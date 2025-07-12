@@ -1,25 +1,52 @@
 {
   "Name": "book",
-  "Path": "E:\\home\\github\\test2\\TEST2\\book",
+  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book",
   "Type": "Directory",
   "Children": [
     {
-      "Name": "C#API大全.pdf",
-      "Path": "E:\\home\\github\\test2\\TEST2\\book\\API大全.pdf",
-      "Type": "File",
-      "Children": null
-    },
-    {
-      "Name": "C#docs文档.pdf",
-      "Path": "E:\\home\\github\\test2\\TEST2\\book\\docs文档.pdf",
-      "Type": "File",
-      "Children": null
-    },
-    {
-      "Name": "C#开发实例大全 提高卷.pdf",
-      "Path": "E:\\home\\github\\test2\\TEST2\\book\\开发实例大全 提高卷.pdf",
-      "Type": "File",
-      "Children": null
+      "Name": "数学",
+      "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学",
+      "Type": "Directory",
+      "Children": [
+        {
+          "Name": "微积分",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学\\微积分",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "微积分的力量 (史蒂夫·斯托加茨 (Steven Henry Strogatz)) .pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学\\微积分\\微积分的力量 (史蒂夫·斯托加茨 (Steven Henry Strogatz)) .pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "线性代数",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学\\线性代数",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "线性代数与空间解析几何.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学\\线性代数\\线性代数与空间解析几何.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "3D数学基础 图形与游戏开发.pdf",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学\\3D数学基础 图形与游戏开发.pdf",
+          "Type": "File",
+          "Children": null
+        },
+        {
+          "Name": "统计学的世界（第五版） (美) 戴维·S·穆尔著 2.pdf",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学\\统计学的世界（第五版） (美) 戴维·S·穆尔著 2.pdf",
+          "Type": "File",
+          "Children": null
+        }
+      ]
     }
   ]
 }
