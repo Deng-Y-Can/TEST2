@@ -4,6 +4,149 @@
   "Type": "Directory",
   "Children": [
     {
+      "Name": "人工智能",
+      "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能",
+      "Type": "Directory",
+      "Children": [
+        {
+          "Name": "opencv",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\opencv",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "OpenCV官方教程中文版（For Python）.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\opencv\\OpenCV官方教程中文版（For Python）.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "机器学习",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\机器学习",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "吴恩达机器学习中文版.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\机器学习\\吴恩达机器学习中文版.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "算法",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "统计分析",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析",
+              "Type": "Directory",
+              "Children": [
+                {
+                  "Name": "第02章  整数规划.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第02章  整数规划.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第08章  层次分析法.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第08章  层次分析法.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第09章 插值与拟合.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第09章 插值与拟合.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第10章 数据的统计描述和分析.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第10章 数据的统计描述和分析.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第11章 方差分析.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第11章 方差分析.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第12章 回归分析.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第12章 回归分析.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第14章 稳定状态模型.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第14章 稳定状态模型.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第15章 常微分方程的解法.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第15章 常微分方程的解法.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第16章 差分方程模型.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第16章 差分方程模型.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第17章 马氏链模型.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第17章 马氏链模型.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第19章 神经网络模型.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第19章 神经网络模型.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第21章 目标规划.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第21章 目标规划.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第22章  模糊数学模型.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第22章  模糊数学模型.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第23章  现代优化算法.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第23章  现代优化算法.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第24章   时间序列模型.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第24章   时间序列模型.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "第25章  存贮论.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\人工智能\\算法\\统计分析\\第25章  存贮论.pdf",
+                  "Type": "File",
+                  "Children": null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "Name": "数学",
       "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学",
       "Type": "Directory",
@@ -41,10 +184,287 @@
           "Children": null
         },
         {
+          "Name": "数学建模算法全收录799页.pdf",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学\\数学建模算法全收录799页.pdf",
+          "Type": "File",
+          "Children": null
+        },
+        {
           "Name": "统计学的世界（第五版） (美) 戴维·S·穆尔著 2.pdf",
           "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\数学\\统计学的世界（第五版） (美) 戴维·S·穆尔著 2.pdf",
           "Type": "File",
           "Children": null
+        }
+      ]
+    },
+    {
+      "Name": "编程",
+      "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程",
+      "Type": "Directory",
+      "Children": [
+        {
+          "Name": "C+",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\C+",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "C++并发编程实战(中文版).pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\C+\\C++并发编程实战(中文版).pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "C++设计模式.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\C+\\C++设计模式.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "Csharp",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Csharp",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "GDI编程教程.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Csharp\\GDI编程教程.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "设计模式.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Csharp\\设计模式.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "C语言",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\C语言",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "c函数大全.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\C语言\\c函数大全.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "C语言手写腾讯QQ-笔记.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\C语言\\C语言手写腾讯QQ-笔记.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "C语言程序设计(第四版)谭浩强.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\C语言\\C语言程序设计(第四版)谭浩强.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "C语言高级编程技术.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\C语言\\C语言高级编程技术.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "GO",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\GO",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "Go 1.5 源码剖析 （书签版） by it-ebooks (z-lib.org).pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\GO\\Go 1.5 源码剖析 （书签版） by it-ebooks (z-lib.org).pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "Go 网络编程.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\GO\\Go 网络编程.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "go.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\GO\\go.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "Go入门指南.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\GO\\Go入门指南.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "一起学GO.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\GO\\一起学GO.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "Linux",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Linux",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "1.linux常用命令速查手册.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Linux\\1.linux常用命令速查手册.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "4、Linux命令.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Linux\\4、Linux命令.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "Python",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Python",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "Python人工智能 数据分析学科详解20210207.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Python\\Python人工智能 数据分析学科详解20210207.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "Python极客项目编程  Mahesh Venkitachalam完整版.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Python\\Python极客项目编程  Mahesh Venkitachalam完整版.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "Python网络数据采集.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Python\\Python网络数据采集.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "深入Python3中文版.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Python\\深入Python3中文版.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "用Python进行自然语言处理.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\Python\\用Python进行自然语言处理.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "前端",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\前端",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "CSS",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\前端\\CSS",
+              "Type": "Directory",
+              "Children": [
+                {
+                  "Name": "CSS设计指南.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\前端\\CSS\\CSS设计指南.pdf",
+                  "Type": "File",
+                  "Children": null
+                }
+              ]
+            },
+            {
+              "Name": "JS",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\前端\\JS",
+              "Type": "Directory",
+              "Children": [
+                {
+                  "Name": "JavaScript设计模式与开发实践.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\前端\\JS\\JavaScript设计模式与开发实践.pdf",
+                  "Type": "File",
+                  "Children": null
+                },
+                {
+                  "Name": "JavaScript语言精粹.pdf",
+                  "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\前端\\JS\\JavaScript语言精粹.pdf",
+                  "Type": "File",
+                  "Children": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "数据库",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\数据库",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "MySQL常用命令大全.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\数据库\\MySQL常用命令大全.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "SQL必知必会-第4版.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\数据库\\SQL必知必会-第4版.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "SQL进阶教程.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\数据库\\SQL进阶教程.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "数据库基础知识.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\数据库\\数据库基础知识.pdf",
+              "Type": "File",
+              "Children": null
+            },
+            {
+              "Name": "深入浅出MySQL 数据库开发、优化与管理维护 by 唐汉明 翟振兴 关宝军 王洪权 (z-lib.org).pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\数据库\\深入浅出MySQL 数据库开发、优化与管理维护 by 唐汉明 翟振兴 关宝军 王洪权 (z-lib.org).pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "编程-系统",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\编程-系统",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "30天自制操作系统.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\编程-系统\\30天自制操作系统.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
+        },
+        {
+          "Name": "计算机网络",
+          "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\计算机网络",
+          "Type": "Directory",
+          "Children": [
+            {
+              "Name": "ccna命令大全.pdf",
+              "Path": "E:\\home\\github\\test2\\TEST2\\TEST2\\book\\编程\\计算机网络\\ccna命令大全.pdf",
+              "Type": "File",
+              "Children": null
+            }
+          ]
         }
       ]
     }
