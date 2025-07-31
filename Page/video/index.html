@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy视频格式转换工具</title>
+    <!-- 引入外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .gradient-bg {
+                background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+            }
+
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .shadow-custom {
+                box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.1);
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <header class="bg-white shadow-md sticky top-0 z-50 transition-custom">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-video-camera text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">视频格式转换工具</h1>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="#" class="font-medium text-primary hover:text-accent transition-custom">主页</a>
+                <a href="#formats" class="font-medium text-gray-600 hover:text-primary transition-custom">支持格式</a>
+                <a href="#about" class="font-medium text-gray-600 hover:text-primary transition-custom">关于</a>
+                <button class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-custom flex items-center">
+                    <i class="fa fa-question-circle mr-2"></i>帮助
+                </button>
+            </nav>
+
+            <button class="md:hidden text-gray-600 hover:text-primary transition-custom">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-16">
+        <!-- 介绍部分 -->
+        <section class="text-center mb-12 md:mb-20">
+            <h2 class="text-[clamp(1.8rem,4vw,2.8rem)] font-bold mb-4 text-gray-800">简单、快速的视频格式转换</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto text-lg">支持多种视频格式之间的相互转换，拖放即可开始，无需安装任何软件</p>
+        </section>
+
+        <!-- 拖放区域 -->
+        <section class="max-w-4xl mx-auto mb-16">
+            <div id="drop-area" class="border-2 border-dashed border-gray-300 hover:border-primary rounded-2xl p-8 md:p-12 text-center transition-custom bg-white shadow-custom hover:shadow-lg">
+                <div class="flex flex-col items-center">
+                    <i class="fa fa-cloud-upload text-5xl text-primary mb-6"></i>
+                    <h3 class="text-xl font-semibold mb-2">拖放视频文件到此处</h3>
+                    <p class="text-gray-500 mb-6">或者点击选择文件</p>
+
+                    <label class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg cursor-pointer transition-custom font-medium flex items-center">
+                        <i class="fa fa-file-video-o mr-2"></i>选择视频文件
+                        <input type="file" id="file-input" accept="video/*" class="hidden">
+                    </label>
+
+                    <div class="mt-8 pt-6 border-t border-gray-200 w-full">
+                        <p class="text-gray-500 mb-4">或者通过路径导入</p>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <input type="text" id="file-path" placeholder="输入视频文件路径..." class="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                            <button id="load-from-path" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-lg transition-custom font-medium">
+                                <i class="fa fa-folder-open mr-2"></i>加载
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 文件信息和转换选项 (默认隐藏) -->
+        <section id="conversion-options" class="max-w-4xl mx-auto mb-16 hidden">
+            <div class="bg-white rounded-2xl shadow-custom p-6 md:p-8">
+                <!-- 文件信息 -->
+                <div class="mb-8 pb-6 border-b border-gray-200">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fa fa-file-video-o text-primary mr-2"></i>文件信息
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-500 text-sm">文件名</p>
+                            <p id="file-name" class="font-medium"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">文件大小</p>
+                            <p id="file-size" class="font-medium"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">时长</p>
+                            <p id="file-duration" class="font-medium"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">原始格式</p>
+                            <p id="file-format" class="font-medium"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 转换选项 -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="fa fa-cog text-primary mr-2"></i>转换选项
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <!-- 目标格式 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">目标格式</label>
+                            <select id="target-format" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                <option value="mp4">MP4 - MPEG-4 Video</option>
+                                <option value="webm">WebM</option>
+                                <option value="ogg">OGG</option>
+                                <option value="mov">MOV - QuickTime</option>
+                                <option value="avi">AVI - Audio Video Interleave</option>
+                                <option value="flv">FLV - Flash Video</option>
+                                <option value="mkv">MKV - Matroska</option>
+                                <option value="wmv">WMV - Windows Media Video</option>
+                            </select>
+                        </div>
+
+                        <!-- 视频质量 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">视频质量</label>
+                            <select id="video-quality" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                <option value="high">高质量 (大文件)</option>
+                                <option value="medium" selected>中等质量 (平衡)</option>
+                                <option value="low">低质量 (小文件)</option>
+                            </select>
+                        </div>
+
+                        <!-- 分辨率 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">分辨率</label>
+                            <select id="video-resolution" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                <option value="original">原始分辨率</option>
+                                <option value="2160p">4K (2160p)</option>
+                                <option value="1080p">1080p (全高清)</option>
+                                <option value="720p">720p (高清)</option>
+                                <option value="480p">480p (标清)</option>
+                                <option value="360p">360p (流畅)</option>
+                            </select>
+                        </div>
+
+                        <!-- 帧率 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">帧率</label>
+                            <select id="video-fps" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                <option value="original">原始帧率</option>
+                                <option value="60">60 FPS</option>
+                                <option value="30" selected>30 FPS</option>
+                                <option value="24">24 FPS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 高级选项 (可折叠) -->
+                    <div class="mb-8">
+                        <button id="advanced-toggle" class="flex items-center text-primary hover:text-accent transition-custom font-medium">
+                            <i class="fa fa-chevron-down mr-2 text-sm transition-transform duration-300"></i>
+                            高级选项
+                        </button>
+
+                        <div id="advanced-options" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+                            <!-- 音频编码 -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">音频编码</label>
+                                <select id="audio-codec" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                    <option value="auto">自动选择</option>
+                                    <option value="aac">AAC</option>
+                                    <option value="mp3">MP3</option>
+                                    <option value="vorbis">Vorbis</option>
+                                    <option value="opus">Opus</option>
+                                </select>
+                            </div>
+
+                            <!-- 音频比特率 -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">音频比特率</label>
+                                <select id="audio-bitrate" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                    <option value="auto">自动选择</option>
+                                    <option value="320">320 kbps (高)</option>
+                                    <option value="192">192 kbps (中)</option>
+                                    <option value="128">128 kbps (标准)</option>
+                                    <option value="64">64 kbps (低)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 转换按钮 -->
+                    <button id="convert-btn" class="gradient-bg text-white px-8 py-4 rounded-lg transition-custom font-medium text-lg hover:shadow-lg flex items-center justify-center mx-auto">
+                        <i class="fa fa-exchange mr-2"></i>开始转换
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 转换进度 (默认隐藏) -->
+        <section id="conversion-progress" class="max-w-4xl mx-auto mb-16 hidden">
+            <div class="bg-white rounded-2xl shadow-custom p-6 md:p-8">
+                <h3 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="fa fa-spinner fa-spin text-primary mr-2"></i>转换中...
+                </h3>
+
+                <div class="mb-6">
+                    <div class="flex justify-between mb-2">
+                        <span id="progress-text" class="text-gray-700">准备转换...</span>
+                        <span id="progress-percentage" class="font-medium">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3.5">
+                        <div id="progress-bar" class="bg-primary h-3.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-gray-500 text-sm">已用时</p>
+                        <p id="time-elapsed" class="font-medium">00:00</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-gray-500 text-sm">剩余时间</p>
+                        <p id="time-remaining" class="font-medium">估算中...</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-gray-500 text-sm">转换速度</p>
+                        <p id="conversion-speed" class="font-medium">-- MB/s</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button id="cancel-conversion" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition-custom font-medium">
+                        <i class="fa fa-times mr-2"></i>取消转换
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 转换完成 (默认隐藏) -->
+        <section id="conversion-complete" class="max-w-4xl mx-auto mb-16 hidden">
+            <div class="bg-white rounded-2xl shadow-custom p-6 md:p-8 border-t-4 border-secondary">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-secondary/10 text-secondary mb-4">
+                        <i class="fa fa-check text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800">转换完成！</h3>
+                    <p class="text-gray-600 mt-2">您的视频已成功转换为所选格式</p>
+                </div>
+
+                <div class="mb-8 bg-gray-50 p-4 rounded-lg">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">转换后的文件</p>
+                            <p id="output-file-name" class="font-medium"></p>
+                        </div>
+                        <div class="mt-2 md:mt-0">
+                            <p class="text-gray-500 text-sm">文件大小</p>
+                            <p id="output-file-size" class="font-medium"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button id="download-file" class="bg-secondary hover:bg-secondary/90 text-white px-6 py-3 rounded-lg transition-custom font-medium flex items-center justify-center">
+                        <i class="fa fa-download mr-2"></i>下载文件
+                    </button>
+                    <button id="convert-another" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg transition-custom font-medium flex items-center justify-center">
+                        <i class="fa fa-plus mr-2"></i>转换另一个文件
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 支持的格式 -->
+        <section id="formats" class="max-w-5xl mx-auto mb-16">
+            <h2 class="text-2xl md:text-3xl font-bold text-center mb-10">支持的视频格式</h2>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- 输入格式 -->
+                <div class="bg-white rounded-xl shadow-custom p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+                        <i class="fa fa-file-video-o text-primary mr-2"></i>输入格式
+                    </h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>MP4</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>WebM</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>OGG</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>MOV</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>AVI</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>FLV</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>MKV</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>WMV</li>
+                    </ul>
+                </div>
+
+                <!-- 输出格式 -->
+                <div class="bg-white rounded-xl shadow-custom p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+                        <i class="fa fa-file-o text-accent mr-2"></i>输出格式
+                    </h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>MP4</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>WebM</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>OGG</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>MOV</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>AVI</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>FLV</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>MKV</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>WMV</li>
+                    </ul>
+                </div>
+
+                <!-- 设备兼容性 -->
+                <div class="bg-white rounded-xl shadow-custom p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+                        <i class="fa fa-mobile text-gray-700 mr-2 text-2xl"></i>设备兼容
+                    </h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>iPhone/iPad</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>Android 设备</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>Windows</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>macOS</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>智能电视</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>游戏主机</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>网页播放</li>
+                    </ul>
+                </div>
+
+                <!-- 转换特性 -->
+                <div class="bg-white rounded-xl shadow-custom p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+                        <i class="fa fa-magic text-primary mr-2"></i>转换特性
+                    </h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>批量转换</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>质量调整</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>分辨率修改</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>帧率调整</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>音频设置</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>快速转换</li>
+                        <li class="flex items-center"><i class="fa fa-check text-secondary mr-2"></i>无损处理</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 关于部分 -->
+        <section id="about" class="max-w-3xl mx-auto text-center">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6">关于视频转换工具</h2>
+            <p class="text-gray-600 mb-6">我们的视频转换工具提供简单、快速、高质量的视频格式转换服务。所有转换都在您的浏览器中进行，确保您的文件安全不会泄露。</p>
+            <p class="text-gray-600">支持多种视频格式之间的相互转换，满足您在不同设备和场景下的播放需求。</p>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fa fa-video-camera text-primary text-2xl"></i>
+                        <h3 class="text-xl font-bold">视频格式转换工具</h3>
+                    </div>
+                    <p class="text-gray-400">简单、快速、安全的在线视频格式转换解决方案，满足您的各种视频处理需求。</p>
+                </div>
+
+               
+            </div>
+
+            <div class="mt-10 pt-6 border-t border-gray-800 text-center text-gray-500">
+                <p>&copy; 2025 Candy视频格式转换工具</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // DOM 元素
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const filePath = document.getElementById('file-path');
+        const loadFromPath = document.getElementById('load-from-path');
+        const conversionOptions = document.getElementById('conversion-options');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        const fileDuration = document.getElementById('file-duration');
+        const fileFormat = document.getElementById('file-format');
+        const targetFormat = document.getElementById('target-format');
+        const videoQuality = document.getElementById('video-quality');
+        const videoResolution = document.getElementById('video-resolution');
+        const videoFps = document.getElementById('video-fps');
+        const advancedToggle = document.getElementById('advanced-toggle');
+        const advancedOptions = document.getElementById('advanced-options');
+        const convertBtn = document.getElementById('convert-btn');
+        const conversionProgress = document.getElementById('conversion-progress');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const timeElapsed = document.getElementById('time-elapsed');
+        const timeRemaining = document.getElementById('time-remaining');
+        const conversionSpeed = document.getElementById('conversion-speed');
+        const cancelConversion = document.getElementById('cancel-conversion');
+        const conversionComplete = document.getElementById('conversion-complete');
+        const outputFileName = document.getElementById('output-file-name');
+        const outputFileSize = document.getElementById('output-file-size');
+        const downloadFile = document.getElementById('download-file');
+        const convertAnother = document.getElementById('convert-another');
+
+        // 变量
+        let selectedFile = null;
+        let conversionInterval = null;
+        let progress = 0;
+        let startTime = 0;
+
+        // 拖放功能
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropArea.classList.add('border-primary');
+            dropArea.classList.add('bg-primary/5');
+        }
+
+        function unhighlight() {
+            dropArea.classList.remove('border-primary');
+            dropArea.classList.remove('bg-primary/5');
+        }
+
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+
+            if (file && file.type.startsWith('video/')) {
+                handleFiles(file);
+            } else {
+                alert('请拖放视频文件');
+            }
+        }
+
+        // 文件选择
+        fileInput.addEventListener('change', function () {
+            if (this.files.length > 0) {
+                handleFiles(this.files[0]);
+            }
+        });
+
+        // 点击拖放区域触发文件选择
+        dropArea.addEventListener('click', function (e) {
+            if (!e.target.closest('button') && !e.target.closest('input')) {
+                fileInput.click();
+            }
+        });
+
+        // 从路径加载
+        loadFromPath.addEventListener('click', function () {
+            const path = filePath.value.trim();
+            if (path) {
+                // 模拟从路径加载文件
+                const fileName = path.split('/').pop().split('\\').pop();
+                const fileExtension = fileName.split('.').pop().toLowerCase();
+
+                if (isVideoExtension(fileExtension)) {
+                    // 创建模拟文件对象
+                    const mockFile = {
+                        name: fileName,
+                        size: Math.floor(Math.random() * 100000000) + 10000000, // 10MB 到 100MB 之间
+                        type: `video/${fileExtension}`
+                    };
+
+                    // 使用视频元素获取时长
+                    const video = document.createElement('video');
+                    video.onloadedmetadata = function () {
+                        const duration = formatDuration(video.duration);
+                        showConversionOptions(mockFile, duration);
+                        URL.revokeObjectURL(video.src);
+                    };
+
+                    // 使用一个示例视频URL来获取合理的时长
+                    video.src = 'https://storage.googleapis.com/web-dev-assets/video-and-source-tags/chrome.mp4';
+                } else {
+                    alert('请输入有效的视频文件路径');
+                }
+            } else {
+                alert('请输入视频文件路径');
+            }
+        });
+
+        // 处理文件
+        function handleFiles(file) {
+            selectedFile = file;
+
+            // 获取视频时长
+            const video = document.createElement('video');
+            video.onloadedmetadata = function () {
+                const duration = formatDuration(video.duration);
+                showConversionOptions(file, duration);
+                URL.revokeObjectURL(video.src);
+            };
+
+            video.src = URL.createObjectURL(file);
+        }
+
+        // 显示转换选项
+        function showConversionOptions(file, duration) {
+            // 填充文件信息
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileDuration.textContent = duration;
+
+            const extension = file.name.split('.').pop().toLowerCase();
+            fileFormat.textContent = extension.toUpperCase();
+
+            // 如果可能，自动选择不同的目标格式
+            const possibleFormats = Array.from(targetFormat.options).map(option => option.value);
+            if (possibleFormats.includes(extension)) {
+                // 找到第一个与原始格式不同的格式
+                for (let i = 0; i < targetFormat.options.length; i++) {
+                    if (targetFormat.options[i].value !== extension) {
+                        targetFormat.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            // 显示转换选项，隐藏其他部分
+            conversionOptions.classList.remove('hidden');
+            conversionProgress.classList.add('hidden');
+            conversionComplete.classList.add('hidden');
+
+            // 滚动到转换选项
+            conversionOptions.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 高级选项切换
+        advancedToggle.addEventListener('click', function () {
+            advancedOptions.classList.toggle('hidden');
+            const icon = this.querySelector('i');
+            icon.classList.toggle('rotate-180');
+        });
+
+        // 开始转换
+        convertBtn.addEventListener('click', startConversion);
+
+        // 开始转换过程
+        function startConversion() {
+            if (!selectedFile && !filePath.value.trim()) {
+                alert('请先选择或导入视频文件');
+                return;
+            }
+
+            // 显示进度，隐藏其他部分
+            conversionOptions.classList.add('hidden');
+            conversionProgress.classList.remove('hidden');
+            conversionComplete.classList.add('hidden');
+
+            // 重置进度
+            progress = 0;
+            progressBar.style.width = '0%';
+            progressPercentage.textContent = '0%';
+            progressText.textContent = '准备转换...';
+            timeElapsed.textContent = '00:00';
+            timeRemaining.textContent = '估算中...';
+            conversionSpeed.textContent = '-- MB/s';
+
+            // 记录开始时间
+            startTime = new Date().getTime();
+
+            // 模拟转换进度
+            clearInterval(conversionInterval);
+            conversionInterval = setInterval(updateProgress, 500);
+        }
+
+        // 更新转换进度
+        function updateProgress() {
+            if (progress < 100) {
+                // 模拟进度增长，开始慢，中间快，最后慢
+                let increment;
+                if (progress < 10) {
+                    increment = Math.random() * 2;
+                    progressText.textContent = '正在准备文件...';
+                } else if (progress < 80) {
+                    increment = 1 + Math.random() * 3;
+                    progressText.textContent = '正在转换视频...';
+                } else {
+                    increment = Math.random() * 2;
+                    progressText.textContent = '正在完成转换...';
+                }
+
+                progress += increment;
+                if (progress > 100) progress = 100;
+
+                // 更新UI
+                progressBar.style.width = `${progress}%`;
+                progressPercentage.textContent = `${Math.round(progress)}%`;
+
+                // 更新时间
+                const currentTime = new Date().getTime();
+                const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+                timeElapsed.textContent = formatTime(elapsedSeconds);
+
+                // 估算剩余时间
+                if (progress > 10) {
+                    const totalEstimatedSeconds = Math.floor((elapsedSeconds / progress) * 100);
+                    const remainingSeconds = totalEstimatedSeconds - elapsedSeconds;
+                    timeRemaining.textContent = formatTime(remainingSeconds);
+
+                    // 估算速度 (MB/s)
+                    const fileSizeMB = selectedFile ? selectedFile.size / (1024 * 1024) : 50; // 假设50MB如果是路径导入
+                    const estimatedSpeed = (fileSizeMB * (progress / 100)) / (elapsedSeconds / 60 / 60);
+                    conversionSpeed.textContent = `${estimatedSpeed.toFixed(1)} MB/s`;
+                }
+
+                // 完成转换
+                if (progress === 100) {
+                    completeConversion();
+                }
+            }
+        }
+
+        // 完成转换
+        function completeConversion() {
+            clearInterval(conversionInterval);
+
+            // 更新完成信息
+            const originalName = selectedFile ? selectedFile.name : filePath.value.split('/').pop().split('\\').pop();
+            const baseName = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
+            const newName = `${baseName}.${targetFormat.value}`;
+
+            // 估算输出文件大小
+            let sizeMultiplier = 1;
+            if (videoQuality.value === 'high') sizeMultiplier = 1.2;
+            else if (videoQuality.value === 'low') sizeMultiplier = 0.6;
+
+            // 根据格式调整
+            if (targetFormat.value === 'webm' || targetFormat.value === 'ogg') {
+                sizeMultiplier *= 0.8;
+            } else if (targetFormat.value === 'avi' || targetFormat.value === 'wmv') {
+                sizeMultiplier *= 1.3;
+            }
+
+            const originalSize = selectedFile ? selectedFile.size : 50 * 1024 * 1024; // 假设50MB
+            const newSize = originalSize * sizeMultiplier;
+
+            outputFileName.textContent = newName;
+            outputFileSize.textContent = formatFileSize(newSize);
+
+            // 显示完成界面
+            setTimeout(() => {
+                conversionProgress.classList.add('hidden');
+                conversionComplete.classList.remove('hidden');
+            }, 1000);
+        }
+
+        // 取消转换
+        cancelConversion.addEventListener('click', function () {
+            clearInterval(conversionInterval);
+            conversionProgress.classList.add('hidden');
+            conversionOptions.classList.remove('hidden');
+        });
+
+        // 下载文件
+        downloadFile.addEventListener('click', function () {
+            // 模拟下载
+            const fileName = outputFileName.textContent;
+            alert(`正在下载: ${fileName}\n在实际应用中，这里会触发文件下载`);
+        });
+
+        // 转换另一个文件
+        convertAnother.addEventListener('click', function () {
+            conversionComplete.classList.add('hidden');
+            dropArea.scrollIntoView({ behavior: 'smooth' });
+
+            // 重置文件选择
+            fileInput.value = '';
+            filePath.value = '';
+            selectedFile = null;
+        });
+
+        // 工具函数：格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 工具函数：格式化时长
+        function formatDuration(seconds) {
+            if (isNaN(seconds)) return '未知';
+
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+
+            if (h > 0) {
+                return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            } else {
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // 工具函数：格式化时间（秒 -> MM:SS）
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // 工具函数：检查是否为视频扩展名
+        function isVideoExtension(ext) {
+            const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'flv', 'mkv', 'wmv', 'mpeg', 'mpg'];
+            return videoExtensions.includes(ext.toLowerCase());
+        }
+
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function () {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('py-2');
+                header.classList.remove('py-4');
+                header.classList.add('shadow-lg');
+            } else {
+                header.classList.add('py-4');
+                header.classList.remove('py-2');
+                header.classList.remove('shadow-lg');
+            }
+        });
+    </script>
+</body>
+</html>
