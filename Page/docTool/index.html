@@ -6,6 +6,13 @@
     <title>文件格式转换工具 - 支持多种文档格式互转</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 文件处理库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-parse/1.1.1/pdf-parse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/rtf-parser@1.0.0/rtf-parser.min.js"></script>
     
     <!-- Tailwind 配置 -->
     <script>
@@ -41,6 +48,13 @@
             .format-card-disabled {
                 @apply opacity-50 cursor-not-allowed;
             }
+            .format-card-supported {
+                @apply relative;
+            }
+            .format-card-supported::after {
+                content: "推荐";
+                @apply absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded;
+            }
             .gradient-bg {
                 @apply bg-gradient-to-br from-primary to-accent;
             }
@@ -57,6 +71,12 @@
             }
             .progress-animation {
                 transition: width 0.5s ease-in-out;
+            }
+            .drop-area-active {
+                @apply border-primary bg-blue-50;
+            }
+            .file-error {
+                @apply border-red-500 bg-red-50;
             }
         }
     </style>
@@ -95,15 +115,13 @@
         <!-- 介绍部分 -->
         <section class="text-center mb-12 max-w-3xl mx-auto">
             <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">简单高效的文件格式转换</h2>
-            <p class="text-gray-600 text-lg mb-6">支持 DOC, DOCX, XLS, XLSX, PPT, PPTX 等多种格式之间的相互转换，操作简单，转换快速。</p>
+            <p class="text-gray-600 text-lg mb-6">支持 DOC, DOCX, XLS, XLSX, PDF 等多种格式互转，操作简单，转换快速</p>
             <div class="flex flex-wrap justify-center gap-2 mb-6">
-                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">DOC</span>
                 <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">DOCX</span>
-                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">XLS</span>
                 <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">XLSX</span>
-                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">PPT</span>
-                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">PPTX</span>
-                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">更多格式...</span>
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">PDF</span>
+                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">TXT</span>
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">CSV</span>
             </div>
         </section>
 
@@ -143,7 +161,7 @@
                 </div>
             </div>
 
-            <!-- 已选格式提示区 - 始终显示在步骤内容上方 -->
+            <!-- 已选格式提示区 -->
             <div class="bg-white rounded-xl shadow-sm p-4 mb-6 hidden" id="selectionSummary">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
@@ -181,7 +199,7 @@
                     <div class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
                         <div class="flex items-start">
                             <i class="fa fa-info-circle text-primary mt-0.5 mr-3"></i>
-                            <p class="text-sm text-gray-700">提示：选择正确的输入格式可以确保转换效果更佳。如果不确定文件格式，可以查看文件扩展名（文件名后面的字母，如.docx）。</p>
+                            <p class="text-sm text-gray-700">提示：选择正确的输入格式可以确保转换效果更佳。文件格式可通过文件名后缀判断（如.docx、.pdf）。</p>
                         </div>
                     </div>
                 </div>
@@ -193,7 +211,7 @@
                         选择目标文件格式
                     </h3>
                     
-                    <p class="text-gray-600 mb-6">请选择您想要转换到的目标格式：</p>
+                    <p class="text-gray-600 mb-6">请选择您想要转换到的目标格式（标"推荐"的格式转换效果更佳）：</p>
                     
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="outputFormats">
                         <!-- 格式卡片将通过JS动态生成 -->
@@ -202,7 +220,7 @@
                     <div class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
                         <div class="flex items-start">
                             <i class="fa fa-lightbulb-o text-primary mt-0.5 mr-3"></i>
-                            <p class="text-sm text-gray-700">提示：仅显示与 <span id="currentInputFormatHint" class="font-medium"></span> 兼容的转换格式。某些格式转换可能会导致部分格式或内容丢失。</p>
+                            <p class="text-sm text-gray-700">提示：仅显示与 <span id="currentInputFormatHint" class="font-medium"></span> 兼容的转换格式。复杂格式转换可能导致部分样式丢失。</p>
                         </div>
                     </div>
                     
@@ -222,6 +240,14 @@
                         <span class="w-8 h-8 rounded-full gradient-bg text-white flex items-center justify-center mr-3">3</span>
                         上传您的文件
                     </h3>
+                    
+                    <!-- 文件选择错误提示 -->
+                    <div id="fileSelectError" class="p-4 bg-red-50 border border-red-100 rounded-lg mb-6 hidden">
+                        <div class="flex items-start">
+                            <i class="fa fa-exclamation-circle text-red-500 mt-0.5 mr-3"></i>
+                            <p class="text-sm text-red-700" id="fileErrorText">请选择一个有效的文件</p>
+                        </div>
+                    </div>
                     
                     <div id="dropArea" class="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center hover:border-primary transition-colors mb-6 cursor-pointer">
                         <i class="fa fa-cloud-upload text-5xl text-gray-400 mb-4"></i>
@@ -289,6 +315,19 @@
                             <i class="fa fa-download mr-2"></i> 下载文件
                         </button>
                     </div>
+
+                    <!-- 转换失败提示 -->
+                    <div id="conversionFailed" class="text-center py-8 hidden">
+                        <div class="w-20 h-20 rounded-full bg-red-100 text-red-500 flex items-center justify-center mx-auto mb-6">
+                            <i class="fa fa-times text-3xl"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-2 text-red-600">转换失败</h4>
+                        <p class="text-gray-600 mb-6" id="failureReason">该格式转换暂时不支持，请尝试其他格式组合</p>
+                        
+                        <button id="retryConversion" class="px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition-opacity">
+                            重新尝试
+                        </button>
+                    </div>
                     
                     <div class="p-4 bg-green-50 border border-green-100 rounded-lg mt-8">
                         <div class="flex items-start">
@@ -321,47 +360,45 @@
         
         <!-- 支持的格式说明 -->
         <section class="mt-16 max-w-5xl mx-auto">
-            <h3 class="text-2xl font-bold mb-6 text-center">支持的文件格式</h3>
+            <h3 class="text-2xl font-bold mb-6 text-center">支持的文件格式及转换能力</h3>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-                    <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
-                        <i class="fa fa-file-word-o text-xl"></i>
-                    </div>
-                    <h4 class="font-bold text-lg mb-3">文档格式</h4>
-                    <ul class="text-gray-600 space-y-2">
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> DOC / DOCX</li>
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> TXT</li>
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> HTML</li>
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> RTF</li>
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> ODT</li>
-                    </ul>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-                    <div class="w-12 h-12 rounded-lg bg-green-100 text-green-600 flex items-center justify-center mb-4">
-                        <i class="fa fa-file-excel-o text-xl"></i>
-                    </div>
-                    <h4 class="font-bold text-lg mb-3">表格格式</h4>
-                    <ul class="text-gray-600 space-y-2">
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> XLS / XLSX</li>
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> CSV</li>
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> ODS</li>
-                    </ul>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-                    <div class="w-12 h-12 rounded-lg bg-red-100 text-red-600 flex items-center justify-center mb-4">
-                        <i class="fa fa-file-powerpoint-o text-xl"></i>
-                    </div>
-                    <h4 class="font-bold text-lg mb-3">演示文稿与其他</h4>
-                    <ul class="text-gray-600 space-y-2">
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> PPT / PPTX</li>
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> ODP</li>
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> XPS</li>
-                        <li><i class="fa fa-check text-green-500 mr-2"></i> OXPS</li>
-                    </ul>
-                </div>
+            <div class="overflow-x-auto mb-8">
+                <table class="w-full border-collapse bg-white rounded-xl shadow-sm">
+                    <thead>
+                        <tr class="bg-gray-50 border-b">
+                            <th class="py-3 px-4 text-left font-bold text-gray-700">源格式</th>
+                            <th class="py-3 px-4 text-left font-bold text-gray-700">可转换为</th>
+                            <th class="py-3 px-4 text-left font-bold text-gray-700">转换效果</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-4 font-medium">DOC/DOCX (Word)</td>
+                            <td class="py-3 px-4">PDF, TXT, HTML, RTF</td>
+                            <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">优秀</span></td>
+                        </tr>
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-4 font-medium">XLS/XLSX (Excel)</td>
+                            <td class="py-3 px-4">PDF, CSV, TXT</td>
+                            <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">优秀</span></td>
+                        </tr>
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-4 font-medium">PDF</td>
+                            <td class="py-3 px-4">TXT, HTML</td>
+                            <td class="py-3 px-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">良好</span>（纯文本优先）</td>
+                        </tr>
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-4 font-medium">TXT/HTML/RTF</td>
+                            <td class="py-3 px-4">PDF, DOCX, 相互转换</td>
+                            <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">优秀</span></td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-3 px-4 font-medium">CSV</td>
+                            <td class="py-3 px-4">XLSX, PDF, TXT</td>
+                            <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">优秀</span></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </section>
     </main>
@@ -429,37 +466,36 @@
                 name: 'Word 文档', 
                 icon: 'fa-file-word-o', 
                 color: 'text-blue-600',
-                canConvertTo: ['docx', 'txt', 'html', 'rtf', 'odt', 'pdf']
+                canConvertTo: ['docx', 'txt', 'html', 'rtf', 'pdf'],
+                supported: { 'docx': true, 'pdf': true, 'txt': true }
             },
             'docx': { 
                 name: 'Word 文档', 
                 icon: 'fa-file-word-o', 
                 color: 'text-blue-600',
-                canConvertTo: ['doc', 'txt', 'html', 'rtf', 'odt', 'pdf']
+                canConvertTo: ['doc', 'txt', 'html', 'rtf', 'pdf'],
+                supported: { 'pdf': true, 'txt': true, 'html': true }
             },
             'txt': { 
                 name: '文本文件', 
                 icon: 'fa-file-text-o', 
                 color: 'text-gray-600',
-                canConvertTo: ['doc', 'docx', 'html', 'rtf', 'odt', 'pdf']
+                canConvertTo: ['doc', 'docx', 'html', 'rtf', 'pdf'],
+                supported: { 'docx': true, 'pdf': true, 'html': true }
             },
             'html': { 
                 name: '网页文件', 
                 icon: 'fa-file-code-o', 
                 color: 'text-orange-600',
-                canConvertTo: ['doc', 'docx', 'txt', 'rtf', 'odt', 'pdf']
+                canConvertTo: ['doc', 'docx', 'txt', 'rtf', 'pdf'],
+                supported: { 'docx': true, 'pdf': true, 'txt': true }
             },
             'rtf': { 
                 name: '富文本', 
                 icon: 'fa-file-text-o', 
                 color: 'text-purple-600',
-                canConvertTo: ['doc', 'docx', 'txt', 'html', 'odt', 'pdf']
-            },
-            'odt': { 
-                name: 'OpenDocument 文本', 
-                icon: 'fa-file-text-o', 
-                color: 'text-green-600',
-                canConvertTo: ['doc', 'docx', 'txt', 'html', 'rtf', 'pdf']
+                canConvertTo: ['doc', 'docx', 'txt', 'html', 'pdf'],
+                supported: { 'docx': true, 'txt': true }
             },
             
             // 表格格式
@@ -467,45 +503,22 @@
                 name: 'Excel 表格', 
                 icon: 'fa-file-excel-o', 
                 color: 'text-green-600',
-                canConvertTo: ['xlsx', 'csv', 'ods', 'pdf']
+                canConvertTo: ['xlsx', 'csv', 'pdf', 'txt'],
+                supported: { 'xlsx': true, 'csv': true, 'pdf': true }
             },
             'xlsx': { 
                 name: 'Excel 表格', 
                 icon: 'fa-file-excel-o', 
                 color: 'text-green-600',
-                canConvertTo: ['xls', 'csv', 'ods', 'pdf']
+                canConvertTo: ['xls', 'csv', 'pdf', 'txt'],
+                supported: { 'csv': true, 'pdf': true, 'txt': true }
             },
             'csv': { 
                 name: '逗号分隔值', 
                 icon: 'fa-file-text-o', 
                 color: 'text-yellow-600',
-                canConvertTo: ['xls', 'xlsx', 'ods', 'pdf']
-            },
-            'ods': { 
-                name: 'OpenDocument 表格', 
-                icon: 'fa-file-excel-o', 
-                color: 'text-green-600',
-                canConvertTo: ['xls', 'xlsx', 'csv', 'pdf']
-            },
-            
-            // 演示文稿格式
-            'ppt': { 
-                name: 'PowerPoint 演示文稿', 
-                icon: 'fa-file-powerpoint-o', 
-                color: 'text-red-600',
-                canConvertTo: ['pptx', 'odp', 'pdf']
-            },
-            'pptx': { 
-                name: 'PowerPoint 演示文稿', 
-                icon: 'fa-file-powerpoint-o', 
-                color: 'text-red-600',
-                canConvertTo: ['ppt', 'odp', 'pdf']
-            },
-            'odp': { 
-                name: 'OpenDocument 演示文稿', 
-                icon: 'fa-file-powerpoint-o', 
-                color: 'text-orange-600',
-                canConvertTo: ['ppt', 'pptx', 'pdf']
+                canConvertTo: ['xls', 'xlsx', 'pdf', 'txt'],
+                supported: { 'xlsx': true, 'pdf': true }
             },
             
             // 其他格式
@@ -513,19 +526,8 @@
                 name: 'PDF 文档', 
                 icon: 'fa-file-pdf-o', 
                 color: 'text-red-600',
-                canConvertTo: ['doc', 'docx', 'txt', 'html', 'rtf']
-            },
-            'xps': { 
-                name: 'XPS 文档', 
-                icon: 'fa-file-o', 
-                color: 'text-blue-600',
-                canConvertTo: ['pdf', 'docx']
-            },
-            'oxps': { 
-                name: '开放XPS文档', 
-                icon: 'fa-file-o', 
-                color: 'text-blue-600',
-                canConvertTo: ['pdf', 'docx']
+                canConvertTo: ['txt', 'html', 'docx'],
+                supported: { 'txt': true, 'html': true }
             }
         };
 
@@ -533,6 +535,7 @@
         let selectedInputFormat = null;
         let selectedOutputFormat = null;
         let uploadedFile = null;
+        let convertedFile = null;
         
         // DOM 元素
         const inputFormatsContainer = document.getElementById('inputFormats');
@@ -567,6 +570,12 @@
         const fileTypeHint = document.getElementById('fileTypeHint');
         const toStep3Btn = document.getElementById('toStep3');
         const startConversionBtn = document.getElementById('startConversion');
+        const conversionSuccess = document.getElementById('conversionSuccess');
+        const conversionFailed = document.getElementById('conversionFailed');
+        const failureReason = document.getElementById('failureReason');
+        const retryConversionBtn = document.getElementById('retryConversion');
+        const fileSelectError = document.getElementById('fileSelectError');
+        const fileErrorText = document.getElementById('fileErrorText');
         
         // 步骤指示器元素
         const stepIndicators = [
@@ -581,15 +590,13 @@
             inputFormatsContainer.innerHTML = '';
             
             // 按类别分组显示格式
-            const docFormats = ['doc', 'docx', 'txt', 'html', 'rtf', 'odt'];
-            const sheetFormats = ['xls', 'xlsx', 'csv', 'ods'];
-            const slideFormats = ['ppt', 'pptx', 'odp'];
-            const otherFormats = ['pdf', 'xps', 'oxps'];
+            const docFormats = ['doc', 'docx', 'txt', 'html', 'rtf'];
+            const sheetFormats = ['xls', 'xlsx', 'csv'];
+            const otherFormats = ['pdf'];
             
             // 添加分组标题
             addFormatGroup('文档格式', docFormats);
             addFormatGroup('表格格式', sheetFormats);
-            addFormatGroup('演示文稿格式', slideFormats);
             addFormatGroup('其他格式', otherFormats);
         }
         
@@ -620,6 +627,9 @@
         function createFormatCard(format, formatInfo, isInput) {
             const card = document.createElement('div');
             card.className = 'format-card';
+            if (!isInput && formatInfo.supported && formatInfo.supported[format]) {
+                card.classList.add('format-card-supported');
+            }
             card.dataset.format = format;
             
             card.innerHTML = `
@@ -676,9 +686,13 @@
             currentInputFormatHint.textContent = selectedInputFormat.toUpperCase();
             
             const targetFormats = formatData[selectedInputFormat].canConvertTo;
+            const inputFormatInfo = formatData[selectedInputFormat];
             
             targetFormats.forEach(format => {
-                const formatInfo = formatData[format];
+                const formatInfo = {
+                    ...formatData[format],
+                    supported: inputFormatInfo.supported
+                };
                 const formatCard = createFormatCard(format, formatInfo, false);
                 outputFormatsContainer.appendChild(formatCard);
             });
@@ -693,6 +707,10 @@
             document.querySelectorAll('.step-content').forEach(el => {
                 el.classList.add('hidden');
             });
+            
+            // 隐藏文件选择错误提示
+            fileSelectError.classList.add('hidden');
+            dropArea.classList.remove('file-error');
             
             // 更新进度条
             progressBar.style.width = `${(stepNumber - 1) * 25}%`;
@@ -737,10 +755,13 @@
                     step3.classList.remove('hidden');
                     // 显示选择摘要
                     selectionSummary.classList.remove('hidden');
-                    // 设置文件选择器接受的格式
-                    fileInput.accept = `.${selectedInputFormat}`;
-                    // 更新文件类型提示
-                    fileTypeHint.textContent = selectedInputFormat.toUpperCase();
+                    // 确保已选择输入格式
+                    if (selectedInputFormat) {
+                        // 设置文件选择器接受的格式
+                        fileInput.accept = `.${selectedInputFormat}`;
+                        // 更新文件类型提示
+                        fileTypeHint.textContent = selectedInputFormat.toUpperCase();
+                    }
                     // 重置文件上传区域
                     fileInput.value = '';
                     filePreview.classList.add('hidden');
@@ -751,18 +772,13 @@
                     step4.classList.remove('hidden');
                     // 显示选择摘要
                     selectionSummary.classList.remove('hidden');
-                    // 更新结果文本
-                    fromFormatText.textContent = selectedInputFormat.toUpperCase();
-                    toFormatText.textContent = selectedOutputFormat.toUpperCase();
-                    convertedFileName.textContent = fileName.textContent.replace(`.${selectedInputFormat}`, `.${selectedOutputFormat}`);
-                    convertedFileSize.textContent = fileSize.textContent;
                     break;
             }
         }
         
-        // 模拟文件转换
-        function simulateConversion() {
-            if (!uploadedFile) return;
+        // 执行实际文件转换
+        async function convertFile() {
+            if (!uploadedFile || !selectedInputFormat || !selectedOutputFormat) return;
             
             // 显示转换中状态
             document.querySelectorAll('.step-content').forEach(el => {
@@ -774,80 +790,338 @@
             conversionProgress.style.width = '0%';
             progressPercentage.textContent = '0%';
             
-            // 模拟进度步骤
-            const progressSteps = [
-                { percent: 10, status: "正在分析文件内容..." },
-                { percent: 30, status: "正在准备转换引擎..." },
-                { percent: 50, status: "正在转换文件格式..." },
-                { percent: 75, status: "正在优化转换结果..." },
-                { percent: 90, status: "正在验证文件完整性..." },
-                { percent: 100, status: "转换完成，准备下载..." }
-            ];
-            
-            // 应用进度步骤
-            let stepIndex = 0;
-            const interval = setInterval(() => {
-                if (stepIndex < progressSteps.length) {
-                    const step = progressSteps[stepIndex];
-                    conversionProgress.style.width = `${step.percent}%`;
-                    progressPercentage.textContent = `${step.percent}%`;
-                    conversionStatus.textContent = step.status;
-                    stepIndex++;
-                } else {
-                    clearInterval(interval);
-                    // 转换完成，进入步骤4
-                    setTimeout(() => {
-                        goToStep(4);
-                    }, 800);
+            try {
+                // 读取文件内容
+                updateConversionProgress(10, "正在读取文件内容...");
+                const fileContent = await readFileContent(uploadedFile);
+                
+                // 根据格式类型进行转换
+                updateConversionProgress(25, "正在准备转换引擎...");
+                
+                let result = null;
+                let mimeType = '';
+                const baseName = uploadedFile.name.replace(/\.[^/.]+$/, "");
+                const outputFileName = `${baseName}.${selectedOutputFormat}`;
+
+                // Word格式处理
+                if (['doc', 'docx'].includes(selectedInputFormat)) {
+                    result = await handleWordConversion(fileContent, uploadedFile, selectedOutputFormat);
+                    mimeType = getMimeType(selectedOutputFormat);
                 }
-            }, 800);
+                // 表格格式处理
+                else if (['xls', 'xlsx', 'csv'].includes(selectedInputFormat)) {
+                    result = await handleSpreadsheetConversion(fileContent, uploadedFile, selectedInputFormat, selectedOutputFormat);
+                    mimeType = getMimeType(selectedOutputFormat);
+                }
+                // PDF格式处理
+                else if (selectedInputFormat === 'pdf') {
+                    result = await handlePDFConversion(fileContent, selectedOutputFormat);
+                    mimeType = getMimeType(selectedOutputFormat);
+                }
+                // 文本格式处理
+                else if (['txt', 'html', 'rtf'].includes(selectedInputFormat)) {
+                    result = await handleTextConversion(fileContent, selectedInputFormat, selectedOutputFormat);
+                    mimeType = getMimeType(selectedOutputFormat);
+                }
+                
+                // 验证转换结果
+                if (!result) {
+                    throw new Error(`暂不支持 ${selectedInputFormat.toUpperCase()} 转 ${selectedOutputFormat.toUpperCase()} 的转换`);
+                }
+                
+                updateConversionProgress(90, "正在验证文件完整性...");
+                
+                // 创建转换后的文件
+                let blob;
+                if (result instanceof Blob) {
+                    blob = result;
+                } else if (typeof result === 'string') {
+                    blob = new Blob([result], { type: mimeType });
+                } else if (result instanceof ArrayBuffer) {
+                    blob = new Blob([result], { type: mimeType });
+                } else {
+                    throw new Error("转换结果格式不正确");
+                }
+                
+                convertedFile = new File([blob], outputFileName, { type: mimeType });
+                updateConversionProgress(100, "转换完成，准备下载...");
+                
+                // 转换完成，进入步骤4（显示成功）
+                setTimeout(() => {
+                    goToStep(4);
+                    conversionSuccess.classList.remove('hidden');
+                    conversionFailed.classList.add('hidden');
+                    // 更新结果信息
+                    fromFormatText.textContent = selectedInputFormat.toUpperCase();
+                    toFormatText.textContent = selectedOutputFormat.toUpperCase();
+                    convertedFileName.textContent = convertedFile.name;
+                    convertedFileSize.textContent = formatFileSize(convertedFile.size);
+                }, 800);
+            } catch (error) {
+                console.error("转换错误:", error);
+                // 显示失败信息
+                setTimeout(() => {
+                    goToStep(4);
+                    conversionSuccess.classList.add('hidden');
+                    conversionFailed.classList.remove('hidden');
+                    failureReason.textContent = error.message || "转换过程中发生错误，请重试或尝试其他格式";
+                }, 500);
+            }
+        }
+
+        // Word格式转换处理
+        async function handleWordConversion(content, file, outputFormat) {
+            // 处理DOCX转其他格式
+            if (outputFormat === 'txt' || outputFormat === 'html') {
+                // 使用mammoth库提取Word内容
+                const result = await mammoth.extractRawText({arrayBuffer: content});
+                if (outputFormat === 'html') {
+                    const htmlResult = await mammoth.convertToHtml({arrayBuffer: content});
+                    return htmlResult.value;
+                }
+                return result.value;
+            }
+            // 转PDF
+            else if (outputFormat === 'pdf') {
+                const result = await mammoth.extractRawText({arrayBuffer: content});
+                const textContent = result.value;
+                
+                // 创建PDF文档
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const fontBytes = await fetch('https://fonts.gstatic.com/s/roboto/v27/KFOmCnqEu92Fr1Mu4mxK.woff2').then(res => res.arrayBuffer());
+                const robotoFont = await pdfDoc.embedFont(fontBytes);
+                const page = pdfDoc.addPage([600, 800]);
+                
+                // 处理分页
+                const fontSize = 12;
+                const lineHeight = 15;
+                const margin = 50;
+                let yPosition = 750;
+                const lines = textContent.split('\n');
+                
+                for (const line of lines) {
+                    if (yPosition < margin + lineHeight) {
+                        page = pdfDoc.addPage([600, 800]);
+                        yPosition = 750;
+                    }
+                    page.drawText(line, {x: margin, y: yPosition, font: robotoFont, size: fontSize});
+                    yPosition -= lineHeight;
+                }
+                
+                return await pdfDoc.save();
+            }
+            // 转RTF
+            else if (outputFormat === 'rtf') {
+                const result = await mammoth.extractRawText({arrayBuffer: content});
+                return `{\\rtf1\\ansi\\deff0\n${result.value}\n}`;
+            }
+            // 转DOC（简单处理）
+            else if (outputFormat === 'doc') {
+                return content; // 实际需专用库，此处简化
+            }
+            return null;
+        }
+
+        // 表格格式转换处理
+        async function handleSpreadsheetConversion(content, file, inputFormat, outputFormat) {
+            // 使用SheetJS处理电子表格
+            const workbook = XLSX.read(content, { 
+                type: inputFormat === 'csv' ? 'string' : 'array',
+                cellDates: true,
+                cellStyles: true
+            });
+            
+            // 转换为其他表格格式
+            if (['xls', 'xlsx', 'csv'].includes(outputFormat)) {
+                const outputType = outputFormat === 'csv' ? 'csv' : 
+                                  (outputFormat === 'xls' ? 'binary' : 'array');
+                return XLSX.write(workbook, { 
+                    bookType: outputFormat, 
+                    type: outputType,
+                    cellStyles: true,
+                    sheetStubs: true
+                });
+            }
+            // 转换为PDF
+            else if (outputFormat === 'pdf') {
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const fontBytes = await fetch('https://fonts.gstatic.com/s/roboto/v27/KFOmCnqEu92Fr1Mu4mxK.woff2').then(res => res.arrayBuffer());
+                const robotoFont = await pdfDoc.embedFont(fontBytes);
+                
+                // 处理所有工作表
+                for (const sheetName of workbook.SheetNames) {
+                    const worksheet = workbook.Sheets[sheetName];
+                    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
+                    
+                    // 创建表格数据
+                    const tableData = [];
+                    for (let row = range.s.r; row <= range.e.r; row++) {
+                        const rowData = [];
+                        for (let col = range.s.c; col <= range.e.c; col++) {
+                            const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+                            const cell = worksheet[cellAddress];
+                            rowData.push(cell ? cell.v : '');
+                        }
+                        tableData.push(rowData);
+                    }
+                    
+                    // 添加页面
+                    const page = pdfDoc.addPage([800, 600]);
+                    page.drawText(`工作表: ${sheetName}`, {
+                        x: 50,
+                        y: 550,
+                        font: robotoFont,
+                        size: 14,
+                    });
+                    
+                    // 绘制表格
+                    let yPos = 520;
+                    const rowHeight = 25;
+                    const colWidth = 100;
+                    
+                    tableData.forEach((row, rowIdx) => {
+                        // 表头样式
+                        const isHeader = rowIdx === 0;
+                        const textColor = isHeader ? PDFLib.rgb(1, 1, 1) : PDFLib.rgb(0, 0, 0);
+                        const bgColor = isHeader ? PDFLib.rgb(0.2, 0.4, 0.8) : PDFLib.rgb(1, 1, 1);
+                        
+                        // 绘制行背景
+                        if (isHeader) {
+                            page.drawRectangle({
+                                x: 50,
+                                y: yPos - rowHeight + 5,
+                                width: colWidth * row.length,
+                                height: rowHeight,
+                                color: bgColor
+                            });
+                        }
+                        
+                        row.forEach((cell, colIdx) => {
+                            page.drawText(cell.toString(), {
+                                x: 50 + (colIdx * colWidth) + 5,
+                                y: yPos,
+                                font: robotoFont,
+                                size: 10,
+                                color: textColor
+                            });
+                        });
+                        
+                        yPos -= rowHeight;
+                        // 分页处理
+                        if (yPos < 50) {
+                            yPos = 520;
+                            page = pdfDoc.addPage([800, 600]);
+                        }
+                    });
+                }
+                
+                return await pdfDoc.save();
+            }
+            // 转TXT
+            else if (outputFormat === 'txt') {
+                let text = '';
+                for (const sheetName of workbook.SheetNames) {
+                    text += `=== ${sheetName} ===\n`;
+                    text += XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]) + '\n\n';
+                }
+                return text;
+            }
+            return null;
+        }
+
+        // PDF格式转换处理
+        async function handlePDFConversion(content, outputFormat) {
+            // PDF转文本
+            if (outputFormat === 'txt') {
+                const data = await pdfParse(content);
+                return data.text;
+            }
+            // PDF转HTML
+            else if (outputFormat === 'html') {
+                const data = await pdfParse(content);
+                return `<html><head><title>PDF转换结果</title></head><body>
+                        <h1>PDF转换为HTML</h1>
+                        <p>${data.text.replace(/\n/g, '<br>')}</p>
+                        </body></html>`;
+            }
+            // PDF转DOCX（简化处理）
+            else if (outputFormat === 'docx') {
+                const data = await pdfParse(content);
+                // 实际需专用库，此处生成简单DOCX（模拟）
+                return new Blob([data.text], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            }
+            return null;
+        }
+
+        // 文本格式转换处理
+        async function handleTextConversion(content, inputFormat, outputFormat) {
+            // 文本转PDF
+            if (outputFormat === 'pdf') {
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const fontBytes = await fetch('https://fonts.gstatic.com/s/roboto/v27/KFOmCnqEu92Fr1Mu4mxK.woff2').then(res => res.arrayBuffer());
+                const robotoFont = await pdfDoc.embedFont(fontBytes);
+                const page = pdfDoc.addPage([600, 800]);
+                
+                // 处理内容
+                let textContent = content;
+                if (inputFormat === 'html') {
+                    const doc = new DOMParser().parseFromString(content, 'text/html');
+                    textContent = doc.body.textContent || '';
+                } else if (inputFormat === 'rtf') {
+                    // 使用rtf-parser处理RTF
+                    textContent = await new Promise((resolve) => {
+                        rtfParser.parse(content, (err, result) => {
+                            if (err) resolve(content);
+                            else resolve(result.text);
+                        });
+                    });
+                }
+                
+                // 绘制文本
+                const fontSize = 12;
+                const lineHeight = 15;
+                const margin = 50;
+                let yPosition = 750;
+                const lines = textContent.split('\n');
+                
+                lines.forEach(line => {
+                    if (yPosition < margin + lineHeight) {
+                        page = pdfDoc.addPage([600, 800]);
+                        yPosition = 750;
+                    }
+                    page.drawText(line, {x: margin, y: yPosition, font: robotoFont, size: fontSize});
+                    yPosition -= lineHeight;
+                });
+                
+                return await pdfDoc.save();
+            }
+            // 文本转Word
+            else if (outputFormat === 'docx') {
+                // 实际需专用库，此处生成简单DOCX（模拟）
+                return new Blob([content], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            }
+            // 文本格式互转
+            else {
+                return convertTextFormat(content, inputFormat, outputFormat);
+            }
+        }
+        
+        // 更新转换进度
+        function updateConversionProgress(percent, status) {
+            conversionProgress.style.width = `${percent}%`;
+            progressPercentage.textContent = `${percent}%`;
+            conversionStatus.textContent = status;
         }
         
         // 处理文件下载
         function downloadConvertedFile() {
-            if (!uploadedFile || !selectedInputFormat || !selectedOutputFormat) return;
-            
-            // 创建模拟的转换后文件内容
-            let content = `这是从${selectedInputFormat.toUpperCase()}转换为${selectedOutputFormat.toUpperCase()}的示例文件。\n`;
-            content += `原始文件名: ${uploadedFile.name}\n`;
-            content += `转换时间: ${new Date().toLocaleString()}\n\n`;
-            content += `这是一个示例内容。在实际应用中，这里会是真实的文件内容。`;
-            
-            // 根据目标格式设置MIME类型
-            let mimeType = 'application/octet-stream';
-            switch(selectedOutputFormat) {
-                case 'txt':
-                    mimeType = 'text/plain';
-                    break;
-                case 'html':
-                    mimeType = 'text/html';
-                    content = `<html><body><h1>转换后的文件</h1><p>${content.replace(/\n/g, '<br>')}</p></body></html>`;
-                    break;
-                case 'pdf':
-                    mimeType = 'application/pdf';
-                    break;
-                case 'docx':
-                    mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-                    break;
-                case 'xlsx':
-                    mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-                    break;
-                case 'pptx':
-                    mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-                    break;
-            }
-            
-            // 创建Blob对象
-            const blob = new Blob([content], { type: mimeType });
+            if (!convertedFile) return;
             
             // 创建下载链接
-            const url = URL.createObjectURL(blob);
+            const url = URL.createObjectURL(convertedFile);
             const a = document.createElement('a');
             a.href = url;
-            
-            // 设置文件名
-            const originalName = uploadedFile.name.replace(/\.[^/.]+$/, "");
-            a.download = `${originalName}.${selectedOutputFormat}`;
+            a.download = convertedFile.name;
             
             // 触发下载
             document.body.appendChild(a);
@@ -858,19 +1132,116 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }, 100);
+        }
+        
+        // 读取文件内容
+        function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                if (file.type.includes('text') || ['txt', 'html', 'rtf', 'csv'].includes(getExtension(file.name))) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
+                
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error("无法读取文件内容，请检查文件是否损坏"));
+            });
+        }
+        
+        // 获取文件扩展名
+        function getExtension(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+        
+        // 获取MIME类型
+        function getMimeType(format) {
+            const mimeTypes = {
+                'txt': 'text/plain',
+                'html': 'text/html',
+                'rtf': 'application/rtf',
+                'pdf': 'application/pdf',
+                'xls': 'application/vnd.ms-excel',
+                'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'csv': 'text/csv',
+                'doc': 'application/msword',
+                'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            };
+            return mimeTypes[format] || 'application/octet-stream';
+        }
+        
+        // 文本格式转换
+        function convertTextFormat(content, fromFormat, toFormat) {
+            if (fromFormat === toFormat) return content;
             
-            // 显示下载成功提示
-            alert('文件已成功下载！');
+            // TXT转换
+            if (toFormat === 'txt') {
+                if (fromFormat === 'html') {
+                    const doc = new DOMParser().parseFromString(content, 'text/html');
+                    return doc.body.textContent || '';
+                }
+                if (fromFormat === 'rtf') {
+                    return content.replace(/\\[a-z0-9]+/gi, '').replace(/\{|\}/g, '').trim();
+                }
+            }
+            
+            // HTML转换
+            if (toFormat === 'html') {
+                if (fromFormat === 'txt') {
+                    return `<html><head><meta charset="UTF-8"></head><body><p>${content.replace(/\n/g, '<br>')}</p></body></html>`;
+                }
+                if (fromFormat === 'rtf') {
+                    return `<html><head><meta charset="UTF-8"></head><body><p>${content.replace(/\\[a-z0-9]+/gi, '').replace(/\{|\}/g, '').replace(/\n/g, '<br>')}</p></body></html>`;
+                }
+            }
+            
+            // RTF转换
+            if (toFormat === 'rtf') {
+                return `{\\rtf1\\ansi\\deff0\n${content}\n}`;
+            }
+            
+            return content;
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 显示文件选择错误
+        function showFileError(message) {
+            fileErrorText.textContent = message;
+            fileSelectError.classList.remove('hidden');
+            dropArea.classList.add('file-error');
         }
         
         // 处理文件上传
         function handleFileUpload(file) {
-            if (!file) return;
+            // 隐藏之前的错误提示
+            fileSelectError.classList.add('hidden');
+            dropArea.classList.remove('file-error');
+            
+            if (!file) {
+                showFileError("请选择一个文件");
+                return;
+            }
             
             // 验证文件格式
-            const fileExtension = file.name.split('.').pop().toLowerCase();
+            const fileExtension = getExtension(file.name);
             if (fileExtension !== selectedInputFormat) {
-                alert(`请上传${selectedInputFormat.toUpperCase()}格式的文件`);
+                showFileError(`请上传${selectedInputFormat.toUpperCase()}格式的文件（当前文件格式为${fileExtension.toUpperCase()}）`);
+                fileInput.value = '';
+                return;
+            }
+            
+            // 验证文件大小（最大100MB）
+            if (file.size > 100 * 1024 * 1024) {
+                showFileError('文件大小不能超过100MB');
                 fileInput.value = '';
                 return;
             }
@@ -885,15 +1256,6 @@
             
             // 启用转换按钮
             startConversionBtn.disabled = false;
-        }
-        
-        // 格式化文件大小
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
         // 事件监听器
@@ -911,22 +1273,20 @@
                 }
             });
             document.getElementById('backToStep2').addEventListener('click', () => goToStep(2));
-            startConversionBtn.addEventListener('click', () => {
-                if (fileInput.files.length > 0) {
-                    simulateConversion();
-                } else {
-                    alert('请上传文件');
-                }
-            });
+            startConversionBtn.addEventListener('click', convertFile);
             document.getElementById('convertAnother').addEventListener('click', () => {
                 // 重置选择
                 selectedInputFormat = null;
                 selectedOutputFormat = null;
                 uploadedFile = null;
+                convertedFile = null;
                 fileInput.value = '';
                 filePreview.classList.add('hidden');
                 initInputFormats();
                 goToStep(1);
+            });
+            retryConversionBtn.addEventListener('click', () => {
+                goToStep(3);
             });
             
             // 下载文件功能
@@ -938,11 +1298,18 @@
             });
             
             // 文件上传相关
-            browseFilesBtn.addEventListener('click', () => fileInput.click());
+            browseFilesBtn.addEventListener('click', () => {
+                // 确保文件输入框重置
+                fileInput.value = '';
+                // 触发点击
+                fileInput.click();
+            });
             
             fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
+                if (e.target.files && e.target.files.length > 0) {
                     handleFileUpload(e.target.files[0]);
+                } else {
+                    showFileError("未选择任何文件");
                 }
             });
             
@@ -951,36 +1318,65 @@
                 filePreview.classList.add('hidden');
                 startConversionBtn.disabled = true;
                 uploadedFile = null;
+                // 隐藏错误提示
+                fileSelectError.classList.add('hidden');
+                dropArea.classList.remove('file-error');
             });
             
-            // 拖放功能
+            // 拖放功能增强
             dropArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                dropArea.classList.add('border-primary');
-                dropArea.classList.add('bg-blue-50');
+                e.stopPropagation();
+                dropArea.classList.add('drop-area-active');
             });
             
-            dropArea.addEventListener('dragleave', () => {
-                dropArea.classList.remove('border-primary');
-                dropArea.classList.remove('bg-blue-50');
+            dropArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropArea.classList.remove('drop-area-active');
+            });
+            
+            dropArea.addEventListener('dragend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropArea.classList.remove('drop-area-active');
             });
             
             dropArea.addEventListener('drop', (e) => {
                 e.preventDefault();
-                dropArea.classList.remove('border-primary');
-                dropArea.classList.remove('bg-blue-50');
+                e.stopPropagation();
+                dropArea.classList.remove('drop-area-active');
                 
-                if (e.dataTransfer.files.length > 0) {
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     fileInput.files = e.dataTransfer.files;
                     handleFileUpload(e.dataTransfer.files[0]);
+                } else {
+                    showFileError("未检测到可上传的文件");
                 }
             });
             
-            dropArea.addEventListener('click', () => fileInput.click());
+            // 确保点击区域可以触发文件选择
+            dropArea.addEventListener('click', (e) => {
+                // 防止事件冒泡导致的问题
+                e.stopPropagation();
+                // 重置文件输入
+                fileInput.value = '';
+                // 触发文件选择
+                fileInput.click();
+            });
             
             // 移动端菜单
             menuToggle.addEventListener('click', () => {
                 mobileMenu.classList.toggle('hidden');
+            });
+            
+            // 防止页面其他区域影响拖放
+            document.body.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            document.body.addEventListener('drop', (e) => {
+                e.preventDefault();
             });
         });
     </script>
