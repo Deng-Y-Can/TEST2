@@ -574,6 +574,9 @@
       const changeLocation = document.getElementById('change-location');
       const downloadLocation = document.getElementById('download-location');
       
+      // 存储上传的文件信息
+      let uploadedFiles = [];
+      
       // 导航栏滚动效果
       window.addEventListener('scroll', function() {
         if (window.scrollY > 50) {
@@ -660,6 +663,9 @@
       function handleFiles(files) {
         if (files.length === 0) return;
         
+        // 清空上传文件数组
+        uploadedFiles = [];
+        
         // 显示文件列表容器
         fileListContainer.classList.remove('hidden');
         
@@ -670,6 +676,13 @@
         Array.from(files).forEach(file => {
           // 只处理PDF文件
           if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+            // 保存文件信息
+            uploadedFiles.push({
+              name: file.name,
+              size: file.size,
+              type: file.type
+            });
+            
             const fileSize = (file.size / (1024 * 1024)).toFixed(2); // MB
             const fileItem = document.createElement('div');
             fileItem.className = 'py-3 flex justify-between items-center';
@@ -693,6 +706,10 @@
         document.querySelectorAll('.remove-file').forEach(button => {
           button.addEventListener('click', function(e) {
             e.stopPropagation();
+            const fileName = this.getAttribute('data-name');
+            // 从数组中移除
+            uploadedFiles = uploadedFiles.filter(file => file.name !== fileName);
+            // 从DOM中移除
             this.closest('div.py-3').remove();
             
             // 如果列表为空，隐藏容器
@@ -707,6 +724,7 @@
       clearFilesButton.addEventListener('click', function() {
         fileList.innerHTML = '';
         fileListContainer.classList.add('hidden');
+        uploadedFiles = [];
       });
       
       // 开始转换
@@ -716,20 +734,18 @@
         conversionProgress.classList.remove('hidden');
         
         // 获取所有文件
-        const fileItems = fileList.querySelectorAll('div.py-3');
-        const filesCount = fileItems.length;
+        const filesCount = uploadedFiles.length;
         
         // 清空进度列表
         progressItems.innerHTML = '';
         
         // 创建每个文件的进度条
-        fileItems.forEach((item, index) => {
-          const fileName = item.querySelector('p.font-medium').textContent;
+        uploadedFiles.forEach((file, index) => {
           const progressItem = document.createElement('div');
           progressItem.className = 'space-y-1';
           progressItem.innerHTML = `
             <div class="flex justify-between text-sm">
-              <span>${fileName}</span>
+              <span>${file.name}</span>
               <span class="file-percentage-${index}">0%</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
@@ -821,11 +837,10 @@
         const outputFormatText = outputFormat.options[outputFormat.selectedIndex].text.toUpperCase();
         
         // 添加完成的文件
-        const fileItems = fileList.querySelectorAll('div.py-3');
-        fileItems.forEach(item => {
-          const fileName = item.querySelector('p.font-medium').textContent;
+        uploadedFiles.forEach(file => {
+          const fileName = file.name;
           const newFileName = fileName.replace('.pdf', `.${outputFormatVal}`);
-          const fileSize = item.querySelector('p.text-sm').textContent;
+          const fileSize = (file.size / (1024 * 1024)).toFixed(2);
           
           const completedItem = document.createElement('div');
           completedItem.className = 'py-3 flex justify-between items-center';
@@ -834,7 +849,7 @@
               <i class="fa fa-file-text-o text-green-500 mr-3"></i>
               <div>
                 <p class="font-medium text-gray-800 truncate max-w-xs">${newFileName}</p>
-                <p class="text-sm text-gray-500">${fileSize} · 转换为 ${outputFormatText}</p>
+                <p class="text-sm text-gray-500">${fileSize} MB · 转换为 ${outputFormatText}</p>
               </div>
             </div>
             <button class="px-3 py-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-custom text-sm download-single" data-file="${newFileName}">
@@ -853,6 +868,72 @@
         });
       }
       
+      // 生成不同格式的示例文件内容
+      function generateFileContent(fileName) {
+        const extension = fileName.split('.').pop().toLowerCase();
+        
+        // 根据文件格式生成不同内容
+        switch(extension) {
+          case 'doc':
+          case 'docx':
+            return `这是从PDF转换的Word文档: ${fileName}\n\n转换内容示例：\n- 这是一个段落示例\n- 这是列表项1\n- 这是列表项2`;
+            
+          case 'xls':
+          case 'xlsx':
+            // CSV格式可以被Excel打开，模拟Excel文件
+            return '姓名,年龄,职业\n张三,30,工程师\n李四,25,设计师\n王五,35,产品经理';
+            
+          case 'ppt':
+          case 'pptx':
+            return `这是从PDF转换的PowerPoint文档: ${fileName}\n\n幻灯片1: 标题页\n幻灯片2: 内容页 - 要点1\n幻灯片3: 内容页 - 要点2`;
+            
+          case 'html':
+            return `<!DOCTYPE html>
+<html>
+<head>
+  <title>转换的HTML文件</title>
+</head>
+<body>
+  <h1>这是从PDF转换的HTML文档: ${fileName}</h1>
+  <p>这是一个段落示例</p>
+  <ul>
+    <li>列表项1</li>
+    <li>列表项2</li>
+  </ul>
+</body>
+</html>`;
+            
+          case 'txt':
+            return `这是从PDF转换的文本文件: ${fileName}\n\n这是一段示例文本内容。\n这是第二行文本。`;
+            
+          case 'png':
+          case 'jpg':
+            // 对于图片格式，使用一个示例图片URL
+            return 'https://picsum.photos/800/600';
+            
+          default:
+            return `这是转换后的文件: ${fileName}\n\n示例内容`;
+        }
+      }
+      
+      // 获取文件MIME类型
+      function getFileMimeType(extension) {
+        const mimeTypes = {
+          'doc': 'application/msword',
+          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'xls': 'application/vnd.ms-excel',
+          'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'ppt': 'application/vnd.ms-powerpoint',
+          'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'html': 'text/html',
+          'txt': 'text/plain',
+          'png': 'image/png',
+          'jpg': 'image/jpeg'
+        };
+        
+        return mimeTypes[extension] || 'application/octet-stream';
+      }
+      
       // 下载单个文件
       function downloadSingleFile(fileName) {
         // 显示下载状态
@@ -867,40 +948,65 @@
           const success = Math.random() > 0.05;
           
           if (success) {
-            downloadStatus.classList.add('hidden');
-            downloadSuccessText.textContent = `${fileName} 已成功下载到 ${downloadLocation.textContent}`;
-            downloadSuccess.classList.remove('hidden');
+            // 生成文件内容并下载
+            const extension = fileName.split('.').pop().toLowerCase();
+            const content = generateFileContent(fileName);
+            const mimeType = getFileMimeType(extension);
             
-            // 5秒后隐藏成功状态
-            setTimeout(() => {
-              downloadSuccess.classList.add('hidden');
-            }, 5000);
-            
-            // 实际项目中，这里会触发真实下载
-            triggerFileDownload(fileName);
+            try {
+              if (extension === 'png' || extension === 'jpg') {
+                // 对于图片，创建一个img标签并下载
+                const link = document.createElement('a');
+                link.href = content; // 这里content是图片URL
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              } else {
+                // 对于其他文件类型，使用Blob
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // 释放URL对象
+                URL.revokeObjectURL(url);
+              }
+              
+              // 显示成功消息
+              downloadStatus.classList.add('hidden');
+              downloadSuccessText.textContent = `${fileName} 已成功下载到 ${downloadLocation.textContent}`;
+              downloadSuccess.classList.remove('hidden');
+              
+              // 5秒后隐藏成功状态
+              setTimeout(() => {
+                downloadSuccess.classList.add('hidden');
+              }, 5000);
+            } catch (error) {
+              console.error('下载失败:', error);
+              showDownloadError(`下载 ${fileName} 时发生错误: ${error.message}`);
+            }
           } else {
-            downloadStatus.classList.add('hidden');
-            downloadErrorText.textContent = `无法下载 ${fileName}，请尝试解决方案`;
-            downloadError.classList.remove('hidden');
+            showDownloadError(`无法下载 ${fileName}，请尝试解决方案`);
           }
         }, 1500);
       }
       
-      // 触发文件下载
-      function triggerFileDownload(fileName) {
-        // 创建一个模拟下载的链接
-        const a = document.createElement('a');
-        // 在实际应用中，这里应该是真实的文件URL
-        a.href = '#';
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+      // 显示下载错误
+      function showDownloadError(message) {
+        downloadStatus.classList.add('hidden');
+        downloadErrorText.textContent = message;
+        downloadError.classList.remove('hidden');
       }
       
       // 下载所有文件
       downloadAllBtn.addEventListener('click', function() {
-        const fileCount = completedFiles.children.length;
+        const fileCount = uploadedFiles.length;
         const downloadMethod = document.querySelector('input[name="download-method"]:checked').value;
         const methodText = downloadMethod === 'zip' ? 'ZIP压缩包' : '多个文件';
         
@@ -917,29 +1023,52 @@
           
           if (success) {
             downloadStatus.classList.add('hidden');
-            downloadSuccessText.textContent = `${methodText} 已成功下载到 ${downloadLocation.textContent}`;
+            
+            if (downloadMethod === 'zip') {
+              // 模拟ZIP下载
+              const zipFileName = 'converted_files.zip';
+              
+              // 创建一个简单的ZIP文件内容（实际应用中需要使用JSZip等库）
+              const zipContent = `ZIP文件包含以下转换后的文件:\n${uploadedFiles.map(file => {
+                const outputFormatVal = outputFormat.value;
+                return `- ${file.name.replace('.pdf', `.${outputFormatVal}`)}`;
+              }).join('\n')}`;
+              
+              const blob = new Blob([zipContent], { type: 'application/zip' });
+              const url = URL.createObjectURL(blob);
+              
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = zipFileName;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              // 释放URL对象
+              URL.revokeObjectURL(url);
+              
+              downloadSuccessText.textContent = `ZIP压缩包已成功下载到 ${downloadLocation.textContent}`;
+            } else {
+              // 下载所有单个文件
+              const outputFormatVal = outputFormat.value;
+              uploadedFiles.forEach((file, index) => {
+                setTimeout(() => {
+                  const newFileName = file.name.replace('.pdf', `.${outputFormatVal}`);
+                  downloadSingleFile(newFileName);
+                }, index * 800); // 每个文件间隔0.8秒下载，避免浏览器限制
+              });
+              
+              downloadSuccessText.textContent = `所有文件已开始下载到 ${downloadLocation.textContent}`;
+            }
+            
             downloadSuccess.classList.remove('hidden');
             
             // 5秒后隐藏成功状态
             setTimeout(() => {
               downloadSuccess.classList.add('hidden');
             }, 5000);
-            
-            // 实际项目中，这里会触发真实下载
-            if (downloadMethod === 'zip') {
-              triggerFileDownload('converted_files.zip');
-            } else {
-              // 下载所有单个文件
-              document.querySelectorAll('.download-single').forEach(button => {
-                setTimeout(() => {
-                  button.click();
-                }, 300);
-              });
-            }
           } else {
-            downloadStatus.classList.add('hidden');
-            downloadErrorText.textContent = `无法下载 ${methodText}，请尝试解决方案`;
-            downloadError.classList.remove('hidden');
+            showDownloadError(`无法下载 ${methodText}，请尝试解决方案`);
           }
         }, 2000);
       });
@@ -983,4 +1112,3 @@
   </script>
 </body>
 </html>
-    

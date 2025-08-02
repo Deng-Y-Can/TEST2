@@ -32,7 +32,7 @@
                 content-visibility: auto;
             }
             .image-container {
-                @apply absolute cursor-move overflow-hidden shadow-lg transition-all duration-200 border-2 border-white/50;
+                @apply absolute cursor-move overflow-hidden shadow-lg transition-none border-2 border-white/50;
             }
             .control-btn {
                 @apply bg-white/80 hover:bg-white text-neutral rounded-full w-8 h-8 flex items-center justify-center shadow-md transition-all duration-200;
@@ -88,28 +88,20 @@
                 </select>
             </div>
             
-            <!-- 移动灵敏度设置 -->
-            <div class="sensitivity-group">
-                <span class="text-sm">移动灵敏度:</span>
-                <input type="range" id="moveSensitivitySlider" min="1" max="2000" value="500" 
-                       class="w-40 slider-track [&::-webkit-slider-thumb]:slider-thumb">
-                <span id="moveSensitivityValue" class="text-sm font-medium w-12 text-right">500</span>
-            </div>
-            
             <!-- 旋转灵敏度设置 -->
             <div class="sensitivity-group">
                 <span class="text-sm">旋转灵敏度:</span>
-                <input type="range" id="rotateSensitivitySlider" min="1" max="2000" value="100" 
+                <input type="range" id="rotateSensitivitySlider" min="1" max="1000" value="300" 
                        class="w-40 slider-track [&::-webkit-slider-thumb]:slider-thumb">
-                <span id="rotateSensitivityValue" class="text-sm font-medium w-12 text-right">100</span>
+                <span id="rotateSensitivityValue" class="text-sm font-medium w-12 text-right">300</span>
             </div>
             
             <!-- 缩放灵敏度设置 -->
             <div class="sensitivity-group">
                 <span class="text-sm">缩放灵敏度:</span>
-                <input type="range" id="scaleSensitivitySlider" min="1" max="2000" value="100" 
+                <input type="range" id="scaleSensitivitySlider" min="1" max="1000" value="300" 
                        class="w-40 slider-track [&::-webkit-slider-thumb]:slider-thumb">
-                <span id="scaleSensitivityValue" class="text-sm font-medium w-12 text-right">100</span>
+                <span id="scaleSensitivityValue" class="text-sm font-medium w-12 text-right">300</span>
             </div>
             
             <!-- 批量操作 -->
@@ -204,15 +196,13 @@
         let images = [];
         let zIndexCounter = 1;
         
-        // 灵敏度参数（1-2000）
-        let moveSensitivity = 500;    // 移动灵敏度
-        let rotateSensitivity = 100;  // 旋转灵敏度
-        let scaleSensitivity = 100;   // 缩放灵敏度
+        // 灵敏度参数（1-1000）
+        let rotateSensitivity = 300;  // 旋转灵敏度
+        let scaleSensitivity = 300;   // 缩放灵敏度
         
         // 基础操作因子
-        const baseMoveFactor = 0.002;   // 基础移动因子
-        const baseRotationStep = 0.3;   // 基础旋转角度
-        const baseScaleStep = 0.0002;   // 基础缩放比例
+        const baseRotationStep = 1.5;  // 旋转角度基数
+        const baseScaleStep = 0.005;   // 缩放比例基数
         
         // DOM元素
         const canvas = document.getElementById('canvas');
@@ -224,8 +214,6 @@
         const canvasBackground = document.getElementById('canvasBackground');
         
         // 灵敏度滑块元素
-        const moveSensitivitySlider = document.getElementById('moveSensitivitySlider');
-        const moveSensitivityValue = document.getElementById('moveSensitivityValue');
         const rotateSensitivitySlider = document.getElementById('rotateSensitivitySlider');
         const rotateSensitivityValue = document.getElementById('rotateSensitivityValue');
         const scaleSensitivitySlider = document.getElementById('scaleSensitivitySlider');
@@ -273,11 +261,6 @@
             deleteAllBtn.addEventListener('click', deleteAllImages);
             
             // 灵敏度调节
-            moveSensitivitySlider.addEventListener('input', (e) => {
-                moveSensitivity = parseInt(e.target.value);
-                moveSensitivityValue.textContent = moveSensitivity;
-            });
-            
             rotateSensitivitySlider.addEventListener('input', (e) => {
                 rotateSensitivity = parseInt(e.target.value);
                 rotateSensitivityValue.textContent = rotateSensitivity;
@@ -329,20 +312,12 @@
         
         // 获取当前旋转角度步长（基于灵敏度）
         function getRotationStep() {
-            // 灵敏度越高，旋转角度越大，范围0.3°-600°
-            return baseRotationStep * (rotateSensitivity / 100);
+            return baseRotationStep * (rotateSensitivity / 300);
         }
         
         // 获取当前缩放比例步长（基于灵敏度）
         function getScaleStep() {
-            // 灵敏度越高，缩放幅度越大，范围0.0002-0.4
-            return baseScaleStep * (scaleSensitivity / 100);
-        }
-        
-        // 获取当前移动因子（基于灵敏度）
-        function getMoveFactor() {
-            // 灵敏度越高，移动速度越快，范围0.002-4
-            return baseMoveFactor * (moveSensitivity / 100);
+            return baseScaleStep * (scaleSensitivity / 300);
         }
         
         // 处理拖放相关事件
@@ -356,7 +331,6 @@
         function handleDragLeave(e) {
             e.preventDefault();
             e.stopPropagation();
-            // 只有当鼠标真正离开画布时才隐藏覆盖层
             if (!canvas.contains(e.relatedTarget)) {
                 dropOverlay.classList.add('hidden');
                 canvas.classList.remove('drop-highlight');
@@ -448,7 +422,7 @@
                 container.style.width = `${width}px`;
                 container.style.height = `${height}px`;
                 
-                // 重新定位到中心
+                // 定位到中心
                 const canvasRect = canvas.getBoundingClientRect();
                 container.style.left = `${(canvasRect.width / 2) - (width / 2)}px`;
                 container.style.top = `${(canvasRect.height / 2) - (height / 2)}px`;
@@ -478,20 +452,20 @@
             selectImage(container);
         }
         
-        // 使元素可拖拽
+        // 使元素可拖拽 - 修复后的实现
         function makeDraggable(element) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
             let isDragging = false;
+
+            // 鼠标按下时记录初始位置
+            element.onmousedown = dragStart;
             
-            element.onmousedown = dragMouseDown;
-            
-            function dragMouseDown(e) {
+            function dragStart(e) {
                 e = e || window.event;
                 e.preventDefault();
                 
                 // 如果没有选中当前元素，点击时选中
                 if (!selectedImages.includes(element)) {
-                    // 如果按住Ctrl键，则添加到选择集，否则替换选择集
                     if (e.ctrlKey || e.metaKey) {
                         toggleSelectImage(element);
                     } else {
@@ -504,42 +478,40 @@
                 pos4 = e.clientY;
                 isDragging = true;
                 
-                document.onmouseup = closeDragElement;
-                // 当鼠标移动时调用elementDrag函数
-                document.onmousemove = elementDrag;
+                // 绑定鼠标移动和释放事件
+                document.onmouseup = dragEnd;
+                document.onmousemove = dragMove;
             }
             
-            function elementDrag(e) {
+            // 鼠标移动时计算新位置
+            function dragMove(e) {
                 if (!isDragging || selectedImages.length === 0) return;
                 
                 e = e || window.event;
                 e.preventDefault();
                 
-                // 计算移动距离，基于灵敏度调整
-                const moveFactor = getMoveFactor();
-                const deltaX = (e.clientX - pos3) * moveFactor;
-                const deltaY = (e.clientY - pos4) * moveFactor;
+                // 计算新位置
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
                 
                 // 移动所有选中的图片
                 selectedImages.forEach(img => {
-                    img.style.left = (img.offsetLeft + deltaX) + "px";
-                    img.style.top = (img.offsetTop + deltaY) + "px";
+                    img.style.top = (img.offsetTop - pos2) + "px";
+                    img.style.left = (img.offsetLeft - pos1) + "px";
                 });
-                
-                // 更新鼠标位置
-                pos3 = e.clientX;
-                pos4 = e.clientY;
             }
             
-            function closeDragElement() {
-                // 停止移动
+            // 结束拖拽
+            function dragEnd() {
                 isDragging = false;
                 document.onmouseup = null;
                 document.onmousemove = null;
             }
         }
         
-        // 选中单个图片（替换当前选择）
+        // 选中单个图片
         function selectImage(element) {
             // 取消之前选中的所有图片
             deselectAllImages();
@@ -552,7 +524,7 @@
             updateStatusInfo();
         }
         
-        // 切换图片选择状态（添加/移除）
+        // 切换图片选择状态
         function toggleSelectImage(element) {
             const index = selectedImages.indexOf(element);
             if (index > -1) {
@@ -603,7 +575,7 @@
             }
         }
         
-        // 旋转图片
+        // 旋转图片 - 修复后的实现
         function rotateImage(degrees) {
             if (selectedImages.length === 0) return;
             
@@ -617,13 +589,13 @@
             });
         }
         
-        // 缩放图片
+        // 缩放图片 - 修复后的实现
         function scaleImage(scaleFactor) {
             if (selectedImages.length === 0) return;
             
             selectedImages.forEach(element => {
                 let currentScale = parseFloat(element.dataset.scale);
-                currentScale = Math.max(0.1, Math.min(20, currentScale + scaleFactor)); // 扩大缩放范围
+                currentScale = Math.max(0.1, Math.min(20, currentScale + scaleFactor));
                 element.dataset.scale = currentScale;
                 
                 // 应用缩放
@@ -631,7 +603,7 @@
             });
         }
         
-        // 重置变换（旋转和缩放）
+        // 重置变换
         function resetTransform() {
             if (selectedImages.length === 0) return;
             
@@ -656,11 +628,8 @@
                 });
                 
                 selectedImages = [];
-                
-                // 更新状态栏
                 updateStatusInfo();
                 
-                // 如果没有图片了，显示提示
                 if (images.length === 0 && canvasHint) {
                     canvasHint.style.display = 'flex';
                 }
@@ -675,11 +644,8 @@
                 images.forEach(img => img.remove());
                 images = [];
                 selectedImages = [];
-                
-                // 更新状态栏
                 updateStatusInfo();
                 
-                // 显示提示
                 if (canvasHint) {
                     canvasHint.style.display = 'flex';
                 }
@@ -749,7 +715,7 @@
             document.head.appendChild(script);
         }
         
-        // 点击画布空白处取消选择（如果没有按住Ctrl键）
+        // 点击画布空白处取消选择
         canvas.addEventListener('click', (e) => {
             if (!e.ctrlKey && !e.metaKey) {
                 deselectAllImages();
