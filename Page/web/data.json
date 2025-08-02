@@ -1,0 +1,1450 @@
+[
+  {
+    "id": 1,
+    "type": "AI学习网站",
+    "name": "豆包",
+    "web": "https://www.doubao.com/chat/",
+    "remark": " "
+  },
+  {
+    "id": 2,
+    "type": "AI学习网站",
+    "name": "文心一言",
+    "web": "https://yiyan.baidu.com/",
+    "remark": " "
+  },
+  {
+    "id": 3,
+    "type": "AI学习网站",
+    "name": "秘塔AI",
+    "web": "https://metaso.cn/",
+    "remark": " "
+  },
+  {
+    "id": 4,
+    "type": "学习网站",
+    "name": "哔哩哔哩",
+    "web": "https://search.bilibili.com/all?vt=25597357&keyword=%E5%88%9D%E4%B8%AD%E6%95%B0%E5%AD%A6&from_source=webtop_search&spm_id_from=333.1007&search_source=5",
+    "remark": "可以学习各种年级、学科的知识"
+  },
+  {
+    "id": 5,
+    "type": "学习网站",
+    "name": "我要自学网",
+    "web": "https://www.51zxw.net/list.aspx?cid=1188",
+    "remark": "感兴趣的可以学习"
+  },
+  {
+    "id": 6,
+    "type": "学习网站",
+    "name": "大学资源网",
+    "web": "https://www.dxzy163.com/list/index98.html",
+    "remark": "初高中各科学习视频"
+  },
+  {
+    "id": 7,
+    "type": "学习网站",
+    "name": "国家中小学网络云平台",
+    "web": "https://basic.smartedu.cn/syncClassroom?defaultTag=e7bbce2c-0590-11ed-9c79-92fc3b3249d5%2F44bebf7c-54e6-11ed-9c34-850ba61fa9f4%2F44bebcde-54e6-11ed-9c34-850ba61fa9f4%2Fff8080814371757b01437c363a187b0a%2Fff8080814371757b014390f883db0453",
+    "remark": "初高中各科学习视频"
+  },
+  {
+    "id": 8,
+    "type": "学习网站",
+    "name": "中国教研网",
+    "web": "http://main.zgjiaoyan.com/resource/show.jsp?cid=0",
+    "remark": "初高中各类教程"
+  },
+  {
+    "id": 9,
+    "type": "学习网站",
+    "name": "中国大学MOOC",
+    "web": "https://www.icourse163.org/course/SJTU-1003738004?from=searchPage&outVendor=zw_mooc_pcssjg_",
+    "remark": "大学各类学习视频"
+  },
+  {
+    "id": 10,
+    "type": "学习网站",
+    "name": "虎克网",
+    "web": "https://huke88.com/search/video?keyWorld=%E5%88%9D%E9%AB%98%E4%B8%AD%E6%95%B0%E5%AD%A6&identify=1720525705&page=1&per-page=30",
+    "remark": "各类学习视频"
+  },
+  {
+    "id": 11,
+    "type": "学习网站",
+    "name": "国家教育平台",
+    "web": "https://login.system.eduyun.cn/uias/login",
+    "remark": " "
+  },
+  {
+    "id": 12,
+    "type": "学习网站",
+    "name": "网易云课堂",
+    "web": "https://ke.study.163.com/course/detail/100151038?inLoc=lmxq_gkk_480000004289005&Pdt=ydkWeb",
+    "remark": "各类学习视频"
+  },
+  {
+    "id": 13,
+    "type": "学习网站",
+    "name": "学堂在线",
+    "web": "https://www.xuetangx.com/course/ouc07011007347/19322199?channel=i.area.manual_search",
+    "remark": "大学各类学习视频"
+  },
+  {
+    "id": 14,
+    "type": "学习网站",
+    "name": "慕课网",
+    "web": "https://www.imooc.com/",
+    "remark": "编程学习网站"
+  },
+  {
+    "id": 15,
+    "type": "学习网站",
+    "name": "中国教育考试网",
+    "web": "https://www.neea.edu.cn/html1/folder/1510/883-1.htm?q=%E5%88%9D%E4%B8%AD%E6%95%B0%E5%AD%A6",
+    "remark": "各类考试信息"
+  },
+  {
+    "id": 16,
+    "type": "学习网站",
+    "name": "考试酷",
+    "web": "https://www.examcoo.com/paperlist/index/k/653/p/1",
+    "remark": "各类考试"
+  },
+  {
+    "id": 17,
+    "type": "学习网站",
+    "name": "可汗学院",
+    "web": "https://www.khanacademy.org/signup",
+    "remark": " "
+  },
+  {
+    "id": 18,
+    "type": "学习网站",
+    "name": "腾讯课堂",
+    "web": "https://ke.qq.com/course/3940977#term_id=104091162",
+    "remark": "各类视频学习"
+  },
+  {
+    "id": 19,
+    "type": "学习网站",
+    "name": "学习强国",
+    "web": "https://www.xuexi.cn/896bddc5f57a423b857a85eb40f98945/72742e3e40c96ade71e42b6e7ed42419.html",
+    "remark": "文化学习"
+  },
+  {
+    "id": 20,
+    "type": "学习网站",
+    "name": "Doyoudo",
+    "web": "https://www.doyoudo.com",
+    "remark": "主要以设计、视频剪辑、特效为主的自学网站"
+  },
+  {
+    "id": 21,
+    "type": "教育资源平台",
+    "name": "广东省教育资源公共服务平台",
+    "web": "https://zy.gdedu.gov.cn/res//resLocalListPage.html?periodId=cz&subjectId=jcsub01&resTypeId=gk",
+    "remark": "初高中各科学习视频"
+  },
+  {
+    "id": 22,
+    "type": "教育资源平台",
+    "name": "深圳教育云资源平台",
+    "web": "https://zy.szedu.cn/jcjy/?NJ=5710&XK=5753",
+    "remark": "初高中各科学习视频"
+  },
+  {
+    "id": 23,
+    "type": "教育资源平台",
+    "name": "江苏省名师空中课堂",
+    "web": "https://mskzkt.jse.edu.cn/cloudCourse/index/pc/",
+    "remark": "初高中各科学习课程"
+  },
+  {
+    "id": 24,
+    "type": "教育资源平台",
+    "name": "安徽基础教育平台",
+    "web": "https://www.ahedu.cn/zyzx/#/xkzy?phaseCode=04",
+    "remark": "初高中各科学习课件、教案"
+  },
+  {
+    "id": 25,
+    "type": "教育资源平台",
+    "name": "武汉精品教育慕课平台",
+    "web": "https://whedu.jichu.chaoxing.com/",
+    "remark": "初高中各科学习视频"
+  },
+  {
+    "id": 26,
+    "type": "实验与科学",
+    "name": "电子课本网",
+    "web": "http://www.dzkbw.com/",
+    "remark": "初高中各科课本、教材"
+  },
+  {
+    "id": 27,
+    "type": "实验与科学",
+    "name": "国家中小学智慧教育平台",
+    "web": "https://www.zxx.edu.cn",
+    "remark": "初高中各科教材"
+  },
+  {
+    "id": 28,
+    "type": "实验与科学",
+    "name": "中小学语文课文示范诵读库",
+    "web": "http://edu.cnr.cn/eduzt/ywkwsfsd",
+    "remark": "课文朗诵"
+  },
+  {
+    "id": 29,
+    "type": "实验与科学",
+    "name": "中国国家数字图书馆",
+    "web": "http://www.nlc.cn",
+    "remark": "国家博物馆、各类书籍"
+  },
+  {
+    "id": 30,
+    "type": "实验与科学",
+    "name": "国图公开课",
+    "web": "http://open.nlc.cn/onlineedu/client/index.htm",
+    "remark": "各种国家经典"
+  },
+  {
+    "id": 31,
+    "type": "实验与科学",
+    "name": "全国中小学实验在线平台",
+    "web": "http://www.syzx-edu.com",
+    "remark": "初中各类实验"
+  },
+  {
+    "id": 32,
+    "type": "名师讲课",
+    "name": "99教师网",
+    "web": "https://www.99at.com/shuxue/",
+    "remark": "老师讲课"
+  },
+  {
+    "id": 33,
+    "type": "名师讲课",
+    "name": "教视网",
+    "web": "https://www.sp910.com/",
+    "remark": "老师讲课"
+  },
+  {
+    "id": 34,
+    "type": "名师讲课",
+    "name": "教师听课网",
+    "web": "https://www.yanxiuwang.cn/",
+    "remark": "老师讲课"
+  },
+  {
+    "id": 35,
+    "type": "名师讲课",
+    "name": "优质课网",
+    "web": "http://www.youzhik.com/qtmianshi/",
+    "remark": "老师讲课"
+  },
+  {
+    "id": 36,
+    "type": "名师讲课",
+    "name": "学科网",
+    "web": "https://www.zxxk.com/",
+    "remark": "老师讲课"
+  },
+  {
+    "id": 37,
+    "type": "名师讲课",
+    "name": "菁优网",
+    "web": "https://www.jyeoo.com/",
+    "remark": "试卷题目"
+  },
+  {
+    "id": 38,
+    "type": "名师讲课",
+    "name": "教习网",
+    "web": "https://www.51jiaoxi.com/",
+    "remark": "真题"
+  },
+  {
+    "id": 39,
+    "type": "名师讲课",
+    "name": "问答库",
+    "web": "https://www.asklib.com/",
+    "remark": "各类热门考题"
+  },
+  {
+    "id": 40,
+    "type": "名师讲课",
+    "name": "拼题A",
+    "web": "https://pintia.cn/home",
+    "remark": "教学辅导平台"
+  },
+  {
+    "id": 41,
+    "type": "导航网站",
+    "name": "学吧导航",
+    "web": "https://www.xue8nav.com/favorites/programming",
+    "remark": "外语、编程算法、电脑办工、电子书、考研考公、百科知识、音乐艺术医学演讲、数理化生"
+  },
+  {
+    "id": 42,
+    "type": "导航网站",
+    "name": "专业开发者导航",
+    "web": "https://www.zdzn.net/",
+    "remark": "前后端、安卓、node.js"
+  },
+  {
+    "id": 43,
+    "type": "导航网站",
+    "name": "小呆导航",
+    "web": "https://www.webjike.com/",
+    "remark": "前端、UI、影视、日常办公"
+  },
+  {
+    "id": 44,
+    "type": "导航网站",
+    "name": "印记中文",
+    "web": "https://docschina.org/",
+    "remark": "前端框架、代码检查、语言规范、测试工具、可视化工具"
+  },
+  {
+    "id": 45,
+    "type": "导航网站",
+    "name": "编程学习",
+    "web": "https://www.bcnav.cn/",
+    "remark": "资源下载、开源项目、书单、工具、谷歌插件、开发语言、方向、基础"
+  },
+  {
+    "id": 46,
+    "type": "导航网站",
+    "name": "工具猫",
+    "web": "https://www.toolmao.com/",
+    "remark": "外语、工具、辟谣、大数据模型、数据源集、视频、编程算法"
+  },
+  {
+    "id": 47,
+    "type": "导航网站",
+    "name": "程序员盒子",
+    "web": "https://www.coderutil.com/",
+    "remark": "AI、手册、摸鱼、求职、办公、学习、创业"
+  },
+  {
+    "id": 48,
+    "type": "导航网站",
+    "name": "程序员导航",
+    "web": "http://www.cxysite.com/",
+    "remark": "工具、摸鱼、学习、资源、图片视频"
+  },
+  {
+    "id": 49,
+    "type": "导航网站",
+    "name": "cs自学指南",
+    "web": "https://csdiy.wiki/",
+    "remark": "清华计算机大佬推荐的全方位计算机学习课程"
+  },
+  {
+    "id": 50,
+    "type": "导航网站",
+    "name": "集知盒子",
+    "web": "https://www.jizhihezi.com/sites/1153.html",
+    "remark": "AI、音乐影视、学习、考证技能、外语、动漫、软件下载、网盘、办公"
+  },
+  {
+    "id": 51,
+    "type": "导航网站",
+    "name": "爱达杂货铺",
+    "web": "https://adzhp.site/",
+    "remark": "AI、视频、资源、软件游戏、动漫、实习工具、学习教育、办公素材"
+  },
+  {
+    "id": 52,
+    "type": "程序员专用网站",
+    "name": "Github",
+    "web": "https://github.com/",
+    "remark": " "
+  },
+  {
+    "id": 53,
+    "type": "程序员专用网站",
+    "name": "Git",
+    "web": "https://gitee.com/",
+    "remark": " "
+  },
+  {
+    "id": 54,
+    "type": "程序员专用网站",
+    "name": "CSDN",
+    "web": "https://www.csdn.net/",
+    "remark": " "
+  },
+  {
+    "id": 55,
+    "type": "程序员专用网站",
+    "name": "掘金",
+    "web": "https://juejin.cn/",
+    "remark": " "
+  },
+  {
+    "id": 56,
+    "type": "程序员专用网站",
+    "name": "博客园",
+    "web": "https://www.cnblogs.com/",
+    "remark": " "
+  },
+  {
+    "id": 57,
+    "type": "程序员专用网站",
+    "name": "力扣",
+    "web": "https://leetcode.cn/",
+    "remark": " "
+  },
+  {
+    "id": 58,
+    "type": "程序员专用网站",
+    "name": "牛客网",
+    "web": "https://www.nowcoder.com/enterprise/2746",
+    "remark": " "
+  },
+  {
+    "id": 59,
+    "type": "程序员专用网站",
+    "name": "lintcode",
+    "web": "https://www.lintcode.com/",
+    "remark": " "
+  },
+  {
+    "id": 60,
+    "type": "程序员专用网站",
+    "name": "oschina",
+    "web": "https://www.oschina.net/",
+    "remark": " "
+  },
+  {
+    "id": 61,
+    "type": "程序员专用网站",
+    "name": "51cto",
+    "web": "https://www.51cto.com/",
+    "remark": " "
+  },
+  {
+    "id": 62,
+    "type": "程序员专用网站",
+    "name": "微软官网",
+    "web": "https://learn.microsoft.com/zh-cn/",
+    "remark": "资源下载、框架学习"
+  },
+  {
+    "id": 63,
+    "type": "程序员专用网站",
+    "name": "编程狮",
+    "web": "https://www.w3cschool.cn/",
+    "remark": "学习网站"
+  },
+  {
+    "id": 64,
+    "type": "程序员专用网站",
+    "name": "菜鸟教程(菜鸟工具)",
+    "web": "https://www.runoob.com/",
+    "remark": "学习网站"
+  },
+  {
+    "id": 65,
+    "type": "程序员专用网站",
+    "name": "SegmentFault",
+    "web": "https://segmentfault.com/",
+    "remark": " "
+  },
+  {
+    "id": 66,
+    "type": "程序员专用网站",
+    "name": "小傅哥 bugstack",
+    "web": "https://bugstack.cn/",
+    "remark": "Java小傅哥网站"
+  },
+  {
+    "id": 67,
+    "type": "程序员专用网站",
+    "name": "廖雪峰的网站",
+    "web": "https://www.liaoxuefeng.com/",
+    "remark": "廖雪峰的网站"
+  },
+  {
+    "id": 68,
+    "type": "程序员专用网站",
+    "name": "孟坤工具箱",
+    "web": "https://tool.mkblog.cn/",
+    "remark": " "
+  },
+  {
+    "id": 69,
+    "type": "程序员专用网站",
+    "name": "Python Tutor",
+    "web": "https://pythontutor.com/visualize.html#mode=edit",
+    "remark": "Python逐步解析，代码可视化"
+  },
+  {
+    "id": 70,
+    "type": "程序员专用网站",
+    "name": "前端开发者手册",
+    "web": "http://caibaojian.com/fedbook/",
+    "remark": " "
+  },
+  {
+    "id": 71,
+    "type": "程序员专用网站",
+    "name": "百度前端技术手册",
+    "web": "https://ife.baidu.com/preface.html",
+    "remark": " "
+  },
+  {
+    "id": 72,
+    "type": "程序员专用网站",
+    "name": "javaAPI",
+    "web": "https://docs.oracle.com/javase/6/docs/api/",
+    "remark": " "
+  },
+  {
+    "id": 73,
+    "type": "程序员专用网站",
+    "name": "codewars",
+    "web": "https://www.codewars.com/",
+    "remark": "国外学习平台"
+  },
+  {
+    "id": 74,
+    "type": "程序员专用网站",
+    "name": "geeksforgeeks",
+    "web": "https://www.geeksforgeeks.org/",
+    "remark": "国外学习平台"
+  },
+  {
+    "id": 75,
+    "type": "程序员专用网站",
+    "name": "kaggle",
+    "web": "https://www.kaggle.com/code",
+    "remark": "国外学习平台"
+  },
+  {
+    "id": 76,
+    "type": "程序员专用网站",
+    "name": "禅意花园",
+    "web": "https://www.csszengarden.com/",
+    "remark": "前端学习平台"
+  },
+  {
+    "id": 77,
+    "type": "程序员专用网站",
+    "name": "PowerShell ",
+    "web": "https://www.pstips.net/",
+    "remark": " "
+  },
+  {
+    "id": 78,
+    "type": "常用资源、工具下载网站",
+    "name": "openjdk",
+    "web": "https://openjdk.org/",
+    "remark": "JavaJDK下载"
+  },
+  {
+    "id": 79,
+    "type": "常用资源、工具下载网站",
+    "name": "howtodoinjava",
+    "web": "https://howtodoinjava.com/spring-boot-tutorials/",
+    "remark": "java学习网站"
+  },
+  {
+    "id": 80,
+    "type": "常用资源、工具下载网站",
+    "name": "SVN",
+    "web": "https://www.visualsvn.com/downloads/",
+    "remark": "SVN官网"
+  },
+  {
+    "id": 81,
+    "type": "常用资源、工具下载网站",
+    "name": "oracle",
+    "web": "https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/javasdk.htm",
+    "remark": "JDK下载"
+  },
+  {
+    "id": 82,
+    "type": "常用资源、工具下载网站",
+    "name": "myeclipse",
+    "web": "https://www.myeclipsecn.com/",
+    "remark": "JDK的IDE"
+  },
+  {
+    "id": 83,
+    "type": "常用资源、工具下载网站",
+    "name": "安卓官网",
+    "web": "https://developer.android.google.cn/studio?hl=zh-cn",
+    "remark": " "
+  },
+  {
+    "id": 84,
+    "type": "常用资源、工具下载网站",
+    "name": "阿帕奇官网",
+    "web": "https://subversion.apache.org/packages.html",
+    "remark": " "
+  },
+  {
+    "id": 85,
+    "type": "常用资源、工具下载网站",
+    "name": "notepad官网",
+    "web": "https://notepad-plus.en.softonic.com/",
+    "remark": " "
+  },
+  {
+    "id": 86,
+    "type": "常用资源、工具下载网站",
+    "name": "eclipse",
+    "web": "https://www.eclipse.org/downloads/",
+    "remark": "Java的IDE"
+  },
+  {
+    "id": 87,
+    "type": "常用资源、工具下载网站",
+    "name": "JetBrains",
+    "web": "https://plugins.jetbrains.com/",
+    "remark": "JetBrains插件市场"
+  },
+  {
+    "id": 88,
+    "type": "常用资源、工具下载网站",
+    "name": "Nuget",
+    "web": "https://www.nuget.org/",
+    "remark": ".NET插件"
+  },
+  {
+    "id": 89,
+    "type": "常用资源、工具下载网站",
+    "name": "apifox",
+    "web": "https://apifox.com/",
+    "remark": "API 设计、开发、测试一体化协作平台"
+  },
+  {
+    "id": 90,
+    "type": "常用资源、工具下载网站",
+    "name": "Grabient",
+    "web": "https://www.grabient.com/",
+    "remark": "颜色渐变网站"
+  },
+  {
+    "id": 91,
+    "type": "常用资源、工具下载网站",
+    "name": "Iconfont",
+    "web": "https://www.iconfont.cn/",
+    "remark": "阿里巴巴矢量图库"
+  },
+  {
+    "id": 92,
+    "type": "常用资源、工具下载网站",
+    "name": "eolink",
+    "web": "https://www.eolink.com/",
+    "remark": "API 管理 + Mock + 自动化测试 + 异常监控 + 团队协作"
+  },
+  {
+    "id": 93,
+    "type": "常用资源、工具下载网站",
+    "name": "VScode官网",
+    "web": "https://code.visualstudio.com/Download",
+    "remark": " "
+  },
+  {
+    "id": 94,
+    "type": "常用资源、工具下载网站",
+    "name": "Git下载",
+    "web": "https://git-scm.com/download/win",
+    "remark": " "
+  },
+  {
+    "id": 95,
+    "type": "常用资源、工具下载网站",
+    "name": "msdn",
+    "web": "https://msdn.itellyou.cn/",
+    "remark": "软件、开发工具、操作系统、服务器下载"
+  },
+  {
+    "id": 96,
+    "type": "常用资源、工具下载网站",
+    "name": "深度开源",
+    "web": "https://www.open-open.com/code/",
+    "remark": "开源代码"
+  },
+  {
+    "id": 97,
+    "type": "常用资源、工具下载网站",
+    "name": "HBuilderX",
+    "web": "https://hx.dcloud.net.cn/",
+    "remark": "前端开发软件"
+  },
+  {
+    "id": 98,
+    "type": "常用资源、工具下载网站",
+    "name": "python",
+    "web": "https://www.python.org/",
+    "remark": " "
+  },
+  {
+    "id": 99,
+    "type": "常用资源、工具下载网站",
+    "name": "python工具包",
+    "web": "https://pypi.org/",
+    "remark": " "
+  },
+  {
+    "id": 100,
+    "type": "常用资源、工具下载网站",
+    "name": "tortoisegit",
+    "web": "https://tortoisegit.org/download/",
+    "remark": "git可视化工具"
+  },
+  {
+    "id": 101,
+    "type": "资源下载网站",
+    "name": "脚本之家",
+    "web": "https://www.jb51.net/codes/list21_2.html",
+    "remark": " "
+  },
+  {
+    "id": 102,
+    "type": "资源下载网站",
+    "name": "资源包下载",
+    "web": "https://sourceforge.net/projects/cmusphinx/",
+    "remark": " "
+  },
+  {
+    "id": 103,
+    "type": "资源下载网站",
+    "name": "清华大学开源软件镜像",
+    "web": "https://mirrors.tuna.tsinghua.edu.cn/",
+    "remark": " "
+  },
+  {
+    "id": 104,
+    "type": "资源下载网站",
+    "name": " ISCAS 开源镜像站",
+    "web": "https://mirror.iscas.ac.cn/",
+    "remark": " "
+  },
+  {
+    "id": 105,
+    "type": "资源下载网站",
+    "name": "DLL",
+    "web": "https://www.dllzj.com/",
+    "remark": "dll下载网站"
+  },
+  {
+    "id": 106,
+    "type": "资源下载网站",
+    "name": "插件市场",
+    "web": "https://ext.dcloud.net.cn/publisher?id=586192",
+    "remark": "前端插件市场"
+  },
+  {
+    "id": 107,
+    "type": "资源下载网站",
+    "name": "极简插件",
+    "web": "https://chrome.zzzmh.cn/",
+    "remark": "谷歌插件"
+  },
+  {
+    "id": 108,
+    "type": "前端常用框架",
+    "name": "uniapp",
+    "web": "https://uniapp.dcloud.net.cn/",
+    "remark": " "
+  },
+  {
+    "id": 109,
+    "type": "前端常用框架",
+    "name": "微信小程序",
+    "web": "https://developers.weixin.qq.com/doc/",
+    "remark": " "
+  },
+  {
+    "id": 110,
+    "type": "前端常用框架",
+    "name": "Vue",
+    "web": "https://cn.vuejs.org/",
+    "remark": " "
+  },
+  {
+    "id": 111,
+    "type": "前端常用框架",
+    "name": "layui",
+    "web": "https://layui.dev/2.7/",
+    "remark": " "
+  },
+  {
+    "id": 112,
+    "type": "前端常用框架",
+    "name": "element",
+    "web": "https://element.eleme.cn/#/zh-CN/component/layout",
+    "remark": " "
+  },
+  {
+    "id": 113,
+    "type": "前端常用框架",
+    "name": "Pinia",
+    "web": "https://pinia.web3doc.top/",
+    "remark": " "
+  },
+  {
+    "id": 114,
+    "type": "前端常用框架",
+    "name": "Bootstrap",
+    "web": "https://v4.bootcss.com/docs/getting-started/introduction/",
+    "remark": " "
+  },
+  {
+    "id": 115,
+    "type": "前端常用框架",
+    "name": "echarts",
+    "web": "https://echarts.apache.org/handbook/zh/get-started/",
+    "remark": " "
+  },
+  {
+    "id": 116,
+    "type": "前端常用框架",
+    "name": "css框架",
+    "web": "https://css-loaders.com/",
+    "remark": " "
+  },
+  {
+    "id": 117,
+    "type": "前端常用框架",
+    "name": "Variant Form",
+    "web": "https://www.vform666.com/",
+    "remark": "一款高效的低代码表单，可视化拖拽式设计，支持组件库二开，一键生成源码"
+  },
+  {
+    "id": 118,
+    "type": "前端常用框架",
+    "name": "jquery",
+    "web": "https://api.jquery.com/",
+    "remark": " "
+  },
+  {
+    "id": 119,
+    "type": "前端常用框架",
+    "name": "unity",
+    "web": "https://docs.unity.cn/cn/current/Manual/index.html",
+    "remark": " "
+  },
+  {
+    "id": 120,
+    "type": "（前）后端常用框架",
+    "name": "若依",
+    "web": "https://www.ruoyi.vip/",
+    "remark": " "
+  },
+  {
+    "id": 121,
+    "type": "（前）后端常用框架",
+    "name": "YiShaAdmin",
+    "web": "http://106.14.124.170:3000/#/",
+    "remark": " "
+  },
+  {
+    "id": 122,
+    "type": "（前）后端常用框架",
+    "name": "Django",
+    "web": "https://docs.djangoproject.com/zh-hans/3.2/ref/databases/",
+    "remark": " "
+  },
+  {
+    "id": 123,
+    "type": "（前）后端常用框架",
+    "name": "ZRadmin",
+    "web": "https://www.izhaorui.cn/doc/login.html?from=/quickstart.html",
+    "remark": " "
+  },
+  {
+    "id": 124,
+    "type": "算法",
+    "name": "VisuAlgo",
+    "web": "https://visualgo.net/zh",
+    "remark": "通过动画可视化数据结构和算法"
+  },
+  {
+    "id": 125,
+    "type": "算法",
+    "name": "算法可视化",
+    "web": "https://algorithm-visualizer.org/branch-and-bound/binary-search",
+    "remark": " "
+  },
+  {
+    "id": 126,
+    "type": "算法",
+    "name": "红黑树",
+    "web": "https://www.cs.usfca.edu/~galles/visualization/RedBlack.html",
+    "remark": " "
+  },
+  {
+    "id": 127,
+    "type": "网络安全",
+    "name": "安全圈",
+    "web": "https://www.anquanquan.info/",
+    "remark": " "
+  },
+  {
+    "id": 128,
+    "type": "网络安全",
+    "name": "渗透师导航",
+    "web": "https://www.shentoushi.top/network",
+    "remark": " "
+  },
+  {
+    "id": 129,
+    "type": "AI工具及网站",
+    "name": "AI工具集",
+    "web": "https://ai-bot.cn/",
+    "remark": " "
+  },
+  {
+    "id": 130,
+    "type": "AI工具及网站",
+    "name": "AIGC导航",
+    "web": "https://www.aigc.cn/",
+    "remark": " "
+  },
+  {
+    "id": 131,
+    "type": "AI工具及网站",
+    "name": "优设AI导航",
+    "web": "https://hao.uisdc.com/ai/",
+    "remark": " "
+  },
+  {
+    "id": 132,
+    "type": "AI工具及网站",
+    "name": "Toolify",
+    "web": "https://www.toolify.ai/zh/",
+    "remark": " "
+  },
+  {
+    "id": 133,
+    "type": "AI工具及网站",
+    "name": "国内外AI导航",
+    "web": "https://www.amz123.com/ai",
+    "remark": " "
+  },
+  {
+    "id": 134,
+    "type": "AI工具及网站",
+    "name": "36krai",
+    "web": "https://36krai.com/",
+    "remark": " "
+  },
+  {
+    "id": 135,
+    "type": "AI工具及网站",
+    "name": "AI旋风",
+    "web": "https://www.ainav.cn/",
+    "remark": " "
+  },
+  {
+    "id": 136,
+    "type": "AI工具及网站",
+    "name": "tinywow",
+    "web": "https://tinywow.com/",
+    "remark": "文件处理"
+  },
+  {
+    "id": 137,
+    "type": "AI工具及网站",
+    "name": "extract.pics",
+    "web": "https://extract.pics/?utm_source=appinn.com",
+    "remark": "一键提取网站图片"
+  },
+  {
+    "id": 138,
+    "type": "AI工具及网站",
+    "name": "aconvert",
+    "web": "https://www.aconvert.com/",
+    "remark": "文件转换"
+  },
+  {
+    "id": 139,
+    "type": "AI工具及网站",
+    "name": "Kimi.ai",
+    "web": "https://kimi.moonshot.cn/",
+    "remark": " "
+  },
+  {
+    "id": 140,
+    "type": "AI工具及网站",
+    "name": "万知",
+    "web": "https://www.wanzhi.com/home",
+    "remark": "万知 I 问答、阅读、创作的一站式AI工作平台"
+  },
+  {
+    "id": 141,
+    "type": "AI工具及网站",
+    "name": "小浣熊",
+    "web": "https://raccoon.sensetime.com/login",
+    "remark": " "
+  },
+  {
+    "id": 142,
+    "type": "文件处理及常用办公工具",
+    "name": "格式转换",
+    "web": "https://www.bejson.com/",
+    "remark": " "
+  },
+  {
+    "id": 143,
+    "type": "文件处理及常用办公工具",
+    "name": "在线工具",
+    "web": "https://www.wetools.com/base64",
+    "remark": " "
+  },
+  {
+    "id": 144,
+    "type": "文件处理及常用办公工具",
+    "name": "正则表达式",
+    "web": "http://www.jsons.cn/reg/",
+    "remark": " "
+  },
+  {
+    "id": 145,
+    "type": "文件处理及常用办公工具",
+    "name": "迅捷画图",
+    "web": "https://www.liuchengtu.com/home/newfile",
+    "remark": "思维导图"
+  },
+  {
+    "id": 146,
+    "type": "文件处理及常用办公工具",
+    "name": "xmind官网",
+    "web": "https://xmind.cn/",
+    "remark": "思维导图软件"
+  },
+  {
+    "id": 147,
+    "type": "文件处理及常用办公工具",
+    "name": "excel转JSON",
+    "web": "https://www.lddgo.net/string/excel-to-json",
+    "remark": " "
+  },
+  {
+    "id": 148,
+    "type": "文件处理及常用办公工具",
+    "name": "PPT 超级市场",
+    "web": "https://www.pptsupermarket.com/",
+    "remark": "完全免费的 PPT 模板下载网站"
+  },
+  {
+    "id": 149,
+    "type": "文件处理及常用办公工具",
+    "name": "高质量ppt模板免费下载",
+    "web": "https://slidesgo.com/",
+    "remark": "很好用的ppt模板网站"
+  },
+  {
+    "id": 150,
+    "type": "文件处理及常用办公工具",
+    "name": "幕享",
+    "web": "https://letsview.cn/screen-mirroring",
+    "remark": "可用的无线投屏APP"
+  },
+  {
+    "id": 151,
+    "type": "文件处理及常用办公工具",
+    "name": "花火 Hanabi",
+    "web": "https://hanabi.data-viz.cn/index?lang=zh-CN",
+    "remark": "动态图表制作网站"
+  },
+  {
+    "id": 152,
+    "type": "文件处理及常用办公工具",
+    "name": "100font",
+    "web": "https://www.100font.com/",
+    "remark": "收集整理免费商用字体的实用网站"
+  },
+  {
+    "id": 153,
+    "type": "文件处理及常用办公工具",
+    "name": "蜜蜂在线视频编辑",
+    "web": "https://beecut.cn/online-video-editor",
+    "remark": " "
+  },
+  {
+    "id": 154,
+    "type": "文件处理及常用办公工具",
+    "name": "XODO",
+    "web": "https://xodo.com/",
+    "remark": " PDF 在线阅读、编辑、多人协作工具"
+  },
+  {
+    "id": 155,
+    "type": "文件处理及常用办公工具",
+    "name": "镝数图表-零代码在线动态图表工具",
+    "web": "https://www.dycharts.com",
+    "remark": "只需要粘贴数据就可以自动生成好看的动态图表"
+  },
+  {
+    "id": 156,
+    "type": "文件处理及常用办公工具",
+    "name": "自动抠图",
+    "web": "https://gaoding.com/koutu",
+    "remark": "高效的在线一键抠图网站，只要将人或物的图片上传到网站，就可以扣除背景了"
+  },
+  {
+    "id": 157,
+    "type": "文件处理及常用办公工具",
+    "name": "见外工作台",
+    "web": "https://jianwai.youdao.com",
+    "remark": "网易出品，各种实用功能每天开发免费2小时，视频、图片、文档、音频，都可以在这翻译、视频上字幕"
+  },
+  {
+    "id": 158,
+    "type": "文件处理及常用办公工具",
+    "name": "图片放大清晰度",
+    "web": "https://bigjpg.com",
+    "remark": "网站利用深度卷积神经网络技术，将图片中的噪点和锯齿部分进行补充，以实现图片的无损放大操作"
+  },
+  {
+    "id": 159,
+    "type": "文件处理及常用办公工具",
+    "name": "老照片上色",
+    "web": "https://colourise.sg",
+    "remark": "通过AI算法帮黑白照片上色"
+  },
+  {
+    "id": 160,
+    "type": "文件处理及常用办公工具",
+    "name": "5118一键智能改写",
+    "web": "https://wyc.5118.com/?t=zhihu2",
+    "remark": "深入了解用户需求。文本扩写、智能改写和素材搜索等可以帮助我们提高文案创作质量"
+  },
+  {
+    "id": 161,
+    "type": "文件处理及常用办公工具",
+    "name": "秀展网",
+    "web": "https://www.xiuzhan365.com",
+    "remark": "在线制作MG动画的平台工具"
+  },
+  {
+    "id": 162,
+    "type": "文件处理及常用办公工具",
+    "name": "一键抠图",
+    "web": "https://www.yijiankoutu.com/",
+    "remark": "在线抠图网站"
+  },
+  {
+    "id": 163,
+    "type": "英语学习网站",
+    "name": "TED",
+    "web": "https://www.ted.com/",
+    "remark": "英语学习网站"
+  },
+  {
+    "id": 164,
+    "type": "英语学习网站",
+    "name": "在线英语听力室",
+    "web": "https://www.yywz123.com/web/42640.html",
+    "remark": " "
+  },
+  {
+    "id": 165,
+    "type": "英语学习网站",
+    "name": "麻省理工开放课件",
+    "web": "https://ocw.mit.edu/index.html",
+    "remark": " "
+  },
+  {
+    "id": 166,
+    "type": "英语学习网站",
+    "name": "DeepL",
+    "web": "https://www.deepl.com/zh/translator",
+    "remark": "新颖好用的翻译神器"
+  },
+  {
+    "id": 167,
+    "type": "英语学习网站",
+    "name": "ELLLO",
+    "web": "https://www.elllo.org/",
+    "remark": "在线英语听力实验室，有来自世界各地说英语的人的听力素材"
+  },
+  {
+    "id": 168,
+    "type": "影视资源",
+    "name": "影猫网",
+    "web": "https://www.yingmao.com/",
+    "remark": " "
+  },
+  {
+    "id": 169,
+    "type": "影视资源",
+    "name": "茶杯狐",
+    "web": "http://www.eyswkj.com/",
+    "remark": " "
+  },
+  {
+    "id": 170,
+    "type": "影视资源",
+    "name": "中国纪录片网",
+    "web": "http://www.docuchina.cn/",
+    "remark": " "
+  },
+  {
+    "id": 171,
+    "type": "影视资源",
+    "name": "中国科普博览",
+    "web": "https://www.kepu.net.cn/",
+    "remark": " "
+  },
+  {
+    "id": 172,
+    "type": "影视资源",
+    "name": "免费无版权视频下载",
+    "web": "https://lifeofvids.com/all/#/",
+    "remark": "免费无版权视频素材下载"
+  },
+  {
+    "id": 173,
+    "type": "影视资源",
+    "name": "Hotbox-下载视频",
+    "web": "https://www.hotbox.fun/",
+    "remark": "强大的网页视频下载网站，能够单独的解析出视频文件以及音频文件，并且每个音视频还提供了多种下载格式"
+  },
+  {
+    "id": 174,
+    "type": "书籍资源",
+    "name": "无名图片",
+    "web": "https://www.book345.com/",
+    "remark": " "
+  },
+  {
+    "id": 175,
+    "type": "书籍资源",
+    "name": "计算机书籍控",
+    "web": "http://bestcbooks.com/",
+    "remark": "许多优秀的计算机书籍下载"
+  },
+  {
+    "id": 176,
+    "type": "书籍资源",
+    "name": "图书馆创世纪",
+    "web": "http://gen.lib.rus.ec/"
+  },
+  {
+    "id": 177,
+    "type": "书籍资源",
+    "name": "高教书苑",
+    "web": "https://ebook.hep.com.cn/index.html#/index",
+    "remark": "专门为大学生提供电子版教材书籍的网站"
+  },
+  {
+    "id": 178,
+    "type": "书籍资源",
+    "name": "科学文库",
+    "web": "https://book.sciencereading.cn/shop/main/Login/shopFrame.do",
+    "remark": "一个完全免费下载电子书的网站"
+  },
+  {
+    "id": 179,
+    "type": "书籍资源",
+    "name": "Libgen",
+    "web": "https://libgen.ee/",
+    "remark": "号称全世界最大的图书馆网站"
+  },
+  {
+    "id": 180,
+    "type": "书籍资源",
+    "name": "小时百科",
+    "web": "https://wuli.wiki/index.html",
+    "remark": "专业且免费的数学和物理百科网站"
+  },
+  {
+    "id": 181,
+    "type": "书籍资源",
+    "name": "WOW! eBook",
+    "web": "https://www.wowebook.org/reinforcement-learning-algorithms-with-python",
+    "remark": "可以下载英文编程书的PDF版本"
+  },
+  {
+    "id": 182,
+    "type": "书籍资源",
+    "name": "摩鸠搜书",
+    "web": "https://www.jiumodiary.com/",
+    "remark": "格式多种多样的中文书"
+  },
+  {
+    "id": 183,
+    "type": "书籍资源",
+    "name": "图灵社区",
+    "web": "https://www.ituring.com.cn/book",
+    "remark": "一个专门提供计算机书籍的网站"
+  },
+  {
+    "id": 184,
+    "type": "书籍资源",
+    "name": "中国国家图书馆",
+    "web": "http://www.nlc.cn/",
+    "remark": "非常专业的学习教材搜索网站"
+  },
+  {
+    "id": 185,
+    "type": "书籍资源",
+    "name": "第一图书网",
+    "web": "http://www.tushu007.com/jiaocaijiaofu/daxuejiaocaijiaofu/",
+    "remark": "一个专门用来下载大学教材的书籍的网站"
+  },
+  {
+    "id": 186,
+    "type": "会计",
+    "name": "财务工具库",
+    "web": "https://tool.gaodun.com/index.html",
+    "remark": " "
+  },
+  {
+    "id": 187,
+    "type": "会计",
+    "name": "会计网",
+    "web": "https://www.kuaiji.com/",
+    "remark": " "
+  },
+  {
+    "id": 188,
+    "type": "会计",
+    "name": "全国会计资格评价网",
+    "web": "http://kzp.mof.gov.cn/",
+    "remark": " "
+  },
+  {
+    "id": 189,
+    "type": "会计",
+    "name": "中国注册会计师协会",
+    "web": "https://www.cicpa.org.cn/",
+    "remark": " "
+  },
+  {
+    "id": 190,
+    "type": "会计",
+    "name": "会计准则委员会",
+    "web": "https://www.casc.org.cn/",
+    "remark": " "
+  },
+  {
+    "id": 191,
+    "type": "会计",
+    "name": "国家统计局",
+    "web": "https://www.stats.gov.cn/",
+    "remark": " "
+  },
+  {
+    "id": 192,
+    "type": "会计",
+    "name": "国家税务总局",
+    "web": "https://www.chinatax.gov.cn/",
+    "remark": " "
+  },
+  {
+    "id": 193,
+    "type": "资讯",
+    "name": "医学微视",
+    "web": "https://www.mvyxws.com",
+    "remark": "囊括了我们普通人能接触到的所有疾病"
+  },
+  {
+    "id": 194,
+    "type": "资讯",
+    "name": "烽火研报",
+    "web": "https://www.fhyanbao.com/?invite_code=d6fXMr",
+    "remark": "一个实时全面的研究报告聚合搜索平台，覆盖宏观策略、行业分析、公司研究、财报、招股书、定制报告等内容"
+  },
+  {
+    "id": 195,
+    "type": "资讯",
+    "name": "大像素",
+    "web": "http://www.bigpixel.cn/index.html",
+    "remark": "记录了很多著名城市的超大分辨率像素的全景图"
+  },
+  {
+    "id": 196,
+    "type": "资讯",
+    "name": "全历史",
+    "web": "https://www.allhistory.com",
+    "remark": "呈现全世界文明的时间线，各个国家各个时代的重要事件、文物、画作、古籍"
+  },
+  {
+    "id": 197,
+    "type": "资讯",
+    "name": "今日热榜",
+    "web": "https://tophub.today",
+    "remark": "汇聚几乎所有主流平台的实时热榜，真正做到对热点信息一网打尽"
+  },
+  {
+    "id": 198,
+    "type": "资讯",
+    "name": "镝数聚-权威数据 海量聚合",
+    "web": "https://www.dydata.io/?hmsr=zh-hmj-Q2&hmpl=&hmcu=&hmkw=&hmci=",
+    "remark": "高效的数据检索平台，范围涵盖了市面上所有的细分行业"
+  },
+  {
+    "id": 199,
+    "type": "搜索引擎",
+    "name": "秘迹搜索",
+    "web": "https://mijisou.com",
+    "remark": "无敌好用的搜索引擎，界面简洁，没有广告，聚合了多个搜索引擎的结果"
+  },
+  {
+    "id": 200,
+    "type": "搜索引擎",
+    "name": "超能搜",
+    "web": "chaonengsou.com/",
+    "remark": "超强大的资源搜索网站"
+  },
+  {
+    "id": 201,
+    "type": "搜索引擎",
+    "name": "必应",
+    "web": "https://cn.bing.com/",
+    "remark": "程序员搜索引擎"
+  },
+  {
+    "id": 202,
+    "type": "有用工具站",
+    "name": "临时邮箱",
+    "web": "http://24mail.chacuo.net",
+    "remark": "临时邮箱网站，无需注册，可任意设置邮箱名，随时更换邮箱"
+  },
+  {
+    "id": 203,
+    "type": "有用工具站",
+    "name": "临时接收手机验证码",
+    "web": "https://jiemahao.com",
+    "remark": "网站提供手机号，选择任一号码注册即可在这个网站看到验证码"
+  },
+  {
+    "id": 204,
+    "type": "有用工具站",
+    "name": "免费病毒检测",
+    "web": "https://www.virustotal.com/gui/",
+    "remark": "免费病毒检测工具"
+  },
+  {
+    "id": 205,
+    "type": "有用工具站",
+    "name": "提升专注背景音",
+    "web": "https://www.rainymood.com",
+    "remark": "帮助你提升专注，放松心情的网站"
+  },
+  {
+    "id": 206,
+    "type": "有用工具站",
+    "name": "wormhole-文件传输",
+    "web": "https://wormhole.app/",
+    "remark": "强大的文件传输网站，能够免费传输10GB以内的文件"
+  },
+  {
+    "id": 207,
+    "type": "好玩",
+    "name": "童年游戏",
+    "web": "https://www.yikm.net",
+    "remark": "很多童年游戏"
+  }
+]

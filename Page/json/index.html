@@ -2,14 +2,14 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Candy-JSON处理工具</title>
     <!-- 引入外部资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/lint/lint.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/lint/lint.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
@@ -20,19 +20,13 @@
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xml-js@1.6.11/dist/xml-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <!-- JSON修复库 -->
     <script src="https://cdn.jsdelivr.net/npm/jsonrepair@3.7.0/dist/jsonrepair.min.js"></script>
-    <!-- JSON差异对比库 -->
-    <script src="https://cdn.jsdelivr.net/npm/deep-object-diff@1.1.9/dist/deep-object-diff.min.js"></script>
-    <!-- JSONPath库 -->
-    <script src="https://cdn.jsdelivr.net/npm/jsonpath-plus@7.2.0/dist/index-browser.min.js"></script>
-    <!-- 图表库 -->
+    <script src="https://cdn.jsdelivr.net/npm/jsondiffpatch@0.4.1/dist/jsondiffpatch.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-    <!-- 树形图可视化 -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
-    <!-- 加密库 -->
     <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
-
+    
     <!-- 配置Tailwind -->
     <script>
         tailwind.config = {
@@ -60,57 +54,43 @@
             }
         }
     </script>
-
+    
     <style type="text/tailwindcss">
         @layer utilities {
             .content-auto {
                 content-visibility: auto;
             }
-
             .editor-height {
                 height: calc(100vh - 240px);
             }
-
             @screen md {
                 .editor-height {
                     height: calc(100vh - 200px);
                 }
             }
-
             .transition-all-300 {
                 transition: all 300ms ease-in-out;
             }
-
             .error-line {
                 background-color: rgba(239, 68, 68, 0.1) !important;
             }
-
             .added-line {
                 background-color: rgba(16, 185, 129, 0.1) !important;
             }
-
             .modified-line {
                 background-color: rgba(245, 158, 11, 0.1) !important;
             }
-
             .removed-line {
                 background-color: rgba(239, 68, 68, 0.1) !important;
             }
-
-            .cm-s-dracula .cm-lint-error {
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='5' fill='%23EF4444'/%3E%3Cpath fill='white' d='M6 3v4l3 2v-6z'/%3E%3C/svg%3E");
-            }
-
             .tree-node circle {
                 fill: #999;
                 stroke: #fff;
                 stroke-width: 1.5px;
             }
-
             .tree-node text {
                 font: 10px sans-serif;
             }
-
             .tree-link {
                 fill: none;
                 stroke: #ccc;
@@ -128,17 +108,14 @@
                     <i class="fa fa-code text-primary text-3xl mr-3"></i>
                     <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">JSON工具包</h1>
                 </div>
-
-                <!-- 功能标签页 -->
+                
+                <!-- 功能标签页 - 已移除查询筛选 -->
                 <div class="flex flex-wrap gap-1 justify-center">
                     <button class="tab-btn active px-4 py-2 rounded-lg transition-all-300" data-tab="editor">
                         <i class="fa fa-edit mr-1"></i>编辑器
                     </button>
                     <button class="tab-btn px-4 py-2 rounded-lg transition-all-300" data-tab="diff">
                         <i class="fa fa-exchange mr-1"></i>差异对比
-                    </button>
-                    <button class="tab-btn px-4 py-2 rounded-lg transition-all-300" data-tab="query">
-                        <i class="fa fa-search mr-1"></i>查询筛选
                     </button>
                     <button class="tab-btn px-4 py-2 rounded-lg transition-all-300" data-tab="analysis">
                         <i class="fa fa-bar-chart mr-1"></i>结构分析
@@ -202,10 +179,17 @@
                 <button id="export-btn" class="flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow transition-all-300">
                     <i class="fa fa-download mr-2"></i>导出
                 </button>
-                <label for="import-file" class="flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow transition-all-300 cursor-pointer">
-                    <i class="fa fa-upload mr-2"></i>导入文件
-                    <input id="import-file" type="file" accept=".json,.xml,.yaml,.yml,.csv" class="hidden">
-                </label>
+                <div class="relative group">
+                    <label for="import-file" class="flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow transition-all-300 cursor-pointer">
+                        <i class="fa fa-upload mr-2"></i>导入文件
+                        <input id="import-file" type="file" accept=".json,.xml,.yaml,.yml,.csv,.xlsx,.xls" class="hidden" />
+                    </label>
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all-300">
+                        <span class="block px-4 py-2 text-xs text-gray-500">支持格式:</span>
+                        <span class="block px-4 py-1 text-xs">JSON, XML, YAML</span>
+                        <span class="block px-4 py-1 text-xs">CSV, Excel (XLSX, XLS)</span>
+                    </div>
+                </div>
             </div>
 
             <!-- 编辑器区域 -->
@@ -215,6 +199,7 @@
                     <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                         <h2 class="font-semibold text-lg flex items-center">
                             <i class="fa fa-pencil-square-o text-primary mr-2"></i>输入
+                            <span class="ml-2 text-sm text-gray-500">(示例: 简单用户信息)</span>
                         </h2>
                         <div class="flex items-center text-sm">
                             <span id="input-status" class="hidden items-center"></span>
@@ -248,7 +233,8 @@
                 <div class="flex flex-col md:flex-row gap-4">
                     <div class="flex-1">
                         <label class="text-gray-700 font-medium block mb-2">忽略字段 (用逗号分隔)</label>
-                        <input type="text" id="ignore-fields" placeholder="例如: timestamp,version,id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                        <input type="text" id="ignore-fields" placeholder="例如: timestamp,version,id" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" />
                     </div>
                     <div class="flex items-end">
                         <button id="compare-btn" class="flex items-center px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg shadow transition-all-300">
@@ -264,6 +250,7 @@
                     <div class="p-4 border-b border-gray-100 bg-gray-50">
                         <h2 class="font-semibold text-lg flex items-center">
                             <i class="fa fa-code text-primary mr-2"></i>原始JSON
+                            <span class="ml-2 text-sm text-gray-500">(示例: V1版本数据)</span>
                         </h2>
                     </div>
                     <div class="p-4 flex-1 flex flex-col">
@@ -271,7 +258,7 @@
                         <div class="mt-3">
                             <label for="import-left-file" class="flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm shadow transition-all-300 cursor-pointer">
                                 <i class="fa fa-file-text-o mr-1"></i>导入文件
-                                <input id="import-left-file" type="file" accept=".json" class="hidden">
+                                <input id="import-left-file" type="file" accept=".json,.xml,.yaml,.yml,.csv,.xlsx,.xls" class="hidden" />
                             </label>
                         </div>
                     </div>
@@ -282,6 +269,7 @@
                     <div class="p-4 border-b border-gray-100 bg-gray-50">
                         <h2 class="font-semibold text-lg flex items-center">
                             <i class="fa fa-code-fork text-primary mr-2"></i>目标JSON
+                            <span class="ml-2 text-sm text-gray-500">(示例: V2版本数据)</span>
                         </h2>
                     </div>
                     <div class="p-4 flex-1 flex flex-col">
@@ -289,7 +277,7 @@
                         <div class="mt-3">
                             <label for="import-right-file" class="flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm shadow transition-all-300 cursor-pointer">
                                 <i class="fa fa-file-text-o mr-1"></i>导入文件
-                                <input id="import-right-file" type="file" accept=".json" class="hidden">
+                                <input id="import-right-file" type="file" accept=".json,.xml,.yaml,.yml,.csv,.xlsx,.xls" class="hidden" />
                             </label>
                         </div>
                     </div>
@@ -328,100 +316,20 @@
             </div>
         </div>
 
-        <!-- 查询筛选标签页 -->
-        <div class="tab-content hidden" id="query-tab">
-            <div class="mb-6 bg-white p-4 rounded-xl shadow-sm">
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="flex-1">
-                        <label class="text-gray-700 font-medium block mb-2">JSONPath 查询</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="jsonpath-query" placeholder="例如: $.store.book[*].author" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
-                            <button id="run-query-btn" class="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg shadow transition-all-300">
-                                <i class="fa fa-play mr-1"></i>执行
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 保存的查询条件 -->
-                <div class="mt-4">
-                    <label class="text-gray-700 font-medium block mb-2">保存的查询</label>
-                    <div class="flex flex-wrap gap-2" id="saved-queries">
-                        <button class="saved-query-btn px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition-all-300" data-query="$.store.book[*].author">
-                            书籍作者
-                        </button>
-                        <button class="saved-query-btn px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition-all-300" data-query="$..price">
-                            所有价格
-                        </button>
-                        <button class="saved-query-btn px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition-all-300" data-query="$..book[?(@.price<10)]">
-                            低价书籍
-                        </button>
-                        <div class="flex gap-1 ml-auto">
-                            <input type="text" id="save-query-name" placeholder="查询名称" class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary w-32">
-                            <button id="save-query-btn" class="px-3 py-1 bg-secondary hover:bg-secondary/90 text-white rounded-lg text-sm transition-all-300">
-                                <i class="fa fa-save mr-1"></i>保存
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- JSON输入区 -->
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
-                    <div class="p-4 border-b border-gray-100 bg-gray-50">
-                        <h2 class="font-semibold text-lg flex items-center">
-                            <i class="fa fa-code text-primary mr-2"></i>JSON数据
-                        </h2>
-                    </div>
-                    <div class="p-4 flex-1 flex flex-col">
-                        <textarea id="query-input-editor" class="flex-1 w-full font-mono text-sm"></textarea>
-                        <div class="mt-3">
-                            <label for="import-query-file" class="flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm shadow transition-all-300 cursor-pointer">
-                                <i class="fa fa-file-text-o mr-1"></i>导入JSON文件
-                                <input id="import-query-file" type="file" accept=".json" class="hidden">
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 查询结果 -->
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
-                    <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                        <h2 class="font-semibold text-lg flex items-center">
-                            <i class="fa fa-search text-secondary mr-2"></i>查询结果
-                        </h2>
-                        <div class="text-sm text-gray-500">
-                            <span id="query-result-count">0 条结果</span>
-                        </div>
-                    </div>
-                    <div class="p-4 flex-1 flex flex-col">
-                        <textarea id="query-result-editor" class="flex-1 w-full font-mono text-sm"></textarea>
-                        <div class="mt-3 flex gap-2">
-                            <button id="copy-query-btn" class="flex-1 items-center justify-center px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm shadow transition-all-300">
-                                <i class="fa fa-copy mr-1"></i>复制结果
-                            </button>
-                            <button id="export-query-btn" class="flex-1 items-center justify-center px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm shadow transition-all-300">
-                                <i class="fa fa-download mr-1"></i>导出结果
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- 结构分析标签页 -->
         <div class="tab-content hidden" id="analysis-tab">
             <div class="mb-6 bg-white p-4 rounded-xl shadow-sm">
                 <div class="flex flex-col md:flex-row items-center gap-4">
                     <div class="flex-1">
-                        <label class="text-gray-700 font-medium block mb-2">JSON数据</label>
+                        <label class="text-gray-700 font-medium block mb-2">JSON数据
+                            <span class="ml-2 text-sm text-gray-500">(示例: 商品信息结构)</span>
+                        </label>
                         <textarea id="analysis-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary font-mono text-sm h-32"></textarea>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="import-analysis-file" class="flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow transition-all-300 cursor-pointer">
-                            <i class="fa fa-upload mr-2"></i>导入JSON文件
-                            <input id="import-analysis-file" type="file" accept=".json" class="hidden">
+                            <i class="fa fa-upload mr-2"></i>导入文件
+                            <input id="import-analysis-file" type="file" accept=".json,.xml,.yaml,.yml,.csv,.xlsx,.xls" class="hidden" />
                         </label>
                         <button id="analyze-btn" class="flex items-center px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg shadow transition-all-300">
                             <i class="fa fa-bar-chart mr-2"></i>分析结构
@@ -513,12 +421,14 @@
             <div class="mb-6 bg-white p-4 rounded-xl shadow-sm">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="md:col-span-2">
-                        <label class="text-gray-700 font-medium block mb-2">JSON结构模板</label>
+                        <label class="text-gray-700 font-medium block mb-2">JSON结构模板
+                            <span class="ml-2 text-sm text-gray-500">(示例: 用户信息模板)</span>
+                        </label>
                         <textarea id="generator-template" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary font-mono text-sm h-40"></textarea>
                         <div class="mt-3">
                             <label for="import-template-file" class="flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm shadow transition-all-300 cursor-pointer">
                                 <i class="fa fa-file-text-o mr-1"></i>导入结构模板
-                                <input id="import-template-file" type="file" accept=".json" class="hidden">
+                                <input id="import-template-file" type="file" accept=".json" class="hidden" />
                             </label>
                         </div>
                     </div>
@@ -527,26 +437,32 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">生成数量</label>
-                                <input type="number" id="generate-count" value="5" min="1" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                <input type="number" id="generate-count" value="5" min="1" max="100" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" />
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">嵌套深度限制</label>
-                                <input type="number" id="nesting-depth" value="5" min="1" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                <input type="number" id="nesting-depth" value="5" min="1" max="10" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" />
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">字符串长度范围</label>
                                 <div class="flex gap-2">
-                                    <input type="number" id="str-min-length" value="3" min="1" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                    <input type="number" id="str-min-length" value="3" min="1" 
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" />
                                     <span class="flex items-center">至</span>
-                                    <input type="number" id="str-max-length" value="20" min="1" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                    <input type="number" id="str-max-length" value="20" min="1" 
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" />
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">数字范围</label>
                                 <div class="flex gap-2">
-                                    <input type="number" id="num-min" value="0" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                    <input type="number" id="num-min" value="0" 
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" />
                                     <span class="flex items-center">至</span>
-                                    <input type="number" id="num-max" value="1000" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                    <input type="number" id="num-max" value="1000" 
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" />
                                 </div>
                             </div>
                             <button id="generate-btn" class="w-full flex items-center justify-center px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg shadow transition-all-300">
@@ -583,18 +499,20 @@
             <div class="mb-6 bg-white p-4 rounded-xl shadow-sm">
                 <div class="flex flex-col md:flex-row gap-6">
                     <div class="flex-1">
-                        <label class="text-gray-700 font-medium block mb-2">输入内容</label>
+                        <label class="text-gray-700 font-medium block mb-2">输入内容
+                            <span class="ml-2 text-sm text-gray-500">(示例: 简单JSON数据)</span>
+                        </label>
                         <textarea id="security-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary font-mono text-sm h-40"></textarea>
                         <div class="mt-3">
                             <label for="import-security-file" class="flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm shadow transition-all-300 cursor-pointer">
                                 <i class="fa fa-file-text-o mr-1"></i>导入文件
-                                <input id="import-security-file" type="file" class="hidden">
+                                <input id="import-security-file" type="file" class="hidden" />
                             </label>
                         </div>
                     </div>
                     <div class="flex-1">
                         <label class="text-gray-700 font-medium block mb-2">处理结果</label>
-                        <textarea id="security-output" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary font-mono text-sm h-40" readonly></textarea>
+                        <textarea id="security-output" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary font-mono text-sm h-40" readonly=""></textarea>
                         <div class="mt-3 flex gap-2">
                             <button id="copy-security-btn" class="flex-1 items-center justify-center px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm shadow transition-all-300">
                                 <i class="fa fa-copy mr-1"></i>复制结果
@@ -635,7 +553,8 @@
                     <div class="p-4">
                         <div class="mb-3">
                             <label class="block text-sm text-gray-600 mb-1">加密密钥</label>
-                            <input type="password" id="crypto-key" placeholder="输入加密/解密密钥" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                            <input type="password" id="crypto-key" placeholder="输入加密/解密密钥" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary" />
                         </div>
                         <div class="flex flex-wrap gap-3">
                             <button id="encrypt-btn" class="flex items-center px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg shadow transition-all-300">
@@ -661,12 +580,14 @@
             <div class="mb-6 bg-white p-4 rounded-xl shadow-sm">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div>
-                        <label class="text-gray-700 font-medium block mb-2">源JSON</label>
+                        <label class="text-gray-700 font-medium block mb-2">源JSON
+                            <span class="ml-2 text-sm text-gray-500">(示例: 原始用户数据)</span>
+                        </label>
                         <textarea id="transform-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary font-mono text-sm h-60"></textarea>
                         <div class="mt-3">
                             <label for="import-transform-file" class="flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm shadow transition-all-300 cursor-pointer">
                                 <i class="fa fa-file-text-o mr-1"></i>导入源文件
-                                <input id="import-transform-file" type="file" accept=".json" class="hidden">
+                                <input id="import-transform-file" type="file" accept=".json,.xml,.yaml,.yml,.csv,.xlsx,.xls" class="hidden" />
                             </label>
                         </div>
                     </div>
@@ -675,8 +596,10 @@
                         <div class="space-y-3">
                             <div id="transform-rules">
                                 <div class="transform-rule flex gap-2 items-center p-2 border border-gray-200 rounded-lg">
-                                    <input type="text" placeholder="源字段路径" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm">
-                                    <input type="text" placeholder="目标字段名" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm">
+                                    <input type="text" placeholder="源字段路径" 
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm" />
+                                    <input type="text" placeholder="目标字段名" 
+                                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm" />
                                     <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm">
                                         <option value="copy">复制</option>
                                         <option value="uppercase">转大写</option>
@@ -711,8 +634,9 @@
                                 <i class="fa fa-copy mr-1"></i>复制结果
                             </button>
                             <button id="export-transform-btn" class="flex-1 items-center justify-center px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm shadow transition-all-300">
-                                <i class="fa fa-download mr-1"></i>导出结果
-                            </button>
+                                    <i class="fa fa-download mr-1"></i>导出结果
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -728,12 +652,12 @@
                     </button>
                 </div>
                 <div class="p-4">
-                    <label class="block text-gray-700 font-medium mb-2">选择多个JSON文件</label>
+                    <label class="block text-gray-700 font-medium mb-2">选择多个文件 (支持Excel, XML, CSV等)</label>
                     <label class="flex items-center justify-center px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg shadow-sm hover:border-primary transition-all-300 cursor-pointer bg-gray-50">
                         <div class="text-center">
                             <i class="fa fa-upload text-3xl text-gray-400 mb-2"></i>
                             <p class="text-sm text-gray-600">拖拽文件到此处或点击选择文件</p>
-                            <input id="batch-files" type="file" accept=".json" multiple class="hidden">
+                            <input id="batch-files" type="file" accept=".json,.xml,.yaml,.yml,.csv,.xlsx,.xls" multiple="" class="hidden" />
                         </div>
                     </label>
                     <div id="batch-files-list" class="mt-4 text-sm text-gray-600">
@@ -747,7 +671,6 @@
         <div id="status-message" class="mt-6 p-4 rounded-lg hidden transition-all-300 transform translate-y-2 opacity-0"></div>
     </main>
 
-    <!-- 页脚 -->
     <footer class="bg-dark text-white mt-8 py-6">
         <div class="container mx-auto px-4 text-center">
             <p class="mb-2">JSON工具包 - 强大的JSON处理工具</p>
@@ -759,7 +682,6 @@
         // 全局变量
         let typeChart = null;
         let treeSimulation = null;
-        let savedQueries = JSON.parse(localStorage.getItem('jsonToolkitSavedQueries')) || [];
 
         // 初始化所有编辑器
         const editors = {
@@ -803,25 +725,6 @@
                 lint: true
             }),
             diffResult: CodeMirror.fromTextArea(document.getElementById('diff-result-editor'), {
-                lineNumbers: true,
-                mode: 'application/json',
-                theme: 'dracula',
-                indentUnit: 2,
-                smartIndent: true,
-                lineWrapping: true,
-                readOnly: true
-            }),
-            queryInput: CodeMirror.fromTextArea(document.getElementById('query-input-editor'), {
-                lineNumbers: true,
-                mode: 'application/json',
-                theme: 'dracula',
-                indentUnit: 2,
-                smartIndent: true,
-                lineWrapping: true,
-                gutters: ["CodeMirror-lint-markers"],
-                lint: true
-            }),
-            queryResult: CodeMirror.fromTextArea(document.getElementById('query-result-editor'), {
                 lineNumbers: true,
                 mode: 'application/json',
                 theme: 'dracula',
@@ -1118,14 +1021,10 @@
                 const filteredLeft = filterObject(leftObj, ignoreFields);
                 const filteredRight = filterObject(rightObj, ignoreFields);
 
-                // 计算差异
-                const diff = {
-                    added: deepObjectDiff.getAdded(filteredLeft, filteredRight),
-                    removed: deepObjectDiff.getRemoved(filteredLeft, filteredRight),
-                    modified: deepObjectDiff.getModified(filteredLeft, filteredRight)
-                };
+                // 使用jsondiffpatch计算差异
+                const diff = jsondiffpatch.diff(filteredLeft, filteredRight);
 
-                // 生成带颜色标记的差异结果
+                // 生成差异结果
                 const diffResult = JSON.stringify(diff, null, 2);
                 editors.diffResult.setValue(diffResult);
 
@@ -1144,123 +1043,6 @@
         document.getElementById('export-diff-btn').addEventListener('click', () => {
             const content = editors.diffResult.getValue();
             exportToFile(content, 'json', 'diff-report');
-        });
-
-        // JSON查询功能
-        document.getElementById('run-query-btn').addEventListener('click', () => {
-            try {
-                const jsonInput = editors.queryInput.getValue();
-                const query = document.getElementById('jsonpath-query').value;
-
-                if (!jsonInput.trim()) {
-                    showMessage('请输入JSON数据', 'error');
-                    return;
-                }
-
-                if (!query.trim()) {
-                    showMessage('请输入查询表达式', 'error');
-                    return;
-                }
-
-                // 解析JSON
-                let jsonObj;
-                try {
-                    jsonObj = JSON.parse(jsonInput);
-                } catch (e) {
-                    showMessage(`JSON解析错误: ${e.message}`, 'error');
-                    return;
-                }
-
-                // 执行JSONPath查询
-                const result = JSONPath({
-                    path: query,
-                    json: jsonObj,
-                    wrap: false
-                });
-
-                // 显示结果
-                editors.queryResult.setValue(JSON.stringify(result, null, 2));
-                document.getElementById('query-result-count').textContent = Array.isArray(result) ? `${result.length} 条结果` : '1 条结果';
-
-                showMessage('查询执行成功', 'success');
-            } catch (error) {
-                showMessage(`查询失败: ${error.message}`, 'error');
-            }
-        });
-
-        // 保存查询条件
-        document.getElementById('save-query-btn').addEventListener('click', () => {
-            const query = document.getElementById('jsonpath-query').value;
-            const name = document.getElementById('save-query-name').value;
-
-            if (!query.trim()) {
-                showMessage('请输入查询表达式', 'error');
-                return;
-            }
-
-            if (!name.trim()) {
-                showMessage('请输入查询名称', 'error');
-                return;
-            }
-
-            // 保存查询
-            savedQueries.push({ name, query });
-            localStorage.setItem('jsonToolkitSavedQueries', JSON.stringify(savedQueries));
-
-            // 更新UI
-            renderSavedQueries();
-
-            showMessage(`查询"${name}"已保存`, 'success');
-            document.getElementById('save-query-name').value = '';
-        });
-
-        // 渲染保存的查询
-        function renderSavedQueries() {
-            const container = document.getElementById('saved-queries');
-            const saveControls = container.lastElementChild;
-
-            // 清除现有查询（保留保存控件）
-            while (container.children.length > 1) {
-                container.removeChild(container.firstElementChild);
-            }
-
-            // 添加保存的查询
-            savedQueries.forEach((item, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'saved-query-btn px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition-all-300';
-                btn.setAttribute('data-query', item.query);
-                btn.innerHTML = `${item.name} <span class="ml-1 text-gray-500">×</span>`;
-
-                // 点击查询按钮
-                btn.addEventListener('click', (e) => {
-                    if (e.target.tagName === 'SPAN') {
-                        // 删除查询
-                        savedQueries.splice(index, 1);
-                        localStorage.setItem('jsonToolkitSavedQueries', JSON.stringify(savedQueries));
-                        renderSavedQueries();
-                        showMessage(`查询"${item.name}"已删除`, 'info');
-                    } else {
-                        // 使用查询
-                        document.getElementById('jsonpath-query').value = item.query;
-                    }
-                });
-
-                container.insertBefore(btn, saveControls);
-            });
-        }
-
-        // 初始化保存的查询
-        renderSavedQueries();
-
-        // 复制查询结果
-        document.getElementById('copy-query-btn').addEventListener('click', () => {
-            copyToClipboard(editors.queryResult.getValue());
-        });
-
-        // 导出查询结果
-        document.getElementById('export-query-btn').addEventListener('click', () => {
-            const content = editors.queryResult.getValue();
-            exportToFile(content, 'json', 'query-result');
         });
 
         // 结构分析功能
@@ -1451,7 +1233,7 @@
                 document.getElementById('security-output').value = decrypted;
                 showMessage('AES解密成功', 'success');
             } catch (error) {
-                showMessage(`解密失败: 密钥可能不正确或内容已损坏`, 'error');
+                showMessage('解密失败: 密钥可能不正确或内容已损坏', 'error');
             }
         });
 
@@ -1489,7 +1271,7 @@
                 document.getElementById('security-output').value = decoded;
                 showMessage('Base64解码成功', 'success');
             } catch (error) {
-                showMessage(`解码失败: 输入不是有效的Base64编码`, 'error');
+                showMessage('解码失败: 输入不是有效的Base64编码', 'error');
             }
         });
 
@@ -1510,7 +1292,7 @@
             const rulesContainer = document.getElementById('transform-rules');
             const newRule = document.createElement('div');
             newRule.className = 'transform-rule flex gap-2 items-center p-2 border border-gray-200 rounded-lg';
-            newRule.innerHTML = `
+                            newRule.innerHTML = `
                     <input type="text" placeholder="源字段路径" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm">
                     <input type="text" placeholder="目标字段名" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm">
                     <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm">
@@ -1518,7 +1300,6 @@
                         <option value="uppercase">转大写</option>
                         <option value="lowercase">转小写</option>
                         <option value="number">转数字</option>
-
                         <option value="boolean">转布尔</option>
                         <option value="date">格式化日期</option>
                     </select>
@@ -1527,832 +1308,952 @@
                     </button>
                 `;
 
-            // 添加删除规则事件
-            newRule.querySelector('.remove-rule').addEventListener('click', () => {
-                rulesContainer.removeChild(newRule);
-            });
-
-            rulesContainer.appendChild(newRule);
-        });
-
-        // 初始化删除规则事件
-        document.querySelectorAll('.remove-rule').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.closest('.transform-rule').remove();
-            });
-        });
-
-        // 执行转换
-        document.getElementById('batch-transform-btn').addEventListener('click', () => {
-            const fileCount = document.getElementById('batch-files').files.length;
-            if (fileCount === 0) {
-                showMessage('请选择要转换的文件', 'error');
-                return;
-            }
-
-            showMessage(`开始批量转换 ${fileCount} 个文件...`, 'info');
-
-            // 这里只是模拟批量转换
-            setTimeout(() => {
-                showMessage(`批量转换完成，成功转换 ${fileCount} 个文件`, 'success');
-            }, 1500);
-        });
-
-        // 复制转换结果
-        document.getElementById('copy-transform-btn').addEventListener('click', () => {
-            copyToClipboard(document.getElementById('transform-output').value);
-        });
-
-        // 导出转换结果
-        document.getElementById('export-transform-btn').addEventListener('click', () => {
-            const content = document.getElementById('transform-output').value;
-            exportToFile(content, 'json', 'transformed-data');
-        });
-
-        // 文件导入功能
-        // 编辑器导入
-        document.getElementById('import-file').addEventListener('change', (e) => {
-            importFile(e.target.files[0], (content) => {
-                editors.input.setValue(content);
-                try {
-                    // 尝试解析为JSON并格式化
-                    const json = JSON.parse(content);
-                    editors.input.setValue(JSON.stringify(json, null, 2));
-                } catch (e) {
-                    // 不是JSON，直接显示
-                }
-                showMessage('文件导入成功', 'success');
-            });
-        });
-
-        // 差异对比左侧导入
-        document.getElementById('import-left-file').addEventListener('change', (e) => {
-            importFile(e.target.files[0], (content) => {
-                editors.leftDiff.setValue(content);
-                showMessage('左侧文件导入成功', 'success');
-            });
-        });
-
-        // 差异对比右侧导入
-        document.getElementById('import-right-file').addEventListener('change', (e) => {
-            importFile(e.target.files[0], (content) => {
-                editors.rightDiff.setValue(content);
-                showMessage('右侧文件导入成功', 'success');
-            });
-        });
-
-        // 查询筛选导入
-        document.getElementById('import-query-file').addEventListener('change', (e) => {
-            importFile(e.target.files[0], (content) => {
-                editors.queryInput.setValue(content);
-                showMessage('查询文件导入成功', 'success');
-            });
-        });
-
-        // 结构分析导入
-        document.getElementById('import-analysis-file').addEventListener('change', (e) => {
-            importFile(e.target.files[0], (content) => {
-                document.getElementById('analysis-input').value = content;
-                showMessage('分析文件导入成功', 'success');
-            });
-        });
-
-        // 数据生成模板导入
-        document.getElementById('import-template-file').addEventListener('change', (e) => {
-            importFile(e.target.files[0], (content) => {
-                document.getElementById('generator-template').value = content;
-                showMessage('模板文件导入成功', 'success');
-            });
-        });
-
-        // 加密压缩导入
-        document.getElementById('import-security-file').addEventListener('change', (e) => {
-            importFile(e.target.files[0], (content) => {
-                document.getElementById('security-input').value = content;
-                showMessage('文件导入成功', 'success');
-            });
-        });
-
-        // 高级转换导入
-        document.getElementById('import-transform-file').addEventListener('change', (e) => {
-            importFile(e.target.files[0], (content) => {
-                document.getElementById('transform-input').value = content;
-                showMessage('源文件导入成功', 'success');
-            });
-        });
-
-        // 批量转换文件选择
-        document.getElementById('batch-files').addEventListener('change', (e) => {
-            const filesList = document.getElementById('batch-files-list');
-            if (e.target.files.length === 0) {
-                filesList.textContent = '未选择任何文件';
-                return;
-            }
-
-            // 显示选择的文件名
-            let html = '<ul class="list-disc list-inside">';
-            for (let i = 0; i < e.target.files.length; i++) {
-                html += `<li>${e.target.files[i].name}</li>`;
-            }
-            html += '</ul>';
-            filesList.innerHTML = html;
-        });
-
-        // 拖放功能
-        const dropArea = document.querySelector('#batch-transform-tab label[for="batch-files"]');
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight() {
-            dropArea.classList.add('border-primary', 'bg-blue-50');
-        }
-
-        function unhighlight() {
-            dropArea.classList.remove('border-primary', 'bg-blue-50');
-        }
-
-        dropArea.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-
-            if (files.length > 0) {
-                document.getElementById('batch-files').files = files;
-                // 触发change事件以更新UI
-                const event = new Event('change');
-                document.getElementById('batch-files').dispatchEvent(event);
-            }
-        }
-
-        // 工具函数
-        // 复制到剪贴板
-        function copyToClipboard(text) {
-            if (text) {
-                navigator.clipboard.writeText(text).then(() => {
-                    showMessage('内容已复制到剪贴板', 'success');
-                }).catch(err => {
-                    // 降级处理：创建临时textarea复制
-                    const textarea = document.createElement('textarea');
-                    textarea.value = text;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-                    showMessage('内容已复制到剪贴板', 'success');
+                // 添加删除规则事件
+                newRule.querySelector('.remove-rule').addEventListener('click', () => {
+                    rulesContainer.removeChild(newRule);
                 });
-            } else {
-                showMessage('没有内容可复制', 'error');
-            }
-        }
 
-        // 导出为文件
-        function exportToFile(content, format, prefix = 'data') {
-            if (!content) {
-                showMessage('没有内容可导出', 'error');
-                return;
-            }
+                rulesContainer.appendChild(newRule);
+            });
 
-            const extensions = {
-                'json': 'json',
-                'xml': 'xml',
-                'yaml': 'yaml',
-                'csv': 'csv',
-                'txt': 'txt'
-            };
-
-            const extension = extensions[format] || 'txt';
-            const blob = new Blob([content], { type: getMimeType(format) });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${prefix}.${extension}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            showMessage(`内容已导出为 ${extension} 文件`, 'success');
-        }
-
-        // 获取MIME类型
-        function getMimeType(format) {
-            const types = {
-                'json': 'application/json',
-                'xml': 'application/xml',
-                'yaml': 'text/yaml',
-                'csv': 'text/csv',
-                'txt': 'text/plain'
-            };
-            return types[format] || 'text/plain';
-        }
-
-        // 获取格式名称
-        function getFormatName(format) {
-            const names = {
-                'json': 'JSON',
-                'xml': 'XML',
-                'yaml': 'YAML',
-                'csv': 'CSV'
-            };
-            return names[format] || format;
-        }
-
-        // 转换为XML
-        function convertToXml(json) {
-            return js2xml(json, { compact: false, spaces: 2 });
-        }
-
-        // 转换为YAML
-        function convertToYaml(json) {
-            return jsyaml.dump(json);
-        }
-
-        // 转换为CSV
-        function convertToCsv(json) {
-            // 处理数组和对象的不同情况
-            let data = json;
-            if (!Array.isArray(json)) {
-                // 如果是对象，尝试找到第一个数组属性
-                const arrayProps = Object.values(json).filter(v => Array.isArray(v));
-                if (arrayProps.length > 0) {
-                    data = arrayProps[0];
-                } else {
-                    // 否则包装成数组
-                    data = [json];
-                }
-            }
-            return Papa.unparse(data);
-        }
-
-        // 过滤对象中的指定字段
-        function filterObject(obj, fieldsToIgnore) {
-            if (typeof obj !== 'object' || obj === null) {
-                return obj;
-            }
-
-            // 数组处理
-            if (Array.isArray(obj)) {
-                return obj.map(item => filterObject(item, fieldsToIgnore));
-            }
-
-            // 对象处理
-            const filtered = {};
-            for (const key in obj) {
-                if (obj.hasOwnProperty(key) && !fieldsToIgnore.includes(key)) {
-                    filtered[key] = filterObject(obj[key], fieldsToIgnore);
-                }
-            }
-            return filtered;
-        }
-
-        // 分析JSON结构
-        function analyzeJsonStructure(obj, currentDepth = 0, analysis = {
-            totalNodes: 0,
-            objects: 0,
-            arrays: 0,
-            maxDepth: 0,
-            types: {
-                string: 0,
-                number: 0,
-                boolean: 0,
-                null: 0
-            }
-        }) {
-            // 更新深度
-            currentDepth++;
-            analysis.maxDepth = Math.max(analysis.maxDepth, currentDepth);
-            analysis.totalNodes++;
-
-            if (obj === null) {
-                analysis.types.null++;
-                return analysis;
-            }
-
-            // 基本类型
-            if (typeof obj !== 'object') {
-                switch (typeof obj) {
-                    case 'string':
-                        analysis.types.string++;
-                        break;
-                    case 'number':
-                        analysis.types.number++;
-                        break;
-                    case 'boolean':
-                        analysis.types.boolean++;
-                        break;
-                }
-                return analysis;
-            }
-
-            // 数组
-            if (Array.isArray(obj)) {
-                analysis.arrays++;
-                obj.forEach(item => {
-                    analyzeJsonStructure(item, currentDepth, analysis);
+            // 初始化删除规则事件
+            document.querySelectorAll('.remove-rule').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.closest('.transform-rule').remove();
                 });
-                return analysis;
-            }
+            });
 
-            // 对象
-            analysis.objects++;
-            for (const key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    analyzeJsonStructure(obj[key], currentDepth, analysis);
+            // 执行转换
+            document.getElementById('batch-transform-btn').addEventListener('click', () => {
+                const fileCount = document.getElementById('batch-files').files.length;
+                if (fileCount === 0) {
+                    showMessage('请选择要转换的文件', 'error');
+                    return;
                 }
-            }
 
-            return analysis;
-        }
+                showMessage(`开始批量转换 ${fileCount} 个文件...`, 'info');
 
-        // 更新分析统计信息
-        function updateAnalysisStats(analysis) {
-            // 更新节点统计
-            document.querySelectorAll('#node-stats li span:last-child')[0].textContent = analysis.totalNodes;
-            document.querySelectorAll('#node-stats li span:last-child')[1].textContent = analysis.objects;
-            document.querySelectorAll('#node-stats li span:last-child')[2].textContent = analysis.arrays;
-            document.querySelectorAll('#node-stats li span:last-child')[3].textContent = analysis.maxDepth;
+                // 处理每个文件
+                const files = Array.from(document.getElementById('batch-files').files);
+                let completed = 0;
 
-            // 更新类型统计
-            document.querySelectorAll('#type-stats li span:last-child')[0].textContent = analysis.types.string;
-            document.querySelectorAll('#type-stats li span:last-child')[1].textContent = analysis.types.number;
-            document.querySelectorAll('#type-stats li span:last-child')[2].textContent = analysis.types.boolean;
-            document.querySelectorAll('#type-stats li span:last-child')[3].textContent = analysis.types.null;
-        }
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            let jsonData;
+                            const fileName = file.name.toLowerCase();
 
-        // 绘制类型图表
-        function drawTypeChart(types) {
-            const ctx = document.getElementById('type-chart').getContext('2d');
+                            // 根据文件类型解析
+                            if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                                // 处理Excel文件
+                                const data = new Uint8Array(e.target.result);
+                                const workbook = XLSX.read(data, { type: 'array' });
+                                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                                jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                            } else if (fileName.endsWith('.csv')) {
+                                // 处理CSV文件
+                                jsonData = Papa.parse(e.target.result, { header: true }).data;
+                            } else if (fileName.endsWith('.xml')) {
+                                // 处理XML文件
+                                jsonData = JSON.parse(js2json(e.target.result, { compact: true }));
+                            } else if (fileName.endsWith('.json')) {
+                                // 处理JSON文件
+                                jsonData = JSON.parse(e.target.result);
+                            } else {
+                                throw new Error('不支持的文件类型');
+                            }
 
-            // 如果已有图表，销毁它
-            if (typeChart) {
-                typeChart.destroy();
-            }
+                            // 应用转换规则
+                            const transformedData = applyTransformRules(jsonData);
 
-            typeChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['字符串', '数字', '布尔值', '空值'],
-                    datasets: [{
-                        data: [types.string, types.number, types.boolean, types.null],
-                        backgroundColor: [
-                            '#3B82F6', // primary
-                            '#10B981', // secondary
-                            '#F59E0B', // warning
-                            '#9CA3AF'  // gray
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right'
+                            // 这里可以添加保存转换后数据的逻辑
+                            completed++;
+                            if (completed === files.length) {
+                                showMessage(`批量转换完成，成功转换 ${completed} 个文件`, 'success');
+                            }
+                        } catch (error) {
+                            showMessage(`转换文件 ${file.name} 失败: ${error.message}`, 'error');
                         }
-                    }
-                }
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
             });
-        }
 
-        // 构建树形数据结构
-        function buildTreeData(obj, name = 'root') {
-            const node = { name };
+            // 应用转换规则
+            function applyTransformRules(data) {
+                const rules = document.querySelectorAll('.transform-rule');
+                if (rules.length === 0) {
+                    return data; // 没有规则，直接返回原始数据
+                }
 
-            if (obj === null) {
-                node.type = 'null';
-                node.value = 'null';
-                return node;
+                // 如果是数组，对每个元素应用规则
+                if (Array.isArray(data)) {
+                    return data.map(item => applyRulesToItem(item, rules));
+                }
+
+                // 否则对单个对象应用规则
+                return applyRulesToItem(data, rules);
             }
 
-            if (typeof obj !== 'object') {
-                node.type = typeof obj;
-                node.value = obj.toString();
-                return node;
-            }
+            // 对单个项目应用转换规则
+            function applyRulesToItem(item, rules) {
+                const result = {};
 
-            if (Array.isArray(obj)) {
-                node.type = 'array';
-                node.children = obj.map((item, index) => buildTreeData(item, `[${index}]`));
-                return node;
-            }
+                rules.forEach(rule => {
+                    const sourcePath = rule.querySelector('input:first-child').value.trim();
+                    const targetName = rule.querySelector('input:nth-child(2)').value.trim();
+                    const transformType = rule.querySelector('select').value;
 
-            // 对象类型
-            node.type = 'object';
-            node.children = Object.keys(obj).map(key => buildTreeData(obj[key], key));
-            return node;
-        }
+                    if (!sourcePath || !targetName) return;
 
-        // 绘制JSON树形结构
-        function drawJsonTree(jsonObj) {
-            const container = document.getElementById('tree-container');
-            container.innerHTML = '';
-
-            // 构建树形数据
-            const treeData = buildTreeData(jsonObj);
-
-            // 设置尺寸
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-            const margin = { top: 20, right: 90, bottom: 30, left: 90 };
-            const innerWidth = width - margin.left - margin.right;
-            const innerHeight = height - margin.top - margin.bottom;
-
-            // 创建SVG
-            const svg = d3.select('#tree-container')
-                .append('svg')
-                .attr('width', width)
-                .attr('height', height)
-                .append('g')
-                .attr('transform', `translate(${margin.left},${margin.top})`);
-
-            // 创建层次结构
-            const root = d3.hierarchy(treeData);
-
-            // 计算节点位置
-            const treeLayout = d3.tree().size([innerHeight, innerWidth]);
-            treeLayout(root);
-
-            // 绘制连接线
-            svg.selectAll('.tree-link')
-                .data(root.links())
-                .enter()
-                .append('path')
-                .attr('class', 'tree-link')
-                .attr('d', d3.linkHorizontal()
-                    .x(d => d.y)
-                    .y(d => d.x)
-                );
-
-            // 创建节点组
-            const node = svg.selectAll('.tree-node')
-                .data(root.descendants())
-                .enter()
-                .append('g')
-                .attr('class', 'tree-node')
-                .attr('transform', d => `translate(${d.y},${d.x})`);
-
-            // 绘制节点圆圈
-            node.append('circle')
-                .attr('r', 6)
-                .style('fill', d => {
-                    switch (d.data.type) {
-                        case 'object': return '#3B82F6';
-                        case 'array': return '#10B981';
-                        case 'string': return '#F59E0B';
-                        case 'number': return '#8B5CF6';
-                        case 'boolean': return '#EC4899';
-                        case 'null': return '#9CA3AF';
-                        default: return '#6B7280';
+                    // 简单路径解析（示例简化版，实际可使用JSONPath库）
+                    let value = getValueByPath(item, sourcePath);
+                    
+                    // 应用转换
+                    switch (transformType) {
+                        case 'uppercase':
+                            result[targetName] = typeof value === 'string' ? value.toUpperCase() : value;
+                            break;
+                        case 'lowercase':
+                            result[targetName] = typeof value === 'string' ? value.toLowerCase() : value;
+                            break;
+                        case 'number':
+                            result[targetName] = Number(value);
+                            break;
+                        case 'boolean':
+                            result[targetName] = Boolean(value);
+                            break;
+                        case 'date':
+                            try {
+                                const date = new Date(value);
+                                result[targetName] = date.toISOString();
+                            } catch (error) {
+                                result[targetName] = value;
+                            }
+                            break;
+                        case 'copy':
+                        default:
+                            result[targetName] = value;
                     }
                 });
 
-            // 添加节点文本
-            node.append('text')
-                .attr('dy', '.35em')
-                .attr('x', d => d.children ? -10 : 10)
-                .attr('text-anchor', d => d.children ? 'end' : 'start')
-                .text(d => {
-                    let text = d.data.name;
-                    if (d.data.value !== undefined && d.data.value.length > 15) {
-                        text += `: ${d.data.value.substring(0, 15)}...`;
-                    } else if (d.data.value !== undefined) {
-                        text += `: ${d.data.value}`;
-                    }
-                    return text;
+                return result;
+            }
+
+            // 简单路径解析
+            function getValueByPath(obj, path) {
+                return path.split('.').reduce((acc, part) => {
+                    if (acc && acc[part] !== undefined) return acc[part];
+                    return null;
+                }, obj);
+            }
+
+            // 复制转换结果
+            document.getElementById('copy-transform-btn').addEventListener('click', () => {
+                copyToClipboard(document.getElementById('transform-output').value);
+            });
+
+            // 导出转换结果
+            document.getElementById('export-transform-btn').addEventListener('click', () => {
+                const content = document.getElementById('transform-output').value;
+                exportToFile(content, 'json', 'transformed-data');
+            });
+
+            // 文件导入功能 - 增强支持Excel/XML
+            function handleFileImport(file, callback) {
+                if (!file) return;
+
+                const fileName = file.name.toLowerCase();
+                const reader = new FileReader();
+
+                // 根据文件类型选择读取方式
+                if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                    reader.readAsArrayBuffer(file);
+                    reader.onload = function(e) {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                            callback(JSON.stringify(jsonData, null, 2));
+                        } catch (error) {
+                            showMessage(`解析Excel文件失败: ${error.message}`, 'error');
+                        }
+                    };
+                } else if (fileName.endsWith('.csv')) {
+                    reader.readAsText(file);
+                    reader.onload = function(e) {
+                        try {
+                            const result = Papa.parse(e.target.result, { header: true });
+                            callback(JSON.stringify(result.data, null, 2));
+                        } catch (error) {
+                            showMessage(`解析CSV文件失败: ${error.message}`, 'error');
+                        }
+                    };
+                } else if (fileName.endsWith('.xml')) {
+                    reader.readAsText(file);
+                    reader.onload = function(e) {
+                        try {
+                            const jsonData = JSON.parse(js2json(e.target.result, { compact: true }));
+                            callback(JSON.stringify(jsonData, null, 2));
+                        } catch (error) {
+                            showMessage(`解析XML文件失败: ${error.message}`, 'error');
+                        }
+                    };
+                } else {
+                    // 处理其他文本格式
+                    reader.readAsText(file);
+                    reader.onload = function(e) {
+                        try {
+                            // 尝试解析为JSON并格式化
+                            const json = JSON.parse(e.target.result);
+                            callback(JSON.stringify(json, null, 2));
+                        } catch (e) {
+                            // 不是JSON，直接显示
+                            callback(e.target.result);
+                        }
+                    };
+                }
+
+                reader.onerror = () => {
+                    showMessage('文件读取失败', 'error');
+                };
+            }
+
+            // 编辑器导入
+            document.getElementById('import-file').addEventListener('change', (e) => {
+                handleFileImport(e.target.files[0], (content) => {
+                    editors.input.setValue(content);
+                    editors.output.setValue(content);
+                    showMessage('文件导入成功', 'success');
                 });
+            });
 
-            // 保存模拟以便缩放
-            treeSimulation = { svg, margin, innerWidth, innerHeight };
-        }
+            // 差异对比左侧导入
+            document.getElementById('import-left-file').addEventListener('change', (e) => {
+                handleFileImport(e.target.files[0], (content) => {
+                    editors.leftDiff.setValue(content);
+                    showMessage('左侧文件导入成功', 'success');
+                });
+            });
 
-        // 检查数据一致性
-        function checkDataConsistency(obj, analysis) {
-            const issuesContainer = document.getElementById('consistency-issues');
-            const issues = [];
+            // 差异对比右侧导入
+            document.getElementById('import-right-file').addEventListener('change', (e) => {
+                handleFileImport(e.target.files[0], (content) => {
+                    editors.rightDiff.setValue(content);
+                    showMessage('右侧文件导入成功', 'success');
+                });
+            });
 
-            // 递归检查数组元素结构一致性
-            function checkArrayConsistency(arr, path) {
-                if (!Array.isArray(arr) || arr.length <= 1) return;
+            // 结构分析导入
+            document.getElementById('import-analysis-file').addEventListener('change', (e) => {
+                handleFileImport(e.target.files[0], (content) => {
+                    document.getElementById('analysis-input').value = content;
+                    showMessage('分析文件导入成功', 'success');
+                });
+            });
 
-                // 获取第一个元素的结构签名
-                const firstSignature = getStructureSignature(arr[0]);
+            // 高级转换导入
+            document.getElementById('import-transform-file').addEventListener('change', (e) => {
+                handleFileImport(e.target.files[0], (content) => {
+                    document.getElementById('transform-input').value = content;
+                    showMessage('源文件导入成功', 'success');
+                });
+            });
 
-                // 检查其他元素
-                for (let i = 1; i < arr.length; i++) {
-                    const currentSignature = getStructureSignature(arr[i]);
-                    if (currentSignature !== firstSignature) {
-                        issues.push(`数组元素结构不一致: ${path}[0] 与 ${path}[${i}] 结构不同`);
-                        break; // 找到一个不一致即可
+            // 批量转换文件选择
+            document.getElementById('batch-files').addEventListener('change', (e) => {
+                const filesList = document.getElementById('batch-files-list');
+                if (e.target.files.length === 0) {
+                    filesList.textContent = '未选择任何文件';
+                    return;
+                }
+
+                // 显示选择的文件名
+                let html = '<ul class="list-disc list-inside">';
+                for (let i = 0; i < e.target.files.length; i++) {
+                    html += `<li>${e.target.files[i].name}</li>`;
+                }
+                html += '</ul>';
+                filesList.innerHTML = html;
+            });
+
+            // 拖放功能
+            const dropArea = document.querySelector('#batch-transform-tab label[for="batch-files"]');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropArea.classList.add('border-primary', 'bg-blue-50');
+            }
+
+            function unhighlight() {
+                dropArea.classList.remove('border-primary', 'bg-blue-50');
+            }
+
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                if (files.length > 0) {
+                    document.getElementById('batch-files').files = files;
+                    // 触发change事件以更新UI
+                    const event = new Event('change');
+                    document.getElementById('batch-files').dispatchEvent(event);
+                }
+            }
+
+            // 工具函数
+            // 复制到剪贴板
+            function copyToClipboard(text) {
+                if (text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showMessage('内容已复制到剪贴板', 'success');
+                    }).catch(err => {
+                        // 降级处理：创建临时textarea复制
+                        const textarea = document.createElement('textarea');
+                        textarea.value = text;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        showMessage('内容已复制到剪贴板', 'success');
+                    });
+                } else {
+                    showMessage('没有内容可复制', 'error');
+                }
+            }
+
+            // 导出为文件
+            function exportToFile(content, format, prefix = 'data') {
+                if (!content) {
+                    showMessage('没有内容可导出', 'error');
+                    return;
+                }
+
+                const extensions = {
+                    'json': 'json',
+                    'xml': 'xml',
+                    'yaml': 'yaml',
+                    'csv': 'csv',
+                    'txt': 'txt'
+                };
+
+                const extension = extensions[format] || 'txt';
+                const blob = new Blob([content], { type: getMimeType(format) });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${prefix}.${extension}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showMessage(`内容已导出为 ${extension} 文件`, 'success');
+            }
+
+            // 获取MIME类型
+            function getMimeType(format) {
+                const types = {
+                    'json': 'application/json',
+                    'xml': 'application/xml',
+                    'yaml': 'text/yaml',
+                    'csv': 'text/csv',
+                    'txt': 'text/plain'
+                };
+                return types[format] || 'text/plain';
+            }
+
+            // 获取格式名称
+            function getFormatName(format) {
+                const names = {
+                    'json': 'JSON',
+                    'xml': 'XML',
+                    'yaml': 'YAML',
+                    'csv': 'CSV'
+                };
+                return names[format] || format;
+            }
+
+            // 转换为XML
+            function convertToXml(json) {
+                return js2xml(json, { compact: false, spaces: 2 });
+            }
+
+            // 转换为YAML
+            function convertToYaml(json) {
+                return jsyaml.dump(json);
+            }
+
+            // 转换为CSV
+            function convertToCsv(json) {
+                // 处理数组和对象的不同情况
+                let data = json;
+                if (!Array.isArray(json)) {
+                    // 如果是对象，尝试找到第一个数组属性
+                    const arrayProps = Object.values(json).filter(v => Array.isArray(v));
+                    if (arrayProps.length > 0) {
+                        data = arrayProps[0];
+                    } else {
+                        // 否则包装成数组
+                        data = [json];
+                    }
+                }
+                return Papa.unparse(data);
+            }
+
+            // 过滤对象中的指定字段
+            function filterObject(obj, fieldsToIgnore) {
+                if (typeof obj !== 'object' || obj === null) {
+                    return obj;
+                }
+
+                // 数组处理
+                if (Array.isArray(obj)) {
+                    return obj.map(item => filterObject(item, fieldsToIgnore));
+                }
+
+                // 对象处理
+                const filtered = {};
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key) && !fieldsToIgnore.includes(key)) {
+                        filtered[key] = filterObject(obj[key], fieldsToIgnore);
+                    }
+                }
+                return filtered;
+            }
+
+            // 分析JSON结构
+            function analyzeJsonStructure(obj, currentDepth = 0, analysis = {
+                totalNodes: 0,
+                objects: 0,
+                arrays: 0,
+                maxDepth: 0,
+                types: {
+                    string: 0,
+                    number: 0,
+                    boolean: 0,
+                    null: 0
+                }
+            }) {
+                // 更新深度
+                currentDepth++;
+                analysis.maxDepth = Math.max(analysis.maxDepth, currentDepth);
+                analysis.totalNodes++;
+
+                if (obj === null) {
+                    analysis.types.null++;
+                    return analysis;
+                }
+
+                // 基本类型
+                if (typeof obj !== 'object') {
+                    switch (typeof obj) {
+                        case 'string':
+                            analysis.types.string++;
+                            break;
+                        case 'number':
+                            analysis.types.number++;
+                            break;
+                        case 'boolean':
+                            analysis.types.boolean++;
+                            break;
+                    }
+                    return analysis;
+                }
+
+                // 数组
+                if (Array.isArray(obj)) {
+                    analysis.arrays++;
+                    obj.forEach(item => {
+                        analyzeJsonStructure(item, currentDepth, analysis);
+                    });
+                    return analysis;
+                }
+
+                // 对象
+                analysis.objects++;
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        analyzeJsonStructure(obj[key], currentDepth, analysis);
                     }
                 }
 
-                // 递归检查数组内的对象和数组
-                arr.forEach((item, index) => {
-                    if (typeof item === 'object' && item !== null) {
-                        const newPath = Array.isArray(arr) ? `${path}[${index}]` : `${path}.${index}`;
-                        if (Array.isArray(item)) {
-                            checkArrayConsistency(item, newPath);
-                        } else {
-                            // 检查对象
-                            for (const key in item) {
-                                if (item.hasOwnProperty(key)) {
-                                    const propPath = `${newPath}.${key}`;
-                                    if (Array.isArray(item[key])) {
-                                        checkArrayConsistency(item[key], propPath);
-                                    } else if (typeof item[key] === 'object' && item[key] !== null) {
-                                        checkObjectConsistency(item[key], propPath);
-                                    }
-                                }
+                return analysis;
+            }
+
+            // 更新分析统计信息
+            function updateAnalysisStats(analysis) {
+                // 更新节点统计
+                document.querySelectorAll('#node-stats li span:last-child')[0].textContent = analysis.totalNodes;
+                document.querySelectorAll('#node-stats li span:last-child')[1].textContent = analysis.objects;
+                document.querySelectorAll('#node-stats li span:last-child')[2].textContent = analysis.arrays;
+                document.querySelectorAll('#node-stats li span:last-child')[3].textContent = analysis.maxDepth;
+
+                // 更新类型统计
+                document.querySelectorAll('#type-stats li span:last-child')[0].textContent = analysis.types.string;
+                document.querySelectorAll('#type-stats li span:last-child')[1].textContent = analysis.types.number;
+                document.querySelectorAll('#type-stats li span:last-child')[2].textContent = analysis.types.boolean;
+                document.querySelectorAll('#type-stats li span:last-child')[3].textContent = analysis.types.null;
+            }
+
+            // 绘制类型图表
+            function drawTypeChart(types) {
+                const ctx = document.getElementById('type-chart').getContext('2d');
+
+                // 如果已有图表，销毁它
+                if (typeChart) {
+                    typeChart.destroy();
+                }
+
+                typeChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['字符串', '数字', '布尔值', '空值'],
+                        datasets: [{
+                            data: [types.string, types.number, types.boolean, types.null],
+                            backgroundColor: [
+                                '#3B82F6', // primary
+                                '#10B981', // secondary
+                                '#F59E0B', // warning
+                                '#9CA3AF'  // gray
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right'
                             }
                         }
                     }
                 });
             }
 
-            // 检查对象一致性（用于嵌套对象）
-            function checkObjectConsistency(obj, path) {
-                for (const key in obj) {
-                    if (obj.hasOwnProperty(key)) {
-                        const propPath = `${path}.${key}`;
-                        if (Array.isArray(obj[key])) {
-                            checkArrayConsistency(obj[key], propPath);
-                        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-                            checkObjectConsistency(obj[key], propPath);
+            // 构建树形数据结构
+            function buildTreeData(obj, name = 'root') {
+                const node = { name };
+
+                if (obj === null) {
+                    node.type = 'null';
+                    node.value = 'null';
+                    return node;
+                }
+
+                if (typeof obj !== 'object') {
+                    node.type = typeof obj;
+                    node.value = obj.toString();
+                    return node;
+                }
+
+                if (Array.isArray(obj)) {
+                    node.type = 'array';
+                    node.children = obj.map((item, index) => buildTreeData(item, `[${index}]`));
+                    return node;
+                }
+
+                // 对象类型
+                node.type = 'object';
+                node.children = Object.keys(obj).map(key => buildTreeData(obj[key], key));
+                return node;
+            }
+
+            // 绘制JSON树形结构
+            function drawJsonTree(jsonObj) {
+                const container = document.getElementById('tree-container');
+                container.innerHTML = '';
+
+                // 构建树形数据
+                const treeData = buildTreeData(jsonObj);
+
+                // 设置尺寸
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                const margin = {top: 20, right: 90, bottom: 30, left: 90};
+                const innerWidth = width - margin.left - margin.right;
+                const innerHeight = height - margin.top - margin.bottom;
+
+                // 创建SVG
+                const svg = d3.select('#tree-container')
+                    .append('svg')
+                    .attr('width', width)
+                    .attr('height', height)
+                    .append('g')
+                    .attr('transform', `translate(${margin.left},${margin.top})`);
+
+                // 创建层次结构
+                const root = d3.hierarchy(treeData);
+
+                // 计算节点位置
+                const treeLayout = d3.tree().size([innerHeight, innerWidth]);
+                treeLayout(root);
+
+                // 绘制连接线
+                svg.selectAll('.tree-link')
+                    .data(root.links())
+                    .enter()
+                    .append('path')
+                    .attr('class', 'tree-link')
+                    .attr('d', d3.linkHorizontal()
+                        .x(d => d.y)
+                        .y(d => d.x)
+                    );
+
+                // 创建节点组
+                const node = svg.selectAll('.tree-node')
+                    .data(root.descendants())
+                    .enter()
+                    .append('g')
+                    .attr('class', 'tree-node')
+                    .attr('transform', d => `translate(${d.y},${d.x})`);
+
+                // 绘制节点圆圈
+                node.append('circle')
+                    .attr('r', 6)
+                    .style('fill', d => {
+                        switch (d.data.type) {
+                            case 'object': return '#3B82F6';
+                            case 'array': return '#10B981';
+                            case 'string': return '#F59E0B';
+                            case 'number': return '#8B5CF6';
+                            case 'boolean': return '#EC4899';
+                            case 'null': return '#9CA3AF';
+                            default: return '#6B7280';
+                        }
+                    });
+
+                // 添加节点文本
+                node.append('text')
+                    .attr('dy', '.35em')
+                    .attr('x', d => d.children ? -10 : 10)
+                    .attr('text-anchor', d => d.children ? 'end' : 'start')
+                    .text(d => {
+                        let text = d.data.name;
+                        if (d.data.value !== undefined && d.data.value.length > 15) {
+                            text += `: ${d.data.value.substring(0, 15)}...`;
+                        } else if (d.data.value !== undefined) {
+                            text += `: ${d.data.value}`;
+                        }
+                        return text;
+                    });
+
+                // 保存模拟以便缩放
+                treeSimulation = {svg, margin, innerWidth, innerHeight};
+            }
+
+            // 检查数据一致性
+            function checkDataConsistency(obj, analysis) {
+                const issuesContainer = document.getElementById('consistency-issues');
+                const issues = [];
+
+                // 递归检查数组元素结构一致性
+                function checkArrayConsistency(arr, path) {
+                    if (!Array.isArray(arr) || arr.length <= 1) return;
+
+                    // 获取第一个元素的结构签名
+                    const firstSignature = getStructureSignature(arr[0]);
+
+                    // 检查其他元素
+                    for (let i = 1; i < arr.length; i++) {
+                        const currentSignature = getStructureSignature(arr[i]);
+                        if (currentSignature !== firstSignature) {
+                            issues.push(`数组元素结构不一致: ${path}[0] 与 ${path}[${i}] 结构不同`);
+                            break; // 找到一个不一致即可
+                        }
+                    }
+
+                    // 递归检查数组内的对象和数组
+                    arr.forEach((item, index) => {
+                        if (typeof item === 'object' && item !== null) {
+                            const newPath = Array.isArray(arr) ? `${path}[${index}]` : `${path}.${index}`;
+                            if (Array.isArray(item)) {
+                                checkArrayConsistency(item, newPath);
+                            } else {
+                                // 检查对象
+                                for (const key in item) {
+                                    if (item.hasOwnProperty(key)) {
+                                        const propPath = `${newPath}.${key}`;
+                                        if (Array.isArray(item[key])) {
+                                            checkArrayConsistency(item[key], propPath);
+                                        } else if (typeof item[key] === 'object' && item[key] !== null) {
+                                            checkObjectConsistency(item[key], propPath);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 检查对象一致性（用于嵌套对象）
+                function checkObjectConsistency(obj, path) {
+                    for (const key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                            const propPath = `${path}.${key}`;
+                            if (Array.isArray(obj[key])) {
+                                checkArrayConsistency(obj[key], propPath);
+                            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                                checkObjectConsistency(obj[key], propPath);
+                            }
                         }
                     }
                 }
-            }
 
-            // 获取结构签名（用于比较结构是否一致）
-            function getStructureSignature(item) {
-                if (item === null) return 'null';
-                if (typeof item !== 'object') return typeof item;
-                if (Array.isArray(item)) {
-                    return 'array[' + item.map(getStructureSignature).join(',') + ']';
-                }
-                // 对象类型
-                const keys = Object.keys(item).sort();
-                return 'object{' + keys.map(key => key + ':' + getStructureSignature(item[key])).join(',') + '}';
-            }
-
-            // 开始检查
-            if (Array.isArray(obj)) {
-                checkArrayConsistency(obj, 'root');
-            } else if (typeof obj === 'object' && obj !== null) {
-                checkObjectConsistency(obj, 'root');
-            }
-
-            // 显示结果
-            if (issues.length === 0) {
-                issuesContainer.innerHTML = '<p class="text-green-600"><i class="fa fa-check-circle mr-1"></i>未发现数据一致性问题</p>';
-            } else {
-                let html = '<ul class="list-disc list-inside text-orange-600 space-y-2">';
-                issues.forEach(issue => {
-                    html += `<li><i class="fa fa-exclamation-triangle mr-1"></i>${issue}</li>`;
-                });
-                html += '</ul>';
-                issuesContainer.innerHTML = html;
-            }
-        }
-
-        // 根据模板生成数据
-        function generateDataFromTemplate(template, currentDepth, maxDepth, options) {
-            // 如果达到最大深度，返回简单值
-            if (currentDepth >= maxDepth) {
-                return generateRandomValue(options);
-            }
-
-            // 基本类型模板
-            if (template === null) {
-                return null;
-            }
-
-            if (typeof template !== 'object') {
-                return generateValueFromType(template, options);
-            }
-
-            // 数组处理
-            if (Array.isArray(template)) {
-                // 如果数组为空，生成随机长度的数组
-                if (template.length === 0) {
-                    const length = Math.floor(Math.random() * 5) + 1; // 1-5个元素
-                    return Array.from({ length }, () => generateRandomValue(options, currentDepth + 1, maxDepth));
+                // 获取结构签名（用于比较结构是否一致）
+                function getStructureSignature(item) {
+                    if (item === null) return 'null';
+                    if (typeof item !== 'object') return typeof item;
+                    if (Array.isArray(item)) {
+                        return 'array [' + item.map(getStructureSignature).join(',') + ']';
+                    }
+                    // 对象类型
+                    const keys = Object.keys(item).sort();
+                    return 'object {' + keys.map(key => key + ':' + getStructureSignature(item[key])).join(',') + '}';
                 }
 
-                // 否则根据第一个元素生成相似结构
-                const length = Math.floor(Math.random() * 3) + 1; // 1-3个元素
-                return Array.from({ length }, () =>
-                    generateDataFromTemplate(template[0], currentDepth + 1, maxDepth, options)
-                );
-            }
+                // 开始检查
+                if (Array.isArray(obj)) {
+                    checkArrayConsistency(obj, 'root');
+                } else if (typeof obj === 'object' && obj !== null) {
+                    checkObjectConsistency(obj, 'root');
+                }
 
-            // 对象处理
-            const result = {};
-            for (const key in template) {
-                if (template.hasOwnProperty(key)) {
-                    result[key] = generateDataFromTemplate(template[key], currentDepth + 1, maxDepth, options);
+                // 显示结果
+                if (issues.length === 0) {
+                    issuesContainer.innerHTML = '<p class="text-green-600"><i class="fa fa-check-circle mr-1"></i>未发现数据一致性问题</p>';
+                } else {
+                    let html = '<ul class="list-disc list-inside text-orange-600 space-y-2">';
+                    issues.forEach(issue => {
+                        html += `<li><i class="fa fa-exclamation-triangle mr-1"></i>${issue}</li>`;
+                    });
+                    html += '</ul>';
+                    issuesContainer.innerHTML = html;
                 }
             }
-            return result;
-        }
 
-        // 根据类型生成值
-        function generateValueFromType(template, options) {
-            switch (typeof template) {
-                case 'string':
-                    return generateRandomString(options.strMinLen, options.strMaxLen);
-                case 'number':
-                    return generateRandomNumber(options.numMin, options.numMax);
-                case 'boolean':
-                    return Math.random() > 0.5;
-                default:
+            // 根据模板生成数据
+            function generateDataFromTemplate(template, currentDepth, maxDepth, options) {
+                // 如果达到最大深度，返回简单值
+                if (currentDepth >= maxDepth) {
+                    return generateRandomValue(options);
+                }
+
+                // 基本类型模板
+                if (template === null) {
                     return null;
+                }
+
+                if (typeof template !== 'object') {
+                    return generateValueFromType(template, options);
+                }
+
+                // 数组处理
+                if (Array.isArray(template)) {
+                    // 如果数组为空，生成随机长度的数组
+                    if (template.length === 0) {
+                        const length = Math.floor(Math.random() * 5) + 1; // 1-5 个元素
+                        return Array.from({ length }, () => generateRandomValue(options, currentDepth + 1, maxDepth));
+                    }
+
+                    // 否则根据第一个元素生成相似结构
+                    const length = Math.floor(Math.random() * 3) + 1; // 1-3 个元素
+                    return Array.from({ length }, () =>
+                        generateDataFromTemplate(template[0], currentDepth + 1, maxDepth, options)
+                    );
+                }
+
+                // 对象处理
+                const result = {};
+                for (const key in template) {
+                    if (template.hasOwnProperty(key)) {
+                        result[key] = generateDataFromTemplate(template[key], currentDepth + 1, maxDepth, options);
+                    }
+                }
+                return result;
             }
-        }
 
-        // 生成随机值
-        function generateRandomValue(options, currentDepth, maxDepth) {
-            const type = Math.floor(Math.random() * 4); // 0-3 对应四种基本类型
-            switch (type) {
-                case 0: // string
-                    return generateRandomString(options.strMinLen, options.strMaxLen);
-                case 1: // number
-                    return generateRandomNumber(options.numMin, options.numMax);
-                case 2: // boolean
-                    return Math.random() > 0.5;
-                case 3: // null
-                    return null;
-                default:
-                    return null;
-            }
-        }
-
-        // 生成随机字符串
-        function generateRandomString(minLen, maxLen) {
-            const length = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let result = '';
-            for (let i = 0; i < length; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
-        // 生成随机数字
-        function generateRandomNumber(min, max) {
-            // 50% 概率生成整数
-            if (Math.random() > 0.5) {
-                return Math.floor(Math.random() * (max - min + 1)) + min;
-            }
-            // 50% 概率生成浮点数
-            return (Math.random() * (max - min) + min).toFixed(2) * 1;
-        }
-
-        // 导入文件
-        function importFile(file, callback) {
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                callback(e.target.result);
-            };
-            reader.onerror = () => {
-                showMessage('文件读取失败', 'error');
-            };
-            reader.readAsText(file);
-        }
-
-        // 当输入变化时更新状态
-        editors.input.on('change', () => {
-            document.getElementById('input-status').classList.add('hidden');
-            updateOutputSize();
-
-            // 当选择JSON格式时自动同步
-            if (document.getElementById('format-select').value === 'json') {
-                try {
-                    const json = JSON.parse(editors.input.getValue());
-                    editors.output.setValue(JSON.stringify(json, null, 2));
-                    clearErrorLines();
-                } catch (e) {
-                    // 不处理错误，等待验证
+            // 根据类型生成值
+            function generateValueFromType(template, options) {
+                switch (typeof template) {
+                    case 'string':
+                        return generateRandomString(options.strMinLen, options.strMaxLen);
+                    case 'number':
+                        return generateRandomNumber(options.numMin, options.numMax);
+                    case 'boolean':
+                        return Math.random() > 0.5;
+                    default:
+                        return null;
                 }
             }
-        });
 
-        // 输出变化时更新大小
-        editors.output.on('change', updateOutputSize);
+            // 生成随机值
+            function generateRandomValue(options, currentDepth, maxDepth) {
+                const type = Math.floor(Math.random() * 4); // 0-3 对应四种基本类型
+                switch (type) {
+                    case 0: // string
+                        return generateRandomString(options.strMinLen, options.strMaxLen);
+                    case 1: // number
+                        return generateRandomNumber(options.numMin, options.numMax);
+                    case 2: // boolean
+                        return Math.random() > 0.5;
+                    case 3: // null
+                        return null;
+                    default:
+                        return null;
+                }
+            }
 
-        // 示例数据
-        const sampleJson = {
-            "name": "JSON工具包",
-            "version": "2.0.0",
-            "features": [
-                "解析与格式化",
-                "数据验证（带错误标记）",
-                "JSON自动修复",
-                "多格式转换",
-                "在线编辑",
-                "文件导出"
-            ],
-            "supportedFormats": {
-                "input": ["JSON"],
-                "output": ["JSON", "XML", "YAML", "CSV"]
-            },
-            "stats": {
-                "users": 15620,
-                "rating": 4.8,
-                "lastUpdated": "2023-05-15T10:30:00Z"
-            },
-            "settings": {
-                "theme": "dark",
-                "autoSave": true,
-                "indentSize": 2,
-                "lineNumbers": true
-            },
-            "authors": [
-                {
-                    "name": "张明",
-                    "role": "开发者",
-                    "email": "zhangming@example.com"
+            // 生成随机字符串
+            function generateRandomString(minLen, maxLen) {
+                const length = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+
+            // 生成随机数字
+            function generateRandomNumber(min, max) {
+                // 50% 概率生成整数
+                if (Math.random() > 0.5) {
+                    return Math.floor(Math.random() * (max - min + 1)) + min;
+                }
+                // 50% 概率生成浮点数
+                return (Math.random() * (max - min) + min).toFixed(2) * 1;
+            }
+
+            // 当输入变化时更新状态
+            editors.input.on('change', () => {
+                document.getElementById('input-status').classList.add('hidden');
+                updateOutputSize();
+
+                // 当选择JSON格式时自动同步
+                if (document.getElementById('format-select').value === 'json') {
+                    try {
+                        const json = JSON.parse(editors.input.getValue());
+                        editors.output.setValue(JSON.stringify(json, null, 2));
+                        clearErrorLines();
+                    } catch (e) {
+                        // 不处理错误，等待验证
+                    }
+                }
+            });
+
+            // 输出变化时更新大小
+            editors.output.on('change', updateOutputSize);
+
+            // 各功能的示例数据
+            // 1. 编辑器示例 - 简单用户信息
+            const editorSample = {
+                "id": 1001,
+                "name": "张三",
+                "age": 30,
+                "isActive": true,
+                "contact": {
+                    "email": "zhangsan@example.com",
+                    "phone": "13800138000"
                 },
-                {
-                    "name": "李华",
-                    "role": "设计师",
-                    "email": "lihua@example.com"
-                }
-            ],
-            "changelog": [
-                {
-                    "version": "2.0.0",
-                    "date": "2023-05-15",
-                    "changes": ["新增JSONPath查询功能", "优化差异对比算法", "添加数据可视化"]
+                "hobbies": ["阅读", "运动", "旅行"]
+            };
+
+            // 2. 差异对比示例 - 版本差异
+            const diffSampleV1 = {
+                "version": "1.0.0",
+                "features": ["基础编辑", "格式转换"],
+                "updateTime": "2023-01-15"
+            };
+            
+            const diffSampleV2 = {
+                "version": "2.0.0",
+                "features": ["基础编辑", "格式转换", "差异对比"],
+                "author": "开发团队",
+                "updateTime": "2023-06-20"
+            };
+
+            // 3. 结构分析示例 - 商品信息
+            const analysisSample = {
+                "productId": "P10001",
+                "name": "智能手表",
+                "price": 1299.99,
+                "inStock": true,
+                "categories": ["电子产品", "可穿戴设备"],
+                "specs": {
+                    "screenSize": 1.3,
+                    "batteryLife": "7天",
+                    "waterResistant": true
                 },
-                {
-                    "version": "1.5.0",
-                    "date": "2023-03-20",
-                    "changes": ["添加JSON修复功能", "支持批量处理"]
-                }
-            ]
-        };
+                "ratings": [
+                    { "userId": "U101", "score": 4.5, "comment": "很好用" },
+                    { "userId": "U102", "score": 5, "comment": "推荐购买" }
+                ]
+            };
 
-        // 初始化编辑器示例数据
-                 editors.input.setValue (JSON.stringify (sampleJson, null, 2));
-                 editors.output.setValue (JSON.stringify (sampleJson, null, 2));
-                 editors.leftDiff.setValue (JSON.stringify (sampleJson, null, 2));
-                 
-                 // 修改部分数据作为右侧差异示例
-                 const modifiedSample = JSON.parse (JSON.stringify (sampleJson));
-                 modifiedSample.version = "2.1.0";
-                 modifiedSample.features.push ("高级数据生成");
-                 modifiedSample.stats.users = 16240;
-                 delete modifiedSample.settings.autoSave;
-                 editors.rightDiff.setValue (JSON.stringify (modifiedSample, null, 2));
-                 
-                 // 查询示例数据
-                 editors.queryInput.setValue (JSON.stringify (sampleJson, null, 2));
-                 
-                 // 分析示例数据
-                 document.getElementById ('analysis-input').value = JSON.stringify (sampleJson, null, 2);
-                 
-                 // 生成器模板示例
-                 document.getElementById ('generator-template').value = JSON.stringify ({
-                 "id": "{{number}}",
-                 "name": "{{string}}",
-                 "active": "{{boolean}}",
-                 "roles": ["{{string}}", "{{string}}"],
-                 "profile": {
-                 "joinDate": "{{date}}",
-                 "lastLogin": "{{date}}",
-                 "preferences": {
-                 "theme": "{{string}}",
-                 "notifications": "{{boolean}}"
-                 }
-                 }
-                 }, null, 2);
+            // 4. 数据生成模板示例 - 用户信息模板
+            const generatorSample = {
+                "id": "{{number}}",
+                "username": "{{string}}",
+                "email": "{{string}}@example.com",
+                "age": "{{number}}",
+                "isMember": "{{boolean}}",
+                "registrationDate": "{{date}}",
+                "address": {
+                    "city": "{{string}}",
+                    "zipCode": "{{string}}"
+                },
+                "tags": ["{{string}}", "{{string}}"]
+            };
 
-                // 高级转换示例
-                document.getElementById ('transform-input').value = JSON.stringify (sampleJson, null, 2);
-                
-                // 安全示例
-                document.getElementById ('security-input').value = JSON.stringify (sampleJson, null, 2);
-    </script>
+            // 5. 加密压缩示例 - 简单数据
+            const securitySample = {
+                "title": "敏感数据示例",
+                "level": "confidential",
+                "content": "这是一段需要保护的信息",
+                "timestamp": 1688888888888
+            };
 
-</body>
+            // 6. 高级转换示例 - 原始用户数据
+            const transformSample = {
+                "user_id": "10001",
+                "user_name": "zhangsan",
+                "user_email": "ZHANGSAN@example.com",
+                "reg_time": "2023-01-15T08:30:00Z",
+                "is_premium": "true",
+                "total_spent": "299.50"
+            };
+
+            // 初始化各编辑器示例数据
+            editors.input.setValue(JSON.stringify(editorSample, null, 2));
+            editors.output.setValue(JSON.stringify(editorSample, null, 2));
+            editors.leftDiff.setValue(JSON.stringify(diffSampleV1, null, 2));
+            editors.rightDiff.setValue(JSON.stringify(diffSampleV2, null, 2));
+            document.getElementById('analysis-input').value = JSON.stringify(analysisSample, null, 2);
+            document.getElementById('generator-template').value = JSON.stringify(generatorSample, null, 2);
+            document.getElementById('security-input').value = JSON.stringify(securitySample, null, 2);
+            document.getElementById('transform-input').value = JSON.stringify(transformSample, null, 2);
+        </script>
+    </body>
 </html>
