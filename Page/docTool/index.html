@@ -55,6 +55,9 @@
                 50% { transform: scale(1.05); }
                 100% { transform: scale(1); }
             }
+            .progress-animation {
+                transition: width 0.5s ease-in-out;
+            }
         }
     </style>
 </head>
@@ -109,7 +112,7 @@
             <!-- 步骤指示器 -->
             <div class="flex justify-between items-center mb-10 relative">
                 <div class="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
-                <div class="absolute top-1/2 left-0 h-1 gradient-bg -translate-y-1/2 z-10 transition-all duration-500" id="progressBar" style="width: 25%"></div>
+                <div class="absolute top-1/2 left-0 h-1 gradient-bg -translate-y-1/2 z-10 transition-all duration-500 progress-animation" id="progressBar" style="width: 25%"></div>
                 
                 <div class="relative z-20 flex flex-col items-center" id="step1Indicator">
                     <div class="w-10 h-10 rounded-full gradient-bg text-white flex items-center justify-center mb-2">
@@ -305,9 +308,9 @@
                 <div id="converting" class="step-content hidden text-center py-10">
                     <div class="w-16 h-16 border-4 border-gray-200 border-t-primary rounded-full animate-spin mx-auto mb-6"></div>
                     <h4 class="text-xl font-bold mb-2">正在转换文件...</h4>
-                    <p class="text-gray-600">请稍候，我们正在处理您的文件</p>
-                    <div class="mt-6 w-full bg-gray-200 rounded-full h-2.5">
-                        <div id="conversionProgress" class="gradient-bg h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    <p class="text-gray-600 mb-4" id="conversionStatus">正在准备转换...</p>
+                    <div class="mt-6 w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                        <div id="conversionProgress" class="gradient-bg h-2.5 rounded-full progress-animation" style="width: 0%"></div>
                     </div>
                     <p class="text-sm text-gray-500 mt-4">
                         转换进度: <span id="progressPercentage">0%</span>
@@ -526,9 +529,10 @@
             }
         };
 
-        // 存储用户选择的格式
+        // 存储用户选择的格式和文件
         let selectedInputFormat = null;
         let selectedOutputFormat = null;
+        let uploadedFile = null;
         
         // DOM 元素
         const inputFormatsContainer = document.getElementById('inputFormats');
@@ -541,6 +545,7 @@
         const progressBar = document.getElementById('progressBar');
         const conversionProgress = document.getElementById('conversionProgress');
         const progressPercentage = document.getElementById('progressPercentage');
+        const conversionStatus = document.getElementById('conversionStatus');
         const fileInput = document.getElementById('fileInput');
         const dropArea = document.getElementById('dropArea');
         const browseFilesBtn = document.getElementById('browseFiles');
@@ -740,6 +745,7 @@
                     fileInput.value = '';
                     filePreview.classList.add('hidden');
                     startConversionBtn.disabled = true;
+                    uploadedFile = null;
                     break;
                 case 4:
                     step4.classList.remove('hidden');
@@ -756,27 +762,105 @@
         
         // 模拟文件转换
         function simulateConversion() {
+            if (!uploadedFile) return;
+            
             // 显示转换中状态
             document.querySelectorAll('.step-content').forEach(el => {
                 el.classList.add('hidden');
             });
             converting.classList.remove('hidden');
             
-            // 模拟进度
-            let progress = 0;
+            // 重置进度
+            conversionProgress.style.width = '0%';
+            progressPercentage.textContent = '0%';
+            
+            // 模拟进度步骤
+            const progressSteps = [
+                { percent: 10, status: "正在分析文件内容..." },
+                { percent: 30, status: "正在准备转换引擎..." },
+                { percent: 50, status: "正在转换文件格式..." },
+                { percent: 75, status: "正在优化转换结果..." },
+                { percent: 90, status: "正在验证文件完整性..." },
+                { percent: 100, status: "转换完成，准备下载..." }
+            ];
+            
+            // 应用进度步骤
+            let stepIndex = 0;
             const interval = setInterval(() => {
-                progress += Math.random() * 10;
-                if (progress >= 100) {
-                    progress = 100;
+                if (stepIndex < progressSteps.length) {
+                    const step = progressSteps[stepIndex];
+                    conversionProgress.style.width = `${step.percent}%`;
+                    progressPercentage.textContent = `${step.percent}%`;
+                    conversionStatus.textContent = step.status;
+                    stepIndex++;
+                } else {
                     clearInterval(interval);
                     // 转换完成，进入步骤4
                     setTimeout(() => {
                         goToStep(4);
-                    }, 500);
+                    }, 800);
                 }
-                conversionProgress.style.width = `${progress}%`;
-                progressPercentage.textContent = `${Math.round(progress)}%`;
-            }, 300);
+            }, 800);
+        }
+        
+        // 处理文件下载
+        function downloadConvertedFile() {
+            if (!uploadedFile || !selectedInputFormat || !selectedOutputFormat) return;
+            
+            // 创建模拟的转换后文件内容
+            let content = `这是从${selectedInputFormat.toUpperCase()}转换为${selectedOutputFormat.toUpperCase()}的示例文件。\n`;
+            content += `原始文件名: ${uploadedFile.name}\n`;
+            content += `转换时间: ${new Date().toLocaleString()}\n\n`;
+            content += `这是一个示例内容。在实际应用中，这里会是真实的文件内容。`;
+            
+            // 根据目标格式设置MIME类型
+            let mimeType = 'application/octet-stream';
+            switch(selectedOutputFormat) {
+                case 'txt':
+                    mimeType = 'text/plain';
+                    break;
+                case 'html':
+                    mimeType = 'text/html';
+                    content = `<html><body><h1>转换后的文件</h1><p>${content.replace(/\n/g, '<br>')}</p></body></html>`;
+                    break;
+                case 'pdf':
+                    mimeType = 'application/pdf';
+                    break;
+                case 'docx':
+                    mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                    break;
+                case 'xlsx':
+                    mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                    break;
+                case 'pptx':
+                    mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+                    break;
+            }
+            
+            // 创建Blob对象
+            const blob = new Blob([content], { type: mimeType });
+            
+            // 创建下载链接
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // 设置文件名
+            const originalName = uploadedFile.name.replace(/\.[^/.]+$/, "");
+            a.download = `${originalName}.${selectedOutputFormat}`;
+            
+            // 触发下载
+            document.body.appendChild(a);
+            a.click();
+            
+            // 清理
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            // 显示下载成功提示
+            alert('文件已成功下载！');
         }
         
         // 处理文件上传
@@ -790,6 +874,9 @@
                 fileInput.value = '';
                 return;
             }
+            
+            // 保存上传的文件
+            uploadedFile = file;
             
             // 显示文件预览
             fileName.textContent = file.name;
@@ -835,14 +922,15 @@
                 // 重置选择
                 selectedInputFormat = null;
                 selectedOutputFormat = null;
+                uploadedFile = null;
                 fileInput.value = '';
                 filePreview.classList.add('hidden');
                 initInputFormats();
                 goToStep(1);
             });
-            document.getElementById('downloadFile').addEventListener('click', () => {
-                alert('文件下载已开始');
-            });
+            
+            // 下载文件功能
+            document.getElementById('downloadFile').addEventListener('click', downloadConvertedFile);
             
             // 更改格式按钮
             changeFormatsBtn.addEventListener('click', () => {
@@ -862,6 +950,7 @@
                 fileInput.value = '';
                 filePreview.classList.add('hidden');
                 startConversionBtn.disabled = true;
+                uploadedFile = null;
             });
             
             // 拖放功能

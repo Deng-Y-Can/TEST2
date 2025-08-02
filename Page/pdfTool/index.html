@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF转换工具 - 高效转换多种格式</title>
-  <!-- 引入Tailwind CSS -->
+  <title>PDF转换工具 - 支持更多格式</title>
+  <!-- 引入外部库 -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 引入Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   
   <!-- Tailwind配置 -->
   <script>
@@ -43,30 +45,18 @@
       .shadow-custom {
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
       }
-      .gradient-bg {
-        background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
-      }
     }
   </style>
   
   <style>
-    /* 基础动画定义 */
+    /* 基础动画 */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    
     .animate-fadeIn {
       animation: fadeIn 0.5s ease forwards;
-    }
-    
-    .animate-pulse-slow {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
     
     .file-drop-active {
@@ -93,6 +83,45 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
+    
+    /* 通知提示 */
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background-color: #10B981;
+      color: white;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 900;
+    }
+    
+    .notification.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .notification.error {
+      background-color: #EF4444;
+    }
+    
+    /* 预览区域 */
+    .pdf-preview {
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .pdf-page {
+      margin: 1rem auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      max-width: 100%;
+    }
   </style>
 </head>
 
@@ -107,8 +136,9 @@
       
       <nav class="hidden md:flex items-center space-x-6">
         <a href="#" class="font-medium text-primary hover:text-primary/80 transition-custom">首页</a>
+        <a href="#features" class="font-medium text-gray-600 hover:text-primary transition-custom">功能特点</a>
         <a href="#formats" class="font-medium text-gray-600 hover:text-primary transition-custom">支持格式</a>
-        <a href="#download-help" class="font-medium text-gray-600 hover:text-primary transition-custom">下载帮助</a>
+        <a href="#help" class="font-medium text-gray-600 hover:text-primary transition-custom">使用帮助</a>
       </nav>
       
       <div class="flex items-center">
@@ -122,8 +152,9 @@
     <div class="md:hidden hidden bg-white border-t" id="mobile-menu">
       <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
         <a href="#" class="py-2 font-medium text-primary">首页</a>
-        <a href="#formats" class="py-2 font-medium text-gray-600 hover:text-primary transition-custom">支持格式</a>
-        <a href="#download-help" class="py-2 font-medium text-gray-600 hover:text-primary transition-custom">下载帮助</a>
+        <a href="#features" class="py-2 font-medium text-gray-600 hover:text-primary transition-custom">功能特点</a>
+        <a href="#formats" class="py-2 font-medium text-gray-600 hover:text:text-primary transition-custom">支持格式</a>
+        <a href="#help" class="py-2 font-medium text-gray-600 hover:text-primary transition-custom">使用帮助</a>
       </div>
     </div>
   </header>
@@ -135,10 +166,10 @@
       <div class="container mx-auto px-4">
         <div class="max-w-3xl mx-auto text-center mb-8 animate-fadeIn" style="animation-delay: 0.1s">
           <h2 class="text-[clamp(1.8rem,4vw,3rem)] font-bold leading-tight mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            高效PDF格式转换工具
+            多格式PDF转换工具
           </h2>
           <p class="text-lg md:text-xl text-gray-600">
-            支持拖放上传或选择文件夹，快速将PDF转换为多种常用格式
+            支持10+种输出格式，真实解析PDF内容并转换为您需要的格式
           </p>
         </div>
       </div>
@@ -176,16 +207,17 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">输出格式</label>
                 <div class="relative">
                   <select class="block w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary appearance-none transition-custom bg-gray-50" id="output-format">
-                    <option value="doc">DOC</option>
-                    <option value="docx" selected>DOCX</option>
-                    <option value="xls">XLS</option>
-                    <option value="xlsx">XLSX</option>
-                    <option value="ppt">PPT</option>
-                    <option value="pptx">PPTX</option>
+                    <option value="txt">TXT (文本)</option>
                     <option value="html">HTML</option>
-                    <option value="txt">TXT</option>
-                    <option value="png">PNG</option>
-                    <option value="jpg">JPG</option>
+                    <option value="docx">DOCX (Word文档)</option>
+                    <option value="md">Markdown</option>
+                    <option value="rtf">RTF</option>
+                    <option value="csv">CSV</option>
+                    <option value="xlsx">XLSX (Excel表格)</option>
+                    <option value="json">JSON</option>
+                    <option value="epub">EPUB (电子书)</option>
+                    <option value="png">PNG (图片)</option>
+                    <option value="jpg">JPG (图片)</option>
                   </select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                     <i class="fa fa-chevron-down text-sm"></i>
@@ -201,35 +233,206 @@
               <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                 <i class="fa fa-cloud-upload text-2xl"></i>
               </div>
-              <h3 class="text-xl font-semibold mb-2">拖放文件到此处</h3>
+              <h3 class="text-xl font-semibold mb-2">拖放PDF文件到此处</h3>
               <p class="text-gray-600 mb-6">或者点击选择文件上传</p>
               
               <label class="inline-block px-6 py-3 bg-primary text-white rounded-lg shadow-md hover:shadow-lg hover:bg-primary/90 transition-custom font-medium cursor-pointer">
                 <i class="fa fa-folder-open mr-2"></i>选择PDF文件
-                <input type="file" id="file-input" class="hidden" multiple accept=".pdf" />
+                <input type="file" id="file-input" class="hidden" accept=".pdf" />
               </label>
               
-              <p class="text-xs text-gray-500 mt-4">支持 PDF 格式文件，单个文件最大 100MB</p>
+              <p class="text-xs text-gray-500 mt-4">支持 PDF 格式文件，单个文件最大 50MB</p>
             </div>
           </div>
           
-          <!-- 上传文件列表 -->
-          <div class="hidden bg-white rounded-xl shadow-custom p-6 mb-6 animate-fadeIn" id="file-list-container">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-semibold">待转换文件</h3>
-              <button class="text-gray-500 hover:text-red-500 transition-custom" id="clear-files">
-                <i class="fa fa-trash mr-1"></i>清空列表
+          <!-- 预览和选项区域 -->
+          <div class="hidden bg-white rounded-xl shadow-custom p-6 mb-6 animate-fadeIn" id="preview-container">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-lg font-semibold">文件预览与选项</h3>
+              <button class="text-gray-500 hover:text-red-500 transition-custom" id="clear-file">
+                <i class="fa fa-trash mr-1"></i>更换文件
               </button>
             </div>
             
-            <div class="divide-y divide-gray-100 max-h-64 overflow-y-auto" id="file-list">
-              <!-- 文件列表将通过JavaScript动态添加 -->
-            </div>
-            
-            <div class="mt-6 flex justify-end">
-              <button class="px-6 py-3 bg-secondary text-white rounded-lg shadow-md hover:shadow-lg hover:bg-secondary/90 transition-custom font-medium flex items-center" id="convert-button">
-                <i class="fa fa-cog mr-2"></i>开始转换
-              </button>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- PDF预览 -->
+              <div>
+                <h4 class="font-medium text-gray-700 mb-3">PDF预览</h4>
+                <div class="pdf-preview max-h-[400px] overflow-y-auto p-2" id="pdf-preview">
+                  <div class="text-center py-8 text-gray-500">
+                    <i class="fa fa-file-pdf-o text-4xl mb-3 text-red-400"></i>
+                    <p>文件加载后将显示预览</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 转换选项 -->
+              <div>
+                <h4 class="font-medium text-gray-700 mb-3">转换选项</h4>
+                
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">页面范围</label>
+                    <div class="flex gap-2">
+                      <input type="number" id="page-start" min="1" value="1" 
+                             class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                      <span class="flex items-center text-gray-500">-</span>
+                      <input type="number" id="page-end" min="1" value="1" 
+                             class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                      <label class="flex items-center ml-2 cursor-pointer">
+                        <input type="checkbox" id="all-pages" checked 
+                               class="form-checkbox text-primary h-5 w-5">
+                        <span class="ml-2 text-sm text-gray-700">全部</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- 格式特定选项 -->
+                  <div id="txt-options" class="format-options">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">文本处理</label>
+                    <div class="space-y-2">
+                      <label class="flex items-center">
+                        <input type="checkbox" id="preserve-layout" checked 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">保留页面布局</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="checkbox" id="include-images" 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">包含图片引用</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div id="html-options" class="format-options hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">HTML选项</label>
+                    <div class="space-y-2">
+                      <label class="flex items-center">
+                        <input type="checkbox" id="include-styles" checked 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">包含样式</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="checkbox" id="inline-images" 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">嵌入图片</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div id="docx-options" class="format-options hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Word选项</label>
+                    <div class="space-y-2">
+                      <label class="flex items-center">
+                        <input type="checkbox" id="docx-styles" checked 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">保留基本样式</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="checkbox" id="docx-headings" 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">自动识别标题</span>
+                      </label>
+                    </div>
+                    <p class="text-xs text-amber-600 mt-2">
+                      <i class="fa fa-info-circle"></i> 生成的文件为HTML格式，可直接用Word打开并保存为DOCX
+                    </p>
+                  </div>
+                  
+                  <div id="json-options" class="format-options hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">JSON选项</label>
+                    <div class="space-y-2">
+                      <label class="flex items-center">
+                        <input type="checkbox" id="json-pretty" checked 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">格式化输出</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="checkbox" id="json-metadata" 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">包含页面元数据</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div id="epub-options" class="format-options hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">EPUB选项</label>
+                    <div class="space-y-2">
+                      <label class="flex items-center">
+                        <input type="checkbox" id="epub-toc" checked 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">生成目录</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="checkbox" id="epub-styles" 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">添加基础样式</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div id="image-options" class="format-options hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">图片选项</label>
+                    <div class="space-y-2">
+                      <label class="flex items-center">
+                        <input type="radio" name="image-quality" value="low" 
+                               class="form-radio text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">低质量 (快速)</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="radio" name="image-quality" value="medium" checked
+                               class="form-radio text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">中等质量</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="radio" name="image-quality" value="high" 
+                               class="form-radio text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">高质量 (较慢)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div id="csv-options" class="format-options hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">CSV选项</label>
+                    <div class="space-y-2">
+                      <label class="flex items-center">
+                        <input type="radio" name="csv-delimiter" value="comma" checked
+                               class="form-radio text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">逗号分隔</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="radio" name="csv-delimiter" value="semicolon" 
+                               class="form-radio text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">分号分隔</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="checkbox" id="csv-header" checked 
+                               class="form-checkbox text-primary h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">添加标题行</span>
+                      </label>
+                    </div>
+                    <p class="text-xs text-amber-600 mt-2" id="xlsx-note">
+                      <i class="fa fa-info-circle"></i> 生成的文件为CSV格式，可直接用Excel打开并保存为XLSX
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">下载位置</label>
+                    <div class="flex items-center">
+                      <i class="fa fa-folder-open text-gray-400 mr-2"></i>
+                      <span class="text-sm text-gray-600 truncate" id="download-location">浏览器默认位置</span>
+                      <button id="browse-location" class="ml-2 text-xs text-primary hover:underline">浏览...</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">在现代浏览器中，您可以在下载时选择保存位置</p>
+                  </div>
+                </div>
+                
+                <div class="mt-6">
+                  <button class="w-full px-6 py-3 bg-secondary text-white rounded-lg shadow-md hover:shadow-lg hover:bg-secondary/90 transition-custom font-medium flex items-center justify-center" id="convert-button">
+                    <i class="fa fa-cog mr-2"></i>开始转换
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -238,8 +441,14 @@
             <h3 class="text-lg font-semibold mb-4">转换中...</h3>
             
             <div class="space-y-4">
-              <div id="progress-items">
-                <!-- 进度条将通过JavaScript动态添加 -->
+              <div id="page-progress-container">
+                <div class="flex justify-between text-sm">
+                  <span>正在处理页面 <span id="current-page">1</span>/<span id="total-pages">0</span></span>
+                  <span id="page-percentage">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div id="page-progress-bar" class="bg-secondary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
               </div>
               
               <div class="pt-2">
@@ -248,26 +457,14 @@
                   <span id="overall-percentage">0%</span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2.5">
-                  <div id="overall-progress-bar" class="bg-secondary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                  <div id="overall-progress-bar" class="bg-primary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
               </div>
-            </div>
-          </div>
-          
-          <!-- 转换完成 - 准备下载 -->
-          <div class="hidden bg-white rounded-xl shadow-custom p-6 animate-fadeIn" id="preparing-download">
-            <div class="text-center mb-6">
-              <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center text-primary animate-spin">
-                <i class="fa fa-circle-o-notch text-2xl"></i>
+              
+              <div id="conversion-status" class="text-sm text-gray-600">
+                准备开始转换...
               </div>
-              <h3 class="text-xl font-semibold mb-2">正在准备下载文件...</h3>
-              <p class="text-gray-600">请稍候，我们正在处理您的文件以确保可以正常下载</p>
             </div>
-            
-            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-              <div id="preparing-progress" class="bg-primary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-            <p class="text-xs text-gray-500 text-right">文件准备中，请不要关闭此页面</p>
           </div>
           
           <!-- 转换完成 -->
@@ -280,221 +477,235 @@
               <p class="text-gray-600">您的文件已成功转换，点击下方按钮下载</p>
             </div>
             
-            <div class="divide-y divide-gray-100 max-h-64 overflow-y-auto mb-6" id="completed-files">
-              <!-- 完成的文件将通过JavaScript动态添加 -->
-            </div>
-            
-            <!-- 下载选项 -->
-            <div id="download-options" class="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4">
-              <h4 class="font-medium text-blue-800 mb-3 flex items-center">
-                <i class="fa fa-download mr-2"></i>下载选项
-              </h4>
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+              <h4 class="font-medium text-gray-800 mb-3">转换结果</h4>
               
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">下载方式</label>
-                  <div class="flex flex-wrap gap-3">
-                    <label class="inline-flex items-center">
-                      <input type="radio" name="download-method" value="separate" class="form-radio text-primary" checked>
-                      <span class="ml-2 text-sm text-gray-700">单独下载</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                      <input type="radio" name="download-method" value="zip" class="form-radio text-primary">
-                      <span class="ml-2 text-sm text-gray-700">打包ZIP</span>
-                    </label>
-                  </div>
-                </div>
-                
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">下载位置</label>
-                  <div class="flex items-center">
-                    <i class="fa fa-folder-open text-gray-400 mr-2"></i>
-                    <span class="text-sm text-gray-600" id="download-location">默认下载文件夹</span>
-                    <button id="change-location" class="ml-2 text-xs text-primary hover:underline">更改</button>
-                  </div>
-                </div>
+              <div id="result-files" class="space-y-3">
+                <!-- 结果文件将在这里显示 -->
               </div>
             </div>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
               <button class="px-6 py-3 bg-primary text-white rounded-lg shadow-md hover:shadow-lg hover:bg-primary/90 transition-custom font-medium flex items-center justify-center" id="download-all-btn">
-                <i class="fa fa-download mr-2"></i>下载文件
+                <i class="fa fa-download mr-2"></i>下载所有文件
               </button>
               <button class="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-custom font-medium flex items-center justify-center" id="new-conversion">
-                <i class="fa fa-plus mr-2"></i>新的转换
+                <i class="fa fa-plus mr-2"></i>转换新文件
               </button>
-            </div>
-            
-            <!-- 下载状态反馈 -->
-            <div id="download-status" class="mt-4 hidden">
-              <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center">
-                <div class="animate-spin mr-3 h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
-                <p class="text-sm text-gray-700" id="download-status-text">正在准备下载...</p>
-              </div>
-            </div>
-            
-            <!-- 下载成功提示 -->
-            <div id="download-success" class="mt-4 hidden">
-              <div class="bg-green-50 border border-green-100 rounded-lg p-3 flex items-center">
-                <i class="fa fa-check-circle text-green-500 mr-3"></i>
-                <p class="text-sm text-green-700" id="download-success-text">文件下载成功</p>
-              </div>
-            </div>
-            
-            <!-- 下载错误提示 -->
-            <div id="download-error" class="mt-4 hidden">
-              <div class="bg-red-50 border border-red-100 rounded-lg p-3">
-                <div class="flex items-start">
-                  <i class="fa fa-exclamation-circle text-danger mt-0.5 mr-3"></i>
-                  <div>
-                    <p class="text-sm font-medium text-red-800 mb-1" id="download-error-title">下载失败</p>
-                    <p class="text-sm text-red-700 mb-2" id="download-error-text">无法下载文件，请尝试以下解决方案</p>
-                    <div class="ml-4 space-y-1 text-sm">
-                      <p class="text-red-600 flex items-start">
-                        <i class="fa fa-angle-right mt-1 mr-2"></i>
-                        <span>检查您的网络连接是否正常</span>
-                      </p>
-                      <p class="text-red-600 flex items-start">
-                        <i class="fa fa-angle-right mt-1 mr-2"></i>
-                        <span>关闭浏览器的弹出窗口拦截器</span>
-                      </p>
-                      <p class="text-red-600 flex items-start">
-                        <i class="fa fa-angle-right mt-1 mr-2"></i>
-                        <span>
-                          <button id="retry-download" class="text-primary hover:underline">点击重试</button>
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
     
-    <!-- 支持的格式 -->
+    <!-- 支持格式 -->
     <section id="formats" class="py-12 bg-gray-50">
       <div class="container mx-auto px-4">
         <div class="text-center max-w-3xl mx-auto mb-10 animate-fadeIn">
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">支持的转换格式</h2>
-          <p class="text-gray-600">可将PDF转换为以下多种格式，满足不同场景需求</p>
+          <h2 class="text-2xl md:text-3xl font-bold mb-4">支持的输出格式</h2>
+          <p class="text-gray-600">我们的工具支持多种常用格式，满足您的不同需求</p>
         </div>
         
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto animate-fadeIn" style="animation-delay: 0.2s">
-          <!-- 格式图标 -->
-          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
-            <i class="fa fa-file-word-o text-blue-500 text-3xl mb-2"></i>
-            <p class="text-sm font-medium">DOC/DOCX</p>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.1s">
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-primary mb-4">
+              <i class="fa fa-file-text-o text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">文本格式</h3>
+            <ul class="text-gray-600 text-sm space-y-1">
+              <li><i class="fa fa-check text-green-500 mr-2"></i>TXT (纯文本)</li>
+              <li><i class="fa fa-check text-green-500 mr-2"></i>HTML (网页格式)</li>
+              <li><i class="fa fa-check text-green-500 mr-2"></i>Markdown (MD)</li>
+              <li><i class="fa fa-check text-green-500 mr-2"></i>RTF (富文本)</li>
+            </ul>
           </div>
           
-          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
-            <i class="fa fa-file-excel-o text-green-500 text-3xl mb-2"></i>
-            <p class="text-sm font-medium">XLS/XLSX</p>
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.2s">
+            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-secondary mb-4">
+              <i class="fa fa-file-excel-o text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">表格格式</h3>
+            <ul class="text-gray-600 text-sm space-y-1">
+              <li><i class="fa fa-check text-green-500 mr-2"></i>CSV (逗号分隔值)</li>
+              <li><i class="fa fa-check text-green-500 mr-2"></i>XLSX (Excel格式)</li>
+            </ul>
+            <p class="text-xs text-amber-600 mt-3">
+              <i class="fa fa-info-circle"></i> XLSX通过CSV间接支持
+            </p>
           </div>
           
-          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
-            <i class="fa fa-file-powerpoint-o text-orange-500 text-3xl mb-2"></i>
-            <p class="text-sm font-medium">PPT/PPTX</p>
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.3s">
+            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-accent mb-4">
+              <i class="fa fa-file-word-o text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">文档格式</h3>
+            <ul class="text-gray-600 text-sm space-y-1">
+              <li><i class="fa fa-check text-green-500 mr-2"></i>DOCX (Word格式)</li>
+              <li><i class="fa fa-check text-green-500 mr-2"></i>EPUB (电子书)</li>
+            </ul>
+            <p class="text-xs text-amber-600 mt-3">
+              <i class="fa fa-info-circle"></i> DOCX通过HTML间接支持
+            </p>
           </div>
           
-          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
-            <i class="fa fa-file-code-o text-gray-700 text-3xl mb-2"></i>
-            <p class="text-sm font-medium">HTML</p>
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.4s">
+            <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-warning mb-4">
+              <i class="fa fa-file-image-o text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">图像格式</h3>
+            <ul class="text-gray-600 text-sm space-y-1">
+              <li><i class="fa fa-check text-green-500 mr-2"></i>PNG (无损图像)</li>
+              <li><i class="fa fa-check text-green-500 mr-2"></i>JPG (压缩图像)</li>
+            </ul>
           </div>
           
-          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
-            <i class="fa fa-file-text-o text-gray-500 text-3xl mb-2"></i>
-            <p class="text-sm font-medium">TXT</p>
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.5s">
+            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-danger mb-4">
+              <i class="fa fa-code text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">数据格式</h3>
+            <ul class="text-gray-600 text-sm space-y-1">
+              <li><i class="fa fa-check text-green-500 mr-2"></i>JSON (数据交换格式)</li>
+            </ul>
+            <p class="text-xs text-gray-500 mt-3">
+              适合开发人员和数据处理
+            </p>
           </div>
           
-          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
-            <i class="fa fa-file-image-o text-purple-500 text-3xl mb-2"></i>
-            <p class="text-sm font-medium">PNG</p>
-          </div>
-          
-          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
-            <i class="fa fa-file-image-o text-indigo-500 text-3xl mb-2"></i>
-            <p class="text-sm font-medium">JPG</p>
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.6s">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 mb-4">
+              <i class="fa fa-magic text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">格式说明</h3>
+            <p class="text-gray-600 text-sm">
+              所有格式转换均在本地完成，部分格式通过兼容格式间接支持，可被对应软件打开并保存为原生格式。
+            </p>
           </div>
         </div>
       </div>
     </section>
     
-    <!-- 下载帮助 -->
-    <section id="download-help" class="py-12 bg-white">
+    <!-- 功能特点 -->
+    <section id="features" class="py-12 bg-white">
       <div class="container mx-auto px-4">
-        <div class="max-w-4xl mx-auto bg-gray-50 rounded-2xl shadow-custom overflow-hidden animate-fadeIn">
-          <div class="p-8">
-            <h2 class="text-2xl font-bold mb-6">解决文件下载问题</h2>
+        <div class="text-center max-w-3xl mx-auto mb-10 animate-fadeIn">
+          <h2 class="text-2xl md:text-3xl font-bold mb-4">功能特点</h2>
+          <p class="text-gray-600">我们的工具使用专业技术实现真实的PDF处理功能</p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.1s">
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-primary mb-4">
+              <i class="fa fa-file-pdf-o text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">真实PDF解析</h3>
+            <p class="text-gray-600 text-sm">使用pdf.js引擎真实解析PDF内容，确保提取的文本准确反映原始文件。</p>
+          </div>
+          
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.2s">
+            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-secondary mb-4">
+              <i class="fa fa-exchange text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">多格式转换</h3>
+            <p class="text-gray-600 text-sm">支持10+种输出格式，满足不同场景需求，生成真实可用的文件。</p>
+          </div>
+          
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.3s">
+            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-accent mb-4">
+              <i class="fa fa-eye text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">PDF预览</h3>
+            <p class="text-gray-600 text-sm">上传后可预览PDF内容，帮助您确认是否为需要转换的文件，支持多页查看。</p>
+          </div>
+          
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.4s">
+            <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-warning mb-4">
+              <i class="fa fa-sliders text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">转换选项</h3>
+            <p class="text-gray-600 text-sm">每种格式都有特定选项，支持选择页面范围、调整输出质量等，定制转换结果。</p>
+          </div>
+          
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.5s">
+            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-danger mb-4">
+              <i class="fa fa-shield text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">隐私保护</h3>
+            <p class="text-gray-600 text-sm">所有处理均在您的浏览器中进行，文件不会上传到服务器，保护您的隐私安全。</p>
+          </div>
+          
+          <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-custom animate-fadeIn" style="animation-delay: 0.6s">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 mb-4">
+              <i class="fa fa-download text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">多文件下载</h3>
+            <p class="text-gray-600 text-sm">支持单个文件下载或打包下载，方便处理多页PDF转换结果。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 使用帮助 -->
+    <section id="help" class="py-12 bg-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto">
+          <div class="text-center mb-10 animate-fadeIn">
+            <h2 class="text-2xl md:text-3xl font-bold mb-4">使用帮助</h2>
+            <p class="text-gray-600">了解如何使用我们的PDF转换工具</p>
+          </div>
+          
+          <div class="space-y-8 animate-fadeIn" style="animation-delay: 0.2s">
+            <div>
+              <h3 class="text-xl font-semibold mb-3 flex items-center">
+                <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3">1</span>
+                上传PDF文件
+              </h3>
+              <p class="text-gray-600 pl-11">点击上传区域或拖放PDF文件到上传区域。工具支持单个PDF文件，最大50MB。</p>
+            </div>
             
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-lg font-semibold mb-3 flex items-center">
-                  <i class="fa fa-exclamation-circle text-warning mr-2"></i>常见下载问题及解决方案
-                </h3>
-                
-                <div class="space-y-4 pl-6">
-                  <div>
-                    <h4 class="font-medium text-gray-800 mb-1">点击下载按钮没有反应</h4>
-                    <p class="text-gray-600 text-sm">这通常是由于浏览器弹出窗口拦截器阻止了下载。请暂时关闭拦截器，或在浏览器地址栏附近寻找被拦截的提示并允许下载。</p>
-                  </div>
-                  
-                  <div>
-                    <h4 class="font-medium text-gray-800 mb-1">下载文件损坏或无法打开</h4>
-                    <p class="text-gray-600 text-sm">尝试重新下载文件。如果问题持续，可能是转换过程中出现了问题，请尝试重新转换文件。确保您有适合打开该格式的应用程序。</p>
-                  </div>
-                  
-                  <div>
-                    <h4 class="font-medium text-gray-800 mb-1">下载速度慢或中断</h4>
-                    <p class="text-gray-600 text-sm">检查您的网络连接。对于大文件，建议使用稳定的Wi-Fi连接。您也可以尝试单独下载文件而不是批量下载。</p>
-                  </div>
-                  
-                  <div>
-                    <h4 class="font-medium text-gray-800 mb-1">找不到下载的文件</h4>
-                    <p class="text-gray-600 text-sm">文件通常保存在"下载"文件夹中。您可以使用浏览器的下载管理器查看文件保存位置，或在转换完成后更改下载位置。</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h3 class="text-lg font-semibold mb-3 flex items-center">
-                  <i class="fa fa-step-by-step text-primary mr-2"></i>正确下载步骤
-                </h3>
-                
-                <div class="space-y-3 pl-6">
-                  <div class="flex">
-                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3 mt-0.5">1</div>
-                    <p class="text-gray-600">确保浏览器允许弹出窗口（暂时关闭拦截器）</p>
-                  </div>
-                  <div class="flex">
-                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3 mt-0.5">2</div>
-                    <p class="text-gray-600">选择合适的下载方式（单独下载或ZIP打包）</p>
-                  </div>
-                  <div class="flex">
-                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3 mt-0.5">3</div>
-                    <p class="text-gray-600">点击"下载文件"按钮，等待下载开始</p>
-                  </div>
-                  <div class="flex">
-                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3 mt-0.5">4</div>
-                    <p class="text-gray-600">如果下载失败，点击"重试"按钮或查看错误提示</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h3 class="text-lg font-semibold mb-3 flex items-center">
-                  <i class="fa fa-clock-o text-primary mr-2"></i>文件有效期
-                </h3>
-                <p class="text-gray-600 pl-6">转换后的文件将在服务器上保留24小时。为确保您能获取文件，请在转换完成后及时下载。超过有效期的文件将被自动删除，无法恢复。</p>
-              </div>
+            <div>
+              <h3 class="text-xl font-semibold mb-3 flex items-center">
+                <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3">2</span>
+                选择输出格式
+              </h3>
+              <p class="text-gray-600 pl-11">从下拉菜单中选择您需要的输出格式，我们支持10+种常用格式满足不同需求。</p>
+            </div>
+            
+            <div>
+              <h3 class="text-xl font-semibold mb-3 flex items-center">
+                <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3">3</span>
+                设置转换选项
+              </h3>
+              <p class="text-gray-600 pl-11">每种格式都有特定的转换选项，您可以选择转换的页面范围、调整格式参数等，然后点击"开始转换"按钮。</p>
+            </div>
+            
+            <div>
+              <h3 class="text-xl font-semibold mb-3 flex items-center">
+                <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3">4</span>
+                下载转换结果
+              </h3>
+              <p class="text-gray-600 pl-11">转换完成后，您可以选择下载单个文件或打包下载所有文件。文件将保存到您选择的位置。</p>
+            </div>
+            
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-5 mt-6">
+              <h4 class="font-semibold text-blue-800 mb-3 flex items-center">
+                <i class="fa fa-info-circle mr-2"></i>格式说明
+              </h4>
+              <ul class="space-y-2 text-blue-700 text-sm pl-6 list-disc">
+                <li>DOCX格式：生成的文件为HTML格式，可直接用Word打开并保存为DOCX</li>
+                <li>XLSX格式：生成的文件为CSV格式，可直接用Excel打开并保存为XLSX</li>
+                <li>EPUB格式：生成基本的EPUB结构，可被大多数电子书阅读器支持</li>
+                <li>所有处理均在本地进行，不会上传您的文件到任何服务器</li>
+              </ul>
             </div>
           </div>
         </div>
       </div>
     </section>
   </main>
+
+  <!-- 通知提示 -->
+  <div class="notification" id="notification"></div>
 
   <!-- 页脚 -->
   <footer class="bg-dark text-white py-8">
@@ -505,24 +716,29 @@
             <i class="fa fa-file-pdf-o text-primary text-2xl"></i>
             <h3 class="text-xl font-bold">PDF转换工具</h3>
           </div>
-          <p class="text-gray-400 text-sm">高效的在线PDF转换工具，支持多种格式相互转换，操作简单，转换快速。</p>
+          <p class="text-gray-400 text-sm">支持多种格式的PDF转换工具，所有处理均在浏览器中完成，保护您的隐私。</p>
         </div>
         
         <div>
           <h4 class="text-lg font-semibold mb-4">快速链接</h4>
           <ul class="space-y-2 text-sm">
             <li><a href="#" class="text-gray-400 hover:text-white transition-custom">首页</a></li>
+            <li><a href="#features" class="text-gray-400 hover:text-white transition-custom">功能特点</a></li>
             <li><a href="#formats" class="text-gray-400 hover:text-white transition-custom">支持格式</a></li>
-            <li><a href="#download-help" class="text-gray-400 hover:text-white transition-custom">下载帮助</a></li>
+            <li><a href="#help" class="text-gray-400 hover:text-white transition-custom">使用帮助</a></li>
           </ul>
         </div>
         
         <div>
-          <h4 class="text-lg font-semibold mb-4">技术支持</h4>
+          <h4 class="text-lg font-semibold mb-4">技术信息</h4>
           <ul class="space-y-2 text-sm">
             <li class="flex items-center text-gray-400">
-              <i class="fa fa-envelope mr-2"></i>
-              <span>support@pdftool.com</span>
+              <i class="fa fa-code mr-2"></i>
+              <span>基于pdf.js构建</span>
+            </li>
+            <li class="flex items-center text-gray-400">
+              <i class="fa fa-shield mr-2"></i>
+              <span>本地处理，隐私保护</span>
             </li>
           </ul>
         </div>
@@ -532,7 +748,7 @@
         <p class="text-gray-500 text-xs mb-2 md:mb-0">© 2023 PDF转换工具. 保留所有权利.</p>
         <div class="flex space-x-4">
           <a href="#" class="text-gray-500 hover:text-gray-300 text-xs transition-custom">隐私政策</a>
-          <a href="#" class="text-gray-500 hover:text-gray-300 text-xs transition-custom">服务条款</a>
+          <a href="#" class="text-gray-500 hover:text-gray-300 text-xs transition-custom">使用条款</a>
         </div>
       </div>
     </div>
@@ -542,40 +758,53 @@
   <script>
     // 等待DOM加载完成
     document.addEventListener('DOMContentLoaded', function() {
+      // 配置pdf.js工作器
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+      
       // 元素引用
       const navbar = document.getElementById('navbar');
       const mobileMenuButton = document.getElementById('mobile-menu-button');
       const mobileMenu = document.getElementById('mobile-menu');
       const fileDropArea = document.getElementById('file-drop-area');
       const fileInput = document.getElementById('file-input');
-      const fileListContainer = document.getElementById('file-list-container');
-      const fileList = document.getElementById('file-list');
-      const clearFilesButton = document.getElementById('clear-files');
+      const previewContainer = document.getElementById('preview-container');
+      const pdfPreview = document.getElementById('pdf-preview');
+      const clearFileButton = document.getElementById('clear-file');
+      const outputFormat = document.getElementById('output-format');
+      const formatOptions = document.querySelectorAll('.format-options');
+      const txtOptions = document.getElementById('txt-options');
+      const htmlOptions = document.getElementById('html-options');
+      const docxOptions = document.getElementById('docx-options');
+      const jsonOptions = document.getElementById('json-options');
+      const epubOptions = document.getElementById('epub-options');
+      const imageOptions = document.getElementById('image-options');
+      const csvOptions = document.getElementById('csv-options');
+      const xlsxNote = document.getElementById('xlsx-note');
+      const allPagesCheckbox = document.getElementById('all-pages');
+      const pageStartInput = document.getElementById('page-start');
+      const pageEndInput = document.getElementById('page-end');
       const convertButton = document.getElementById('convert-button');
       const conversionProgress = document.getElementById('conversion-progress');
-      const progressItems = document.getElementById('progress-items');
+      const currentPageIndicator = document.getElementById('current-page');
+      const totalPagesIndicator = document.getElementById('total-pages');
+      const pagePercentageIndicator = document.getElementById('page-percentage');
+      const pageProgressBar = document.getElementById('page-progress-bar');
+      const overallPercentageIndicator = document.getElementById('overall-percentage');
       const overallProgressBar = document.getElementById('overall-progress-bar');
-      const overallPercentage = document.getElementById('overall-percentage');
+      const conversionStatus = document.getElementById('conversion-status');
       const conversionComplete = document.getElementById('conversion-complete');
-      const completedFiles = document.getElementById('completed-files');
-      const newConversionButton = document.getElementById('new-conversion');
+      const resultFilesContainer = document.getElementById('result-files');
       const downloadAllBtn = document.getElementById('download-all-btn');
-      const downloadOptions = document.getElementById('download-options');
-      const downloadStatus = document.getElementById('download-status');
-      const downloadStatusText = document.getElementById('download-status-text');
-      const downloadSuccess = document.getElementById('download-success');
-      const downloadSuccessText = document.getElementById('download-success-text');
-      const downloadError = document.getElementById('download-error');
-      const downloadErrorText = document.getElementById('download-error-text');
-      const retryDownload = document.getElementById('retry-download');
-      const outputFormat = document.getElementById('output-format');
-      const preparingDownload = document.getElementById('preparing-download');
-      const preparingProgress = document.getElementById('preparing-progress');
-      const changeLocation = document.getElementById('change-location');
-      const downloadLocation = document.getElementById('download-location');
+      const newConversionButton = document.getElementById('new-conversion');
+      const browseLocationButton = document.getElementById('browse-location');
+      const downloadLocationIndicator = document.getElementById('download-location');
+      const notification = document.getElementById('notification');
       
-      // 存储上传的文件信息
-      let uploadedFiles = [];
+      // 全局变量
+      let pdfDoc = null;
+      let pdfFile = null;
+      let pdfFileName = '';
+      let conversionResults = [];
       
       // 导航栏滚动效果
       window.addEventListener('scroll', function() {
@@ -593,25 +822,63 @@
         mobileMenu.classList.toggle('hidden');
       });
       
-      // 更改下载位置
-      changeLocation.addEventListener('click', function() {
-        // 模拟更改下载位置
-        const locations = [
-          "文档文件夹",
-          "桌面",
-          "自定义文件夹",
-          "默认下载文件夹"
-        ];
-        const currentIndex = locations.indexOf(downloadLocation.textContent);
-        const nextIndex = (currentIndex + 1) % locations.length;
-        downloadLocation.textContent = locations[nextIndex];
+      // 显示通知
+      function showNotification(message, isError = false) {
+        notification.textContent = message;
+        notification.classList.add('show');
+        if (isError) {
+          notification.classList.add('error');
+        } else {
+          notification.classList.remove('error');
+        }
         
-        // 显示短暂提示
-        const originalText = this.textContent;
-        this.textContent = "已更改";
         setTimeout(() => {
-          this.textContent = originalText;
-        }, 1500);
+          notification.classList.remove('show');
+        }, 3000);
+      }
+      
+      // 格式选项切换
+      outputFormat.addEventListener('change', function() {
+        const selectedFormat = this.value;
+        
+        // 隐藏所有格式选项
+        formatOptions.forEach(option => {
+          option.classList.add('hidden');
+        });
+        
+        // 显示选中格式的选项
+        if (selectedFormat === 'txt') {
+          txtOptions.classList.remove('hidden');
+        } else if (selectedFormat === 'html') {
+          htmlOptions.classList.remove('hidden');
+        } else if (selectedFormat === 'docx') {
+          docxOptions.classList.remove('hidden');
+        } else if (selectedFormat === 'json') {
+          jsonOptions.classList.remove('hidden');
+        } else if (selectedFormat === 'epub') {
+          epubOptions.classList.remove('hidden');
+        } else if (selectedFormat === 'png' || selectedFormat === 'jpg') {
+          imageOptions.classList.remove('hidden');
+        } else if (selectedFormat === 'csv' || selectedFormat === 'xlsx') {
+          csvOptions.classList.remove('hidden');
+          // 显示适当的说明
+          if (selectedFormat === 'xlsx') {
+            xlsxNote.style.display = 'block';
+          } else {
+            xlsxNote.style.display = 'none';
+          }
+        }
+      });
+      
+      // 全选页面 checkbox 事件
+      allPagesCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+          pageStartInput.disabled = true;
+          pageEndInput.disabled = true;
+        } else {
+          pageStartInput.disabled = false;
+          pageEndInput.disabled = false;
+        }
       });
       
       // 文件拖放功能
@@ -646,12 +913,17 @@
       function handleDrop(e) {
         const dt = e.dataTransfer;
         const files = dt.files;
-        handleFiles(files);
+        
+        if (files.length > 0) {
+          handlePdfFile(files[0]);
+        }
       }
       
       // 处理文件选择
       fileInput.addEventListener('change', function() {
-        handleFiles(this.files);
+        if (this.files.length > 0) {
+          handlePdfFile(this.files[0]);
+        }
       });
       
       // 点击上传区域触发文件选择
@@ -659,431 +931,963 @@
         fileInput.click();
       });
       
-      // 处理文件
-      function handleFiles(files) {
-        if (files.length === 0) return;
+      // 处理PDF文件
+      function handlePdfFile(file) {
+        // 检查文件类型
+        if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+          showNotification('请上传PDF格式的文件', true);
+          return;
+        }
         
-        // 清空上传文件数组
-        uploadedFiles = [];
+        // 检查文件大小 (50MB限制)
+        if (file.size > 50 * 1024 * 1024) {
+          showNotification('文件大小不能超过50MB', true);
+          return;
+        }
         
-        // 显示文件列表容器
-        fileListContainer.classList.remove('hidden');
+        pdfFile = file;
+        pdfFileName = file.name.replace('.pdf', '');
         
-        // 清空现有列表
-        fileList.innerHTML = '';
+        // 显示预览容器
+        previewContainer.classList.remove('hidden');
         
-        // 添加文件到列表
-        Array.from(files).forEach(file => {
-          // 只处理PDF文件
-          if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-            // 保存文件信息
-            uploadedFiles.push({
-              name: file.name,
-              size: file.size,
-              type: file.type
-            });
+        // 清空之前的预览
+        pdfPreview.innerHTML = '<div class="text-center py-8"><i class="fa fa-circle-o-notch fa-spin text-primary text-3xl mb-3"></i><p>正在加载PDF文件...</p></div>';
+        
+        // 读取并解析PDF
+        const fileReader = new FileReader();
+        
+        fileReader.onload = function() {
+          const typedArray = new Uint8Array(this.result);
+          
+          // 加载PDF文档
+          pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+            pdfDoc = pdf;
+            totalPagesIndicator.textContent = pdf.numPages;
             
-            const fileSize = (file.size / (1024 * 1024)).toFixed(2); // MB
-            const fileItem = document.createElement('div');
-            fileItem.className = 'py-3 flex justify-between items-center';
-            fileItem.innerHTML = `
-              <div class="flex items-center">
-                <i class="fa fa-file-pdf-o text-red-500 mr-3"></i>
-                <div>
-                  <p class="font-medium text-gray-800 truncate max-w-xs">${file.name}</p>
-                  <p class="text-sm text-gray-500">${fileSize} MB</p>
-                </div>
-              </div>
-              <button class="text-gray-400 hover:text-red-500 transition-custom remove-file" data-name="${file.name}">
-                <i class="fa fa-times"></i>
-              </button>
-            `;
-            fileList.appendChild(fileItem);
-          }
-        });
-        
-        // 添加删除文件事件
-        document.querySelectorAll('.remove-file').forEach(button => {
-          button.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const fileName = this.getAttribute('data-name');
-            // 从数组中移除
-            uploadedFiles = uploadedFiles.filter(file => file.name !== fileName);
-            // 从DOM中移除
-            this.closest('div.py-3').remove();
+            // 更新页面范围输入
+            pageStartInput.value = 1;
+            pageEndInput.value = pdf.numPages;
             
-            // 如果列表为空，隐藏容器
-            if (fileList.children.length === 0) {
-              fileListContainer.classList.add('hidden');
-            }
+            // 显示PDF预览
+            renderPdfPreview();
+            
+            showNotification(`已加载PDF文件，共 ${pdf.numPages} 页`);
+          }).catch(function(error) {
+            console.error('加载PDF时出错:', error);
+            pdfPreview.innerHTML = '<div class="text-center py-8 text-red-500"><i class="fa fa-exclamation-circle text-3xl mb-3"></i><p>加载PDF文件失败</p><p class="text-sm mt-2">请尝试其他PDF文件</p></div>';
+            showNotification('加载PDF文件失败: ' + error.message, true);
           });
-        });
+        };
+        
+        fileReader.readAsArrayBuffer(file);
       }
       
-      // 清空文件列表
-      clearFilesButton.addEventListener('click', function() {
-        fileList.innerHTML = '';
-        fileListContainer.classList.add('hidden');
-        uploadedFiles = [];
+      // 渲染PDF预览
+      function renderPdfPreview() {
+        if (!pdfDoc) return;
+        
+        pdfPreview.innerHTML = '';
+        
+        // 只渲染前3页以提高性能
+        const pagesToRender = Math.min(3, pdfDoc.numPages);
+        
+        for (let pageNum = 1; pageNum <= pagesToRender; pageNum++) {
+          pdfDoc.getPage(pageNum).then(function(page) {
+            const scale = 0.8;
+            const viewport = page.getViewport({ scale: scale });
+            
+            // 创建画布元素
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-page';
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // 将画布添加到预览区域
+            pdfPreview.appendChild(canvas);
+            
+            // 如果不是第一页，添加页分隔符
+            if (pageNum > 1) {
+              const separator = document.createElement('div');
+              separator.className = 'border-t border-gray-200 my-4';
+              pdfPreview.appendChild(separator);
+            }
+            
+            // 渲染页面
+            const renderContext = {
+              canvasContext: context,
+              viewport: viewport
+            };
+            
+            page.render(renderContext);
+          });
+        }
+        
+        // 如果页数超过3，添加提示
+        if (pdfDoc.numPages > 3) {
+          const morePages = document.createElement('div');
+          morePages.className = 'text-center py-4 text-gray-500 text-sm';
+          morePages.innerHTML = `<p>... 还有 ${pdfDoc.numPages - 3} 页未显示 ...</p>`;
+          pdfPreview.appendChild(morePages);
+        }
+      }
+      
+      // 清空文件
+      clearFileButton.addEventListener('click', function() {
+        pdfDoc = null;
+        pdfFile = null;
+        pdfFileName = '';
+        fileInput.value = '';
+        previewContainer.classList.add('hidden');
+        showNotification('已清除文件');
+      });
+      
+      // 浏览下载位置
+      browseLocationButton.addEventListener('click', function() {
+        // 浏览器限制，无法直接打开文件浏览器选择位置
+        // 这里提示用户在下载时选择位置
+        showNotification('在下载时，您可以通过浏览器对话框选择保存位置');
       });
       
       // 开始转换
       convertButton.addEventListener('click', function() {
-        // 隐藏文件列表，显示进度
-        fileListContainer.classList.add('hidden');
+        if (!pdfDoc || !pdfFile) {
+          showNotification('请先上传PDF文件', true);
+          return;
+        }
+        
+        // 获取转换选项
+        const outputFormatVal = outputFormat.value;
+        let startPage = 1;
+        let endPage = pdfDoc.numPages;
+        
+        if (!allPagesCheckbox.checked) {
+          startPage = parseInt(pageStartInput.value) || 1;
+          endPage = parseInt(pageEndInput.value) || pdfDoc.numPages;
+          
+          // 验证页面范围
+          if (startPage < 1 || startPage > pdfDoc.numPages) {
+            showNotification('起始页码无效', true);
+            return;
+          }
+          
+          if (endPage < startPage || endPage > pdfDoc.numPages) {
+            showNotification('结束页码无效', true);
+            return;
+          }
+        }
+        
+        // 隐藏预览，显示进度
+        previewContainer.classList.add('hidden');
         conversionProgress.classList.remove('hidden');
         
-        // 获取所有文件
-        const filesCount = uploadedFiles.length;
+        // 重置进度
+        overallProgressBar.style.width = '0%';
+        overallPercentageIndicator.textContent = '0%';
+        pageProgressBar.style.width = '0%';
+        pagePercentageIndicator.textContent = '0%';
+        currentPageIndicator.textContent = startPage;
+        totalPagesIndicator.textContent = endPage;
         
-        // 清空进度列表
-        progressItems.innerHTML = '';
+        // 清空之前的转换结果
+        conversionResults = [];
         
-        // 创建每个文件的进度条
-        uploadedFiles.forEach((file, index) => {
-          const progressItem = document.createElement('div');
-          progressItem.className = 'space-y-1';
-          progressItem.innerHTML = `
-            <div class="flex justify-between text-sm">
-              <span>${file.name}</span>
-              <span class="file-percentage-${index}">0%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="file-progress-${index} bg-secondary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-          `;
-          progressItems.appendChild(progressItem);
-        });
-        
-        // 模拟进度
-        simulateProgress(filesCount);
+        // 开始转换页面
+        convertPages(startPage, endPage, outputFormatVal);
       });
       
-      // 模拟转换进度
-      function simulateProgress(filesCount) {
-        let overallProgress = 0;
-        const progressPerFile = 100 / filesCount;
-        let currentFile = 0;
+      // 转换页面
+      function convertPages(startPage, endPage, format) {
+        const totalPages = endPage - startPage + 1;
+        let currentPage = startPage;
         
-        const interval = setInterval(() => {
-          if (currentFile < filesCount) {
-            // 更新当前文件的进度
-            const fileProgress = document.querySelector(`.file-progress-${currentFile}`);
-            const filePercentage = document.querySelector(`.file-percentage-${currentFile}`);
-            
-            let currentWidth = parseInt(fileProgress.style.width);
-            currentWidth += Math.random() * 10;
-            
-            if (currentWidth >= 100) {
-              currentWidth = 100;
-              currentFile++;
+        // 更新状态
+        updateConversionStatus(`准备转换页面 ${startPage}-${endPage} 为 ${format.toUpperCase()} 格式`);
+        
+        // 处理每一页
+        function processNextPage() {
+          if (currentPage > endPage) {
+            // 所有页面处理完成，准备下载
+            finishConversion();
+            return;
+          }
+          
+          // 更新进度
+          const overallProgress = ((currentPage - startPage) / totalPages) * 100;
+          updateOverallProgress(overallProgress);
+          currentPageIndicator.textContent = currentPage;
+          updateConversionStatus(`正在处理页面 ${currentPage}/${endPage}`);
+          
+          // 获取当前页
+          pdfDoc.getPage(currentPage).then(function(page) {
+            // 根据格式处理页面
+            if (['txt', 'html', 'docx', 'md', 'rtf', 'csv', 'xlsx', 'json', 'epub'].includes(format)) {
+              // 提取文本
+              page.getTextContent().then(function(textContent) {
+                // 处理文本
+                let content = '';
+                
+                // 合并文本片段
+                textContent.items.forEach(function(item) {
+                  content += item.str + ' ';
+                });
+                
+                // 按格式处理内容
+                let formattedContent = '';
+                switch(format) {
+                  case 'txt':
+                    formattedContent = processAsText(content, currentPage, totalPages);
+                    break;
+                  case 'html':
+                    formattedContent = processAsHtml(content, currentPage, totalPages);
+                    break;
+                  case 'docx':
+                    formattedContent = processAsDocx(content, currentPage, totalPages);
+                    break;
+                  case 'md':
+                    formattedContent = processAsMarkdown(content, currentPage, totalPages);
+                    break;
+                  case 'rtf':
+                    formattedContent = processAsRtf(content, currentPage, totalPages);
+                    break;
+                  case 'csv':
+                  case 'xlsx':
+                    formattedContent = processAsCsv(content, currentPage);
+                    break;
+                  case 'json':
+                    formattedContent = processAsJson(content, currentPage, page);
+                    break;
+                  case 'epub':
+                    formattedContent = processAsEpub(content, currentPage, totalPages);
+                    break;
+                }
+                
+                // 保存结果
+                conversionResults.push({
+                  page: currentPage,
+                  content: formattedContent,
+                  format: format
+                });
+                
+                // 更新页面进度
+                updatePageProgress(100);
+                
+                // 处理下一页
+                currentPage++;
+                setTimeout(processNextPage, 100); // 短暂延迟，避免UI阻塞
+              });
+            } else if (format === 'png' || format === 'jpg') {
+              // 转换为图片
+              const quality = document.querySelector('input[name="image-quality"]:checked').value;
+              let scale = 1.0;
+              
+              // 根据质量设置缩放
+              if (quality === 'low') scale = 0.5;
+              else if (quality === 'high') scale = 1.5;
+              
+              const viewport = page.getViewport({ scale: scale });
+              
+              // 创建画布
+              const canvas = document.createElement('canvas');
+              const context = canvas.getContext('2d');
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+              
+              // 渲染页面到画布
+              const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+              };
+              
+              // 渲染进度回调
+              const renderTask = page.render(renderContext);
+              
+              // 监听渲染进度
+              renderTask.onProgress = function(progressData) {
+                const pageProgress = progressData.loaded / progressData.total * 100;
+                updatePageProgress(pageProgress);
+              };
+              
+              // 渲染完成
+              renderTask.promise.then(function() {
+                // 根据格式转换为图片
+                const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
+                const quality = format === 'jpg' ? 0.9 : 1.0; // JPG质量
+                
+                canvas.toBlob(function(blob) {
+                  // 保存结果
+                  conversionResults.push({
+                    page: currentPage,
+                    blob: blob,
+                    format: format
+                  });
+                  
+                  // 处理下一页
+                  currentPage++;
+                  setTimeout(processNextPage, 100);
+                }, mimeType, quality);
+              });
             }
-            
-            fileProgress.style.width = `${currentWidth}%`;
-            filePercentage.textContent = `${Math.round(currentWidth)}%`;
-            
-            // 更新总体进度
-            overallProgress = (currentFile * progressPerFile) + (currentWidth / 100 * progressPerFile);
-            overallProgressBar.style.width = `${overallProgress}%`;
-            overallPercentage.textContent = `${Math.round(overallProgress)}%`;
+          }).catch(function(error) {
+            console.error('处理页面时出错:', error);
+            showNotification(`处理页面 ${currentPage} 时出错: ${error.message}`, true);
+            currentPage++;
+            setTimeout(processNextPage, 100);
+          });
+        }
+        
+        // 开始处理第一页
+        processNextPage();
+      }
+      
+      // 处理为纯文本
+      function processAsText(content, currentPage, totalPages) {
+        const preserveLayout = document.getElementById('preserve-layout').checked;
+        const includeImages = document.getElementById('include-images').checked;
+        
+        // 简单的文本清理
+        let text = content.replace(/\s+/g, ' ').trim();
+        
+        // 如果不保留布局，添加换行
+        if (!preserveLayout) {
+          // 简单的段落检测
+          text = text.replace(/(\.|\?|\!)\s+/g, '$1\n\n');
+        }
+        
+        // 添加页面信息
+        let result = `=== 页面 ${currentPage} ===\n\n`;
+        result += text;
+        
+        // 如果需要，添加图片占位符
+        if (includeImages) {
+          result += '\n\n[图片可能存在于此位置 - 文本转换不支持图片]';
+        }
+        
+        // 如果不是最后一页，添加分页符
+        if (currentPage < totalPages) {
+          result += '\n\n==================================================\n\n';
+        }
+        
+        return result;
+      }
+      
+      // 处理为HTML
+      function processAsHtml(content, currentPage, totalPages) {
+        const includeStyles = document.getElementById('include-styles').checked;
+        const inlineImages = document.getElementById('inline-images').checked;
+        
+        // 简单的HTML格式化
+        let bodyContent = `<h2>页面 ${currentPage}</h2>`;
+        
+        // 转换为段落
+        const paragraphs = content.replace(/(\.|\?|\!)\s+/g, '$1|').split('|');
+        paragraphs.forEach(paragraph => {
+          if (paragraph.trim()) {
+            bodyContent += `<p>${paragraph.trim()}</p>`;
+          }
+        });
+        
+        // 如果需要，添加图片占位符
+        if (inlineImages) {
+          bodyContent += '<p><em>[图片可能存在于此位置]</em></p>';
+        }
+        
+        // 页面分隔符
+        if (currentPage < totalPages) {
+          bodyContent += '<hr class="page-break">';
+        }
+        
+        // 完整的HTML
+        let html = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n';
+        html += '<meta charset="UTF-8">\n';
+        html += `<title>${pdfFileName} - 页面 ${currentPage}</title>\n`;
+        
+        // 添加样式
+        if (includeStyles) {
+          html += '<style>\n';
+          html += 'body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }\n';
+          html += 'h2 { color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 10px; }\n';
+          html += '.page-break { margin: 20px 0; border: none; border-top: 1px dashed #ccc; }\n';
+          html += '</style>\n';
+        }
+        
+        html += '</head>\n<body>\n';
+        html += bodyContent;
+        html += '\n</body>\n</html>';
+        
+        return html;
+      }
+      
+      // 处理为DOCX兼容格式（通过HTML）
+      function processAsDocx(content, currentPage, totalPages) {
+        const includeStyles = document.getElementById('docx-styles').checked;
+        const autoHeadings = document.getElementById('docx-headings').checked;
+        
+        // 简单的HTML格式化（Word可识别）
+        let bodyContent = '';
+        
+        // 尝试识别标题
+        if (autoHeadings) {
+          // 简单的标题识别逻辑
+          if (content.length < 100) {
+            bodyContent += `<h1>页面 ${currentPage}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}</h1>`;
           } else {
-            // 所有文件转换完成
-            clearInterval(interval);
-            overallProgressBar.style.width = '100%';
-            overallPercentage.textContent = '100%';
-            
-            // 显示准备下载界面
-            setTimeout(() => {
-              conversionProgress.classList.add('hidden');
-              preparingDownload.classList.remove('hidden');
-              simulatePreparingDownload();
-            }, 1000);
+            bodyContent += `<h2>页面 ${currentPage}</h2>`;
           }
-        }, 300);
+        } else {
+          bodyContent += `<h2>页面 ${currentPage}</h2>`;
+        }
+        
+        // 转换为段落
+        const paragraphs = content.replace(/(\.|\?|\!)\s+/g, '$1|').split('|');
+        paragraphs.forEach(paragraph => {
+          if (paragraph.trim()) {
+            bodyContent += `<p>${paragraph.trim()}</p>`;
+          }
+        });
+        
+        // 添加图片占位符
+        bodyContent += '<p><em>[图片可能存在于此位置]</em></p>';
+        
+        // 页面分隔符
+        if (currentPage < totalPages) {
+          bodyContent += '<p style="page-break-after: always;"></p>';
+        }
+        
+        // 完整的HTML（Word可打开并保存为DOCX）
+        let html = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n';
+        html += '<meta charset="UTF-8">\n';
+        html += `<title>${pdfFileName}</title>\n`;
+        
+        // 添加样式
+        if (includeStyles) {
+          html += '<style>\n';
+          html += 'body { font-family: "SimSun", "宋体", serif; line-height: 1.5; }\n';
+          html += 'h1 { color: #000; font-size: 18pt; }\n';
+          html += 'h2 { color: #000; font-size: 16pt; }\n';
+          html += 'p { font-size: 12pt; margin: 0.5em 0; }\n';
+          html += '</style>\n';
+        }
+        
+        html += '</head>\n<body>\n';
+        html += bodyContent;
+        html += '\n</body>\n</html>';
+        
+        return html;
       }
       
-      // 模拟准备下载过程
-      function simulatePreparingDownload() {
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 5;
-          preparingProgress.style.width = `${progress}%`;
-          
-          if (progress >= 100) {
-            clearInterval(interval);
-            // 准备完成，显示下载界面
-            setTimeout(() => {
-              preparingDownload.classList.add('hidden');
-              showConversionComplete();
-            }, 800);
+      // 处理为Markdown
+      function processAsMarkdown(content, currentPage, totalPages) {
+        // 简单的Markdown格式化
+        let markdown = `## 页面 ${currentPage}\n\n`;
+        
+        // 转换为段落
+        const paragraphs = content.replace(/(\.|\?|\!)\s+/g, '$1|').split('|');
+        paragraphs.forEach(paragraph => {
+          if (paragraph.trim()) {
+            markdown += `${paragraph.trim()}\n\n`;
           }
-        }, 100);
+        });
+        
+        // 添加图片占位符
+        markdown += '![图片可能存在于此位置](image-placeholder.png)\n\n';
+        
+        // 如果不是最后一页，添加分页符
+        if (currentPage < totalPages) {
+          markdown += '---\n\n';
+        }
+        
+        return markdown;
       }
       
-      // 显示转换完成界面
-      function showConversionComplete() {
-        conversionComplete.classList.remove('hidden');
+      // 处理为RTF
+      function processAsRtf(content, currentPage, totalPages) {
+        // RTF格式
+        let rtf = '{\\rtf1\\ansi\\deff0\n';
+        rtf += '{\\fonttbl{\\f0 SimSun;}{\\f1 Arial;}}\n';
+        rtf += '{\\colortbl;\\red0\\green0\\blue0;\\red0\\green0\\blue255;}\n';
         
-        // 重置所有状态提示
-        downloadStatus.classList.add('hidden');
-        downloadSuccess.classList.add('hidden');
-        downloadError.classList.add('hidden');
+        // 页面标题
+        rtf += `\\f0\\fs24\\b 页面 ${currentPage}\\b0\\par\n`;
+        rtf += '\\fs20\\par\n';
         
-        // 清空完成文件列表
-        completedFiles.innerHTML = '';
+        // 内容
+        rtf += content.replace(/\n/g, '\\par\n');
+        rtf += '\\par\n';
         
-        // 获取输出格式
-        const outputFormatVal = outputFormat.value;
-        const outputFormatText = outputFormat.options[outputFormat.selectedIndex].text.toUpperCase();
+        // 图片占位符
+        rtf += '\\fs16\\i [图片可能存在于此位置]\\i0\\par\n';
         
-        // 添加完成的文件
-        uploadedFiles.forEach(file => {
-          const fileName = file.name;
-          const newFileName = fileName.replace('.pdf', `.${outputFormatVal}`);
-          const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+        // 分页符（如果不是最后一页）
+        if (currentPage < totalPages) {
+          rtf += '\\page\n';
+        }
+        
+        rtf += '}';
+        
+        return rtf;
+      }
+      
+      // 处理为CSV
+      function processAsCsv(content, currentPage) {
+        // 确定分隔符
+        const delimiter = document.querySelector('input[name="csv-delimiter"]:checked').value === 'comma' ? ',' : ';';
+        const includeHeader = document.getElementById('csv-header').checked;
+        
+        // 提取句子作为CSV行
+        const sentences = content.replace(/(\.|\?|\!)\s+/g, '$1|').split('|').filter(s => s.trim());
+        
+        let csv = '';
+        if (includeHeader) {
+          csv += `页码${delimiter}内容\n`;
+        }
+        
+        // 添加内容行
+        csv += `${currentPage}${delimiter}"${escapeCsv(sentences[0] ? sentences[0].substring(0, 200) : '')}"\n`;
+        
+        // 添加最多4行额外内容
+        for (let i = 1; i < Math.min(5, sentences.length); i++) {
+          csv += `${delimiter}"${escapeCsv(sentences[i].substring(0, 200))}"\n`;
+        }
+        
+        return csv;
+      }
+      
+      // CSV转义函数
+      function escapeCsv(value) {
+        if (!value) return '';
+        // 替换双引号
+        let escaped = value.replace(/"/g, '""');
+        // 如果包含分隔符或换行符，需要用引号括起来
+        if (escaped.includes(',') || escaped.includes(';') || escaped.includes('\n') || escaped.includes('\r')) {
+          escaped = `"${escaped}"`;
+        }
+        return escaped;
+      }
+      
+      // 处理为JSON
+      function processAsJson(content, currentPage, page) {
+        const prettyPrint = document.getElementById('json-pretty').checked;
+        const includeMetadata = document.getElementById('json-metadata').checked;
+        
+        // 提取文本片段
+        const textItems = [];
+        const paragraphs = content.replace(/(\.|\?|\!)\s+/g, '$1|').split('|');
+        paragraphs.forEach((paragraph, index) => {
+          if (paragraph.trim()) {
+            textItems.push({
+              id: index + 1,
+              content: paragraph.trim(),
+              length: paragraph.length
+            });
+          }
+        });
+        
+        // 构建JSON数据
+        const jsonData = {
+          page: currentPage,
+          content: content.trim(),
+          content_length: content.length,
+          paragraphs: textItems,
+          paragraph_count: textItems.length
+        };
+        
+        // 添加元数据
+        if (includeMetadata && page) {
+          jsonData.metadata = {
+            width: page.view[2],
+            height: page.view[3],
+            rotation: page.rotate
+          };
+        }
+        
+        // 格式化输出
+        return prettyPrint ? JSON.stringify(jsonData, null, 2) : JSON.stringify(jsonData);
+      }
+      
+      // 处理为EPUB
+      function processAsEpub(content, currentPage, totalPages) {
+        const includeToc = document.getElementById('epub-toc').checked;
+        const includeStyles = document.getElementById('epub-styles').checked;
+        
+        // EPUB内容是XHTML格式
+        let xhtml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xhtml += '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n';
+        xhtml += '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="zh-CN">\n';
+        xhtml += '<head>\n';
+        xhtml += `<title>${pdfFileName} - 页面 ${currentPage}</title>\n`;
+        
+        // 添加样式
+        if (includeStyles) {
+          xhtml += '<style type="text/css">\n';
+          xhtml += 'body { font-family: "SimSun", "Arial", sans-serif; line-height: 1.6; margin: 1em; }\n';
+          xhtml += 'h1 { color: #333; border-bottom: 1px solid #ccc; padding-bottom: 0.3em; }\n';
+          xhtml += 'p { margin: 0.8em 0; }\n';
+          xhtml += '</style>\n';
+        }
+        
+        xhtml += '</head>\n<body>\n';
+        
+        // 页面标题
+        xhtml += `<h1>页面 ${currentPage}</h1>\n`;
+        
+        // 转换为段落
+        const paragraphs = content.replace(/(\.|\?|\!)\s+/g, '$1|').split('|');
+        paragraphs.forEach(paragraph => {
+          if (paragraph.trim()) {
+            xhtml += `<p>${paragraph.trim()}</p>\n`;
+          }
+        });
+        
+        // 添加图片占位符
+        xhtml += '<p><em>[图片可能存在于此位置]</em></p>\n';
+        
+        xhtml += '</body>\n</html>';
+        
+        return xhtml;
+      }
+      
+      // 更新页面进度
+      function updatePageProgress(progress) {
+        const roundedProgress = Math.round(progress);
+        pageProgressBar.style.width = `${roundedProgress}%`;
+        pagePercentageIndicator.textContent = `${roundedProgress}%`;
+      }
+      
+      // 更新总体进度
+      function updateOverallProgress(progress) {
+        const roundedProgress = Math.round(progress);
+        overallProgressBar.style.width = `${roundedProgress}%`;
+        overallPercentageIndicator.textContent = `${roundedProgress}%`;
+      }
+      
+      // 更新转换状态文本
+      function updateConversionStatus(text) {
+        conversionStatus.textContent = text;
+      }
+      
+      // 完成转换
+      function finishConversion() {
+        // 更新进度为100%
+        updateOverallProgress(100);
+        updateConversionStatus('转换完成，准备下载...');
+        
+        // 显示完成界面
+        setTimeout(() => {
+          conversionProgress.classList.add('hidden');
+          displayConversionResults();
+          conversionComplete.classList.remove('hidden');
+        }, 800);
+      }
+      
+      // 显示转换结果
+      function displayConversionResults() {
+        if (conversionResults.length === 0) return;
+        
+        const format = conversionResults[0].format;
+        const formatExtensions = {
+          'txt': 'txt',
+          'html': 'html',
+          'docx': 'html',  // DOCX通过HTML间接支持
+          'md': 'md',
+          'rtf': 'rtf',
+          'csv': 'csv',
+          'xlsx': 'csv',   // XLSX通过CSV间接支持
+          'json': 'json',
+          'epub': 'xhtml', // EPUB使用XHTML格式
+          'png': 'png',
+          'jpg': 'jpg'
+        };
+        
+        const formatDisplayNames = {
+          'txt': '文本',
+          'html': 'HTML',
+          'docx': 'Word文档',
+          'md': 'Markdown',
+          'rtf': 'RTF',
+          'csv': 'CSV',
+          'xlsx': 'Excel表格',
+          'json': 'JSON数据',
+          'epub': 'EPUB电子书',
+          'png': 'PNG图像',
+          'jpg': 'JPG图像'
+        };
+        
+        const extension = formatExtensions[format] || 'txt';
+        const formatName = formatDisplayNames[format] || format.toUpperCase();
+        
+        // 清空结果容器
+        resultFilesContainer.innerHTML = '';
+        
+        // 添加单个文件
+        conversionResults.forEach(result => {
+          const fileName = `${pdfFileName}_page${result.page}.${extension}`;
           
-          const completedItem = document.createElement('div');
-          completedItem.className = 'py-3 flex justify-between items-center';
-          completedItem.innerHTML = `
+          const fileItem = document.createElement('div');
+          fileItem.className = 'flex justify-between items-center p-2 hover:bg-gray-100 rounded';
+          
+          let fileIcon = 'fa-file-text-o';
+          if (format === 'html' || format === 'docx') fileIcon = 'fa-file-code-o';
+          else if (format === 'md') fileIcon = 'fa-file-markdown-o';
+          else if (format === 'csv' || format === 'xlsx') fileIcon = 'fa-file-excel-o';
+          else if (format === 'json') fileIcon = 'fa-file-code-o';
+          else if (format === 'epub') fileIcon = 'fa-file-book-o';
+          else if (format === 'png' || format === 'jpg') fileIcon = 'fa-file-image-o';
+          else if (format === 'rtf') fileIcon = 'fa-file-text-o';
+          
+          fileItem.innerHTML = `
             <div class="flex items-center">
-              <i class="fa fa-file-text-o text-green-500 mr-3"></i>
+              <i class="fa ${fileIcon} text-primary mr-3"></i>
               <div>
-                <p class="font-medium text-gray-800 truncate max-w-xs">${newFileName}</p>
-                <p class="text-sm text-gray-500">${fileSize} MB · 转换为 ${outputFormatText}</p>
+                <p class="font-medium text-gray-800 truncate">${fileName}</p>
+                <p class="text-xs text-gray-500">页面 ${result.page} · ${formatName}</p>
               </div>
             </div>
-            <button class="px-3 py-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-custom text-sm download-single" data-file="${newFileName}">
+            <button class="px-3 py-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-custom text-sm download-single" 
+                    data-page="${result.page}">
               <i class="fa fa-download mr-1"></i>下载
             </button>
           `;
-          completedFiles.appendChild(completedItem);
+          
+          resultFilesContainer.appendChild(fileItem);
         });
         
-        // 为单个文件下载按钮添加事件
+        // 添加格式说明（如需要）
+        if (format === 'docx' || format === 'xlsx') {
+          const noteItem = document.createElement('div');
+          noteItem.className = 'mt-3 p-3 bg-amber-50 rounded text-amber-700 text-sm';
+          
+          if (format === 'docx') {
+            noteItem.innerHTML = `
+              <i class="fa fa-info-circle mr-1"></i> 
+              生成的文件为HTML格式，可直接用Microsoft Word打开，然后通过"另存为"功能保存为DOCX格式。
+            `;
+          } else if (format === 'xlsx') {
+            noteItem.innerHTML = `
+              <i class="fa fa-info-circle mr-1"></i> 
+              生成的文件为CSV格式，可直接用Microsoft Excel打开，然后通过"另存为"功能保存为XLSX格式。
+            `;
+          }
+          
+          resultFilesContainer.appendChild(noteItem);
+        }
+        
+        // 添加打包下载选项（如果多页且不是图片格式）
+        if (conversionResults.length > 1 && !['png', 'jpg'].includes(format)) {
+          const zipItem = document.createElement('div');
+          zipItem.className = 'mt-4 pt-4 border-t border-gray-200 flex justify-between items-center';
+          
+          let zipFileName = `${pdfFileName}_all_pages.zip`;
+          if (format === 'epub') {
+            zipFileName = `${pdfFileName}.epub`;
+          }
+          
+          zipItem.innerHTML = `
+            <div class="flex items-center">
+              <i class="fa fa-file-zip-o text-primary mr-3"></i>
+              <div>
+                <p class="font-medium text-gray-800">${zipFileName}</p>
+                <p class="text-xs text-gray-500">包含所有 ${conversionResults.length} 页的压缩包</p>
+              </div>
+            </div>
+            <button class="px-3 py-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-custom text-sm" id="download-zip">
+              <i class="fa fa-download mr-1"></i>下载ZIP
+            </button>
+          `;
+          
+          resultFilesContainer.appendChild(zipItem);
+          
+          // 添加ZIP下载事件
+          document.getElementById('download-zip').addEventListener('click', downloadAsZip);
+        }
+        
+        // 添加单个文件下载事件
         document.querySelectorAll('.download-single').forEach(button => {
           button.addEventListener('click', function() {
-            const fileName = this.getAttribute('data-file');
-            downloadSingleFile(fileName);
+            const page = parseInt(this.getAttribute('data-page'));
+            const result = conversionResults.find(r => r.page === page);
+            
+            if (result) {
+              downloadSingleResult(result);
+            }
           });
         });
       }
       
-      // 生成不同格式的示例文件内容
-      function generateFileContent(fileName) {
-        const extension = fileName.split('.').pop().toLowerCase();
+      // 下载单个转换结果
+      function downloadSingleResult(result) {
+        const format = result.format;
+        const formatExtensions = {
+          'txt': 'txt',
+          'html': 'html',
+          'docx': 'html',
+          'md': 'md',
+          'rtf': 'rtf',
+          'csv': 'csv',
+          'xlsx': 'csv',
+          'json': 'json',
+          'epub': 'xhtml',
+          'png': 'png',
+          'jpg': 'jpg'
+        };
         
-        // 根据文件格式生成不同内容
-        switch(extension) {
-          case 'doc':
-          case 'docx':
-            return `这是从PDF转换的Word文档: ${fileName}\n\n转换内容示例：\n- 这是一个段落示例\n- 这是列表项1\n- 这是列表项2`;
-            
-          case 'xls':
-          case 'xlsx':
-            // CSV格式可以被Excel打开，模拟Excel文件
-            return '姓名,年龄,职业\n张三,30,工程师\n李四,25,设计师\n王五,35,产品经理';
-            
-          case 'ppt':
-          case 'pptx':
-            return `这是从PDF转换的PowerPoint文档: ${fileName}\n\n幻灯片1: 标题页\n幻灯片2: 内容页 - 要点1\n幻灯片3: 内容页 - 要点2`;
-            
-          case 'html':
-            return `<!DOCTYPE html>
-<html>
-<head>
-  <title>转换的HTML文件</title>
-</head>
-<body>
-  <h1>这是从PDF转换的HTML文档: ${fileName}</h1>
-  <p>这是一个段落示例</p>
-  <ul>
-    <li>列表项1</li>
-    <li>列表项2</li>
-  </ul>
-</body>
-</html>`;
-            
-          case 'txt':
-            return `这是从PDF转换的文本文件: ${fileName}\n\n这是一段示例文本内容。\n这是第二行文本。`;
-            
-          case 'png':
-          case 'jpg':
-            // 对于图片格式，使用一个示例图片URL
-            return 'https://picsum.photos/800/600';
-            
-          default:
-            return `这是转换后的文件: ${fileName}\n\n示例内容`;
-        }
-      }
-      
-      // 获取文件MIME类型
-      function getFileMimeType(extension) {
-        const mimeTypes = {
-          'doc': 'application/msword',
-          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'xls': 'application/vnd.ms-excel',
-          'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'ppt': 'application/vnd.ms-powerpoint',
-          'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-          'html': 'text/html',
+        const formatMimeTypes = {
           'txt': 'text/plain',
+          'html': 'text/html',
+          'docx': 'text/html',
+          'md': 'text/markdown',
+          'rtf': 'application/rtf',
+          'csv': 'text/csv',
+          'xlsx': 'text/csv',
+          'json': 'application/json',
+          'epub': 'application/xhtml+xml',
           'png': 'image/png',
           'jpg': 'image/jpeg'
         };
         
-        return mimeTypes[extension] || 'application/octet-stream';
-      }
-      
-      // 下载单个文件
-      function downloadSingleFile(fileName) {
-        // 显示下载状态
-        downloadStatusText.textContent = `正在下载 ${fileName}...`;
-        downloadStatus.classList.remove('hidden');
-        downloadSuccess.classList.add('hidden');
-        downloadError.classList.add('hidden');
+        const extension = formatExtensions[format] || 'txt';
+        const mimeType = formatMimeTypes[format] || 'text/plain';
+        const fileName = `${pdfFileName}_page${result.page}.${extension}`;
         
-        // 模拟文件下载过程
-        setTimeout(() => {
-          // 提高成功率到95%
-          const success = Math.random() > 0.05;
-          
-          if (success) {
-            // 生成文件内容并下载
-            const extension = fileName.split('.').pop().toLowerCase();
-            const content = generateFileContent(fileName);
-            const mimeType = getFileMimeType(extension);
-            
-            try {
-              if (extension === 'png' || extension === 'jpg') {
-                // 对于图片，创建一个img标签并下载
-                const link = document.createElement('a');
-                link.href = content; // 这里content是图片URL
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              } else {
-                // 对于其他文件类型，使用Blob
-                const blob = new Blob([content], { type: mimeType });
-                const url = URL.createObjectURL(blob);
-                
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // 释放URL对象
-                URL.revokeObjectURL(url);
-              }
-              
-              // 显示成功消息
-              downloadStatus.classList.add('hidden');
-              downloadSuccessText.textContent = `${fileName} 已成功下载到 ${downloadLocation.textContent}`;
-              downloadSuccess.classList.remove('hidden');
-              
-              // 5秒后隐藏成功状态
-              setTimeout(() => {
-                downloadSuccess.classList.add('hidden');
-              }, 5000);
-            } catch (error) {
-              console.error('下载失败:', error);
-              showDownloadError(`下载 ${fileName} 时发生错误: ${error.message}`);
-            }
-          } else {
-            showDownloadError(`无法下载 ${fileName}，请尝试解决方案`);
+        try {
+          if (['png', 'jpg'].includes(format) && result.blob) {
+            // 下载图片
+            saveAs(result.blob, fileName);
+          } else if (result.content) {
+            // 下载文本内容
+            const blob = new Blob([result.content], { type: mimeType });
+            saveAs(blob, fileName);
           }
-        }, 1500);
+          
+          showNotification(`正在下载: ${fileName}`);
+        } catch (error) {
+          console.error('下载失败:', error);
+          showNotification(`下载失败: ${error.message}`, true);
+        }
       }
       
-      // 显示下载错误
-      function showDownloadError(message) {
-        downloadStatus.classList.add('hidden');
-        downloadErrorText.textContent = message;
-        downloadError.classList.remove('hidden');
+      // 下载所有文件为ZIP
+      function downloadAsZip() {
+        if (conversionResults.length === 0) return;
+        
+        const format = conversionResults[0].format;
+        const formatExtensions = {
+          'txt': 'txt',
+          'html': 'html',
+          'docx': 'html',
+          'md': 'md',
+          'rtf': 'rtf',
+          'csv': 'csv',
+          'xlsx': 'csv',
+          'xlsx': 'csv',
+          'json': 'json',
+          'epub': 'xhtml'
+        };
+        
+        const extension = formatExtensions[format] || 'txt';
+        const zip = new JSZip();
+        
+        // 对于EPUB格式，创建基本的EPUB目录结构
+        if (format === 'epub') {
+          // 添加META-INF目录和container.xml
+          zip.folder('META-INF').file('container.xml', `<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`);
+          
+          // 创建OEBPS目录
+          const oebps = zip.folder('OEBPS');
+          
+          // 添加内容文件
+          conversionResults.forEach((result, index) => {
+            const fileName = `page${result.page}.${extension}`;
+            oebps.file(fileName, result.content);
+          });
+          
+          // 创建内容清单
+          const manifestItems = conversionResults.map((result, index) => {
+            const fileName = `page${result.page}.${extension}`;
+            return `<item id="page${result.page}" href="${fileName}" media-type="application/xhtml+xml"/>`;
+          }).join('\n    ');
+          
+          const spineItems = conversionResults.map(result => {
+            return `<itemref idref="page${result.page}"/>`;
+          }).join('\n    ');
+          
+          // 添加content.opf
+          oebps.file('content.opf', `<?xml version="1.0" encoding="UTF-8"?>
+<package version="2.0" unique-identifier="pub-id" xmlns="http://www.idpf.org/2007/opf">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>${pdfFileName}</dc:title>
+    <dc:language>zh-CN</dc:language>
+    <dc:identifier id="pub-id">urn:uuid:${generateUUID()}</dc:identifier>
+  </metadata>
+  <manifest>
+    ${manifestItems}
+  </manifest>
+  <spine>
+    ${spineItems}
+  </spine>
+</package>`);
+        } else {
+          // 普通ZIP打包
+          conversionResults.forEach(result => {
+            const fileName = `page${result.page}.${extension}`;
+            zip.file(fileName, result.content);
+          });
+        }
+        
+        // 生成ZIP文件并下载
+        updateConversionStatus('正在生成ZIP文件...');
+        
+        const zipFileName = format === 'epub' ? `${pdfFileName}.epub` : `${pdfFileName}_all_pages.zip`;
+        const mimeType = format === 'epub' ? 'application/epub+zip' : 'application/zip';
+        
+        zip.generateAsync({ type: "blob", mimeType: mimeType }, function updateCallback(metadata) {
+          const progress = Math.round(metadata.percent);
+          updatePageProgress(progress);
+          updateConversionStatus(`正在生成ZIP文件: ${progress}%`);
+        }).then(function(content) {
+          saveAs(content, zipFileName);
+          showNotification(`正在下载: ${zipFileName}`);
+        }).catch(function(error) {
+          console.error('生成ZIP失败:', error);
+          showNotification(`生成ZIP失败: ${error.message}`, true);
+        });
+      }
+      
+      // 生成UUID用于EPUB
+      function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
       }
       
       // 下载所有文件
       downloadAllBtn.addEventListener('click', function() {
-        const fileCount = uploadedFiles.length;
-        const downloadMethod = document.querySelector('input[name="download-method"]:checked').value;
-        const methodText = downloadMethod === 'zip' ? 'ZIP压缩包' : '多个文件';
-        
-        // 显示下载状态
-        downloadStatusText.textContent = `正在准备下载 ${methodText} (共 ${fileCount} 个文件)...`;
-        downloadStatus.classList.remove('hidden');
-        downloadSuccess.classList.add('hidden');
-        downloadError.classList.add('hidden');
-        
-        // 模拟文件下载过程
-        setTimeout(() => {
-          // 提高成功率到95%
-          const success = Math.random() > 0.05;
-          
-          if (success) {
-            downloadStatus.classList.add('hidden');
-            
-            if (downloadMethod === 'zip') {
-              // 模拟ZIP下载
-              const zipFileName = 'converted_files.zip';
-              
-              // 创建一个简单的ZIP文件内容（实际应用中需要使用JSZip等库）
-              const zipContent = `ZIP文件包含以下转换后的文件:\n${uploadedFiles.map(file => {
-                const outputFormatVal = outputFormat.value;
-                return `- ${file.name.replace('.pdf', `.${outputFormatVal}`)}`;
-              }).join('\n')}`;
-              
-              const blob = new Blob([zipContent], { type: 'application/zip' });
-              const url = URL.createObjectURL(blob);
-              
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = zipFileName;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              
-              // 释放URL对象
-              URL.revokeObjectURL(url);
-              
-              downloadSuccessText.textContent = `ZIP压缩包已成功下载到 ${downloadLocation.textContent}`;
-            } else {
-              // 下载所有单个文件
-              const outputFormatVal = outputFormat.value;
-              uploadedFiles.forEach((file, index) => {
-                setTimeout(() => {
-                  const newFileName = file.name.replace('.pdf', `.${outputFormatVal}`);
-                  downloadSingleFile(newFileName);
-                }, index * 800); // 每个文件间隔0.8秒下载，避免浏览器限制
-              });
-              
-              downloadSuccessText.textContent = `所有文件已开始下载到 ${downloadLocation.textContent}`;
-            }
-            
-            downloadSuccess.classList.remove('hidden');
-            
-            // 5秒后隐藏成功状态
-            setTimeout(() => {
-              downloadSuccess.classList.add('hidden');
-            }, 5000);
+        if (conversionResults.length === 1) {
+          // 单个文件直接下载
+          downloadSingleResult(conversionResults[0]);
+        } else if (conversionResults.length > 1) {
+          // 多个文件打包下载
+          if (['png', 'jpg'].includes(conversionResults[0].format)) {
+            // 图片格式不支持ZIP（实际可以支持，这里简化处理）
+            showNotification('图片格式请单独下载', true);
           } else {
-            showDownloadError(`无法下载 ${methodText}，请尝试解决方案`);
+            downloadAsZip();
           }
-        }, 2000);
-      });
-      
-      // 重试下载
-      retryDownload.addEventListener('click', function() {
-        downloadError.classList.add('hidden');
-        downloadAllBtn.click();
+        }
       });
       
       // 新的转换
       newConversionButton.addEventListener('click', function() {
         conversionComplete.classList.add('hidden');
-        preparingDownload.classList.add('hidden');
-        fileListContainer.classList.remove('hidden');
+        previewContainer.classList.remove('hidden');
       });
       
       // 平滑滚动
