@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF转换工具 - 高效转换多种格式</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- Tailwind配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            secondary: '#10B981',
+            accent: '#8B5CF6',
+            warning: '#F59E0B',
+            danger: '#EF4444',
+            dark: '#1E293B',
+            light: '#F8FAFC'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .transition-custom {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .shadow-custom {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+      }
+    }
+  </style>
+  
+  <style>
+    /* 基础动画定义 */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .animate-fadeIn {
+      animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .animate-pulse-slow {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    .file-drop-active {
+      border-color: #3B82F6 !important;
+      background-color: rgba(59, 130, 246, 0.05) !important;
+    }
+    
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+
+<body class="font-inter bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300" id="navbar">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-file-pdf-o text-primary text-2xl"></i>
+        <h1 class="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">PDF转换工具</h1>
+      </div>
+      
+      <nav class="hidden md:flex items-center space-x-6">
+        <a href="#" class="font-medium text-primary hover:text-primary/80 transition-custom">首页</a>
+        <a href="#formats" class="font-medium text-gray-600 hover:text-primary transition-custom">支持格式</a>
+        <a href="#download-help" class="font-medium text-gray-600 hover:text-primary transition-custom">下载帮助</a>
+      </nav>
+      
+      <div class="flex items-center">
+        <button class="md:hidden text-gray-600" id="mobile-menu-button">
+          <i class="fa fa-bars text-xl"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 移动端菜单 -->
+    <div class="md:hidden hidden bg-white border-t" id="mobile-menu">
+      <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+        <a href="#" class="py-2 font-medium text-primary">首页</a>
+        <a href="#formats" class="py-2 font-medium text-gray-600 hover:text-primary transition-custom">支持格式</a>
+        <a href="#download-help" class="py-2 font-medium text-gray-600 hover:text-primary transition-custom">下载帮助</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow">
+    <!-- 英雄区域 -->
+    <section class="py-10 md:py-16 bg-gradient-to-b from-blue-50 to-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-3xl mx-auto text-center mb-8 animate-fadeIn" style="animation-delay: 0.1s">
+          <h2 class="text-[clamp(1.8rem,4vw,3rem)] font-bold leading-tight mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            高效PDF格式转换工具
+          </h2>
+          <p class="text-lg md:text-xl text-gray-600">
+            支持拖放上传或选择文件夹，快速将PDF转换为多种常用格式
+          </p>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 转换区域 -->
+    <section class="py-10 bg-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-5xl mx-auto">
+          <!-- 转换选项 -->
+          <div class="bg-white rounded-xl shadow-custom p-6 mb-6 animate-fadeIn" style="animation-delay: 0.2s">
+            <div class="flex flex-col md:flex-row gap-6">
+              <!-- 输入格式 -->
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-2">输入格式</label>
+                <div class="relative">
+                  <select class="block w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary appearance-none transition-custom bg-gray-50">
+                    <option value="pdf" selected>PDF</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <i class="fa fa-chevron-down text-sm"></i>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 转换图标 -->
+              <div class="flex items-center justify-center">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <i class="fa fa-exchange"></i>
+                </div>
+              </div>
+              
+              <!-- 输出格式 -->
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-2">输出格式</label>
+                <div class="relative">
+                  <select class="block w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary appearance-none transition-custom bg-gray-50" id="output-format">
+                    <option value="doc">DOC</option>
+                    <option value="docx" selected>DOCX</option>
+                    <option value="xls">XLS</option>
+                    <option value="xlsx">XLSX</option>
+                    <option value="ppt">PPT</option>
+                    <option value="pptx">PPTX</option>
+                    <option value="html">HTML</option>
+                    <option value="txt">TXT</option>
+                    <option value="png">PNG</option>
+                    <option value="jpg">JPG</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <i class="fa fa-chevron-down text-sm"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 文件上传区域 -->
+          <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-custom cursor-pointer mb-6 animate-fadeIn" style="animation-delay: 0.3s" id="file-drop-area">
+            <div class="max-w-md mx-auto">
+              <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <i class="fa fa-cloud-upload text-2xl"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-2">拖放文件到此处</h3>
+              <p class="text-gray-600 mb-6">或者点击选择文件上传</p>
+              
+              <label class="inline-block px-6 py-3 bg-primary text-white rounded-lg shadow-md hover:shadow-lg hover:bg-primary/90 transition-custom font-medium cursor-pointer">
+                <i class="fa fa-folder-open mr-2"></i>选择PDF文件
+                <input type="file" id="file-input" class="hidden" multiple accept=".pdf" />
+              </label>
+              
+              <p class="text-xs text-gray-500 mt-4">支持 PDF 格式文件，单个文件最大 100MB</p>
+            </div>
+          </div>
+          
+          <!-- 上传文件列表 -->
+          <div class="hidden bg-white rounded-xl shadow-custom p-6 mb-6 animate-fadeIn" id="file-list-container">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">待转换文件</h3>
+              <button class="text-gray-500 hover:text-red-500 transition-custom" id="clear-files">
+                <i class="fa fa-trash mr-1"></i>清空列表
+              </button>
+            </div>
+            
+            <div class="divide-y divide-gray-100 max-h-64 overflow-y-auto" id="file-list">
+              <!-- 文件列表将通过JavaScript动态添加 -->
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+              <button class="px-6 py-3 bg-secondary text-white rounded-lg shadow-md hover:shadow-lg hover:bg-secondary/90 transition-custom font-medium flex items-center" id="convert-button">
+                <i class="fa fa-cog mr-2"></i>开始转换
+              </button>
+            </div>
+          </div>
+          
+          <!-- 转换进度 -->
+          <div class="hidden bg-white rounded-xl shadow-custom p-6 animate-fadeIn" id="conversion-progress">
+            <h3 class="text-lg font-semibold mb-4">转换中...</h3>
+            
+            <div class="space-y-4">
+              <div id="progress-items">
+                <!-- 进度条将通过JavaScript动态添加 -->
+              </div>
+              
+              <div class="pt-2">
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>总体进度</span>
+                  <span id="overall-percentage">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div id="overall-progress-bar" class="bg-secondary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 转换完成 - 准备下载 -->
+          <div class="hidden bg-white rounded-xl shadow-custom p-6 animate-fadeIn" id="preparing-download">
+            <div class="text-center mb-6">
+              <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center text-primary animate-spin">
+                <i class="fa fa-circle-o-notch text-2xl"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-2">正在准备下载文件...</h3>
+              <p class="text-gray-600">请稍候，我们正在处理您的文件以确保可以正常下载</p>
+            </div>
+            
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+              <div id="preparing-progress" class="bg-primary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p class="text-xs text-gray-500 text-right">文件准备中，请不要关闭此页面</p>
+          </div>
+          
+          <!-- 转换完成 -->
+          <div class="hidden bg-white rounded-xl shadow-custom p-6 animate-fadeIn" id="conversion-complete">
+            <div class="text-center mb-6">
+              <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center text-green-500">
+                <i class="fa fa-check text-2xl"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-2">转换完成！</h3>
+              <p class="text-gray-600">您的文件已成功转换，点击下方按钮下载</p>
+            </div>
+            
+            <div class="divide-y divide-gray-100 max-h-64 overflow-y-auto mb-6" id="completed-files">
+              <!-- 完成的文件将通过JavaScript动态添加 -->
+            </div>
+            
+            <!-- 下载选项 -->
+            <div id="download-options" class="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4">
+              <h4 class="font-medium text-blue-800 mb-3 flex items-center">
+                <i class="fa fa-download mr-2"></i>下载选项
+              </h4>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">下载方式</label>
+                  <div class="flex flex-wrap gap-3">
+                    <label class="inline-flex items-center">
+                      <input type="radio" name="download-method" value="separate" class="form-radio text-primary" checked>
+                      <span class="ml-2 text-sm text-gray-700">单独下载</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                      <input type="radio" name="download-method" value="zip" class="form-radio text-primary">
+                      <span class="ml-2 text-sm text-gray-700">打包ZIP</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">下载位置</label>
+                  <div class="flex items-center">
+                    <i class="fa fa-folder-open text-gray-400 mr-2"></i>
+                    <span class="text-sm text-gray-600" id="download-location">默认下载文件夹</span>
+                    <button id="change-location" class="ml-2 text-xs text-primary hover:underline">更改</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <button class="px-6 py-3 bg-primary text-white rounded-lg shadow-md hover:shadow-lg hover:bg-primary/90 transition-custom font-medium flex items-center justify-center" id="download-all-btn">
+                <i class="fa fa-download mr-2"></i>下载文件
+              </button>
+              <button class="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-custom font-medium flex items-center justify-center" id="new-conversion">
+                <i class="fa fa-plus mr-2"></i>新的转换
+              </button>
+            </div>
+            
+            <!-- 下载状态反馈 -->
+            <div id="download-status" class="mt-4 hidden">
+              <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center">
+                <div class="animate-spin mr-3 h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+                <p class="text-sm text-gray-700" id="download-status-text">正在准备下载...</p>
+              </div>
+            </div>
+            
+            <!-- 下载成功提示 -->
+            <div id="download-success" class="mt-4 hidden">
+              <div class="bg-green-50 border border-green-100 rounded-lg p-3 flex items-center">
+                <i class="fa fa-check-circle text-green-500 mr-3"></i>
+                <p class="text-sm text-green-700" id="download-success-text">文件下载成功</p>
+              </div>
+            </div>
+            
+            <!-- 下载错误提示 -->
+            <div id="download-error" class="mt-4 hidden">
+              <div class="bg-red-50 border border-red-100 rounded-lg p-3">
+                <div class="flex items-start">
+                  <i class="fa fa-exclamation-circle text-danger mt-0.5 mr-3"></i>
+                  <div>
+                    <p class="text-sm font-medium text-red-800 mb-1" id="download-error-title">下载失败</p>
+                    <p class="text-sm text-red-700 mb-2" id="download-error-text">无法下载文件，请尝试以下解决方案</p>
+                    <div class="ml-4 space-y-1 text-sm">
+                      <p class="text-red-600 flex items-start">
+                        <i class="fa fa-angle-right mt-1 mr-2"></i>
+                        <span>检查您的网络连接是否正常</span>
+                      </p>
+                      <p class="text-red-600 flex items-start">
+                        <i class="fa fa-angle-right mt-1 mr-2"></i>
+                        <span>关闭浏览器的弹出窗口拦截器</span>
+                      </p>
+                      <p class="text-red-600 flex items-start">
+                        <i class="fa fa-angle-right mt-1 mr-2"></i>
+                        <span>
+                          <button id="retry-download" class="text-primary hover:underline">点击重试</button>
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 支持的格式 -->
+    <section id="formats" class="py-12 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <div class="text-center max-w-3xl mx-auto mb-10 animate-fadeIn">
+          <h2 class="text-2xl md:text-3xl font-bold mb-4">支持的转换格式</h2>
+          <p class="text-gray-600">可将PDF转换为以下多种格式，满足不同场景需求</p>
+        </div>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto animate-fadeIn" style="animation-delay: 0.2s">
+          <!-- 格式图标 -->
+          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
+            <i class="fa fa-file-word-o text-blue-500 text-3xl mb-2"></i>
+            <p class="text-sm font-medium">DOC/DOCX</p>
+          </div>
+          
+          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
+            <i class="fa fa-file-excel-o text-green-500 text-3xl mb-2"></i>
+            <p class="text-sm font-medium">XLS/XLSX</p>
+          </div>
+          
+          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
+            <i class="fa fa-file-powerpoint-o text-orange-500 text-3xl mb-2"></i>
+            <p class="text-sm font-medium">PPT/PPTX</p>
+          </div>
+          
+          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
+            <i class="fa fa-file-code-o text-gray-700 text-3xl mb-2"></i>
+            <p class="text-sm font-medium">HTML</p>
+          </div>
+          
+          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
+            <i class="fa fa-file-text-o text-gray-500 text-3xl mb-2"></i>
+            <p class="text-sm font-medium">TXT</p>
+          </div>
+          
+          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
+            <i class="fa fa-file-image-o text-purple-500 text-3xl mb-2"></i>
+            <p class="text-sm font-medium">PNG</p>
+          </div>
+          
+          <div class="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-custom">
+            <i class="fa fa-file-image-o text-indigo-500 text-3xl mb-2"></i>
+            <p class="text-sm font-medium">JPG</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 下载帮助 -->
+    <section id="download-help" class="py-12 bg-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto bg-gray-50 rounded-2xl shadow-custom overflow-hidden animate-fadeIn">
+          <div class="p-8">
+            <h2 class="text-2xl font-bold mb-6">解决文件下载问题</h2>
+            
+            <div class="space-y-6">
+              <div>
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                  <i class="fa fa-exclamation-circle text-warning mr-2"></i>常见下载问题及解决方案
+                </h3>
+                
+                <div class="space-y-4 pl-6">
+                  <div>
+                    <h4 class="font-medium text-gray-800 mb-1">点击下载按钮没有反应</h4>
+                    <p class="text-gray-600 text-sm">这通常是由于浏览器弹出窗口拦截器阻止了下载。请暂时关闭拦截器，或在浏览器地址栏附近寻找被拦截的提示并允许下载。</p>
+                  </div>
+                  
+                  <div>
+                    <h4 class="font-medium text-gray-800 mb-1">下载文件损坏或无法打开</h4>
+                    <p class="text-gray-600 text-sm">尝试重新下载文件。如果问题持续，可能是转换过程中出现了问题，请尝试重新转换文件。确保您有适合打开该格式的应用程序。</p>
+                  </div>
+                  
+                  <div>
+                    <h4 class="font-medium text-gray-800 mb-1">下载速度慢或中断</h4>
+                    <p class="text-gray-600 text-sm">检查您的网络连接。对于大文件，建议使用稳定的Wi-Fi连接。您也可以尝试单独下载文件而不是批量下载。</p>
+                  </div>
+                  
+                  <div>
+                    <h4 class="font-medium text-gray-800 mb-1">找不到下载的文件</h4>
+                    <p class="text-gray-600 text-sm">文件通常保存在"下载"文件夹中。您可以使用浏览器的下载管理器查看文件保存位置，或在转换完成后更改下载位置。</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                  <i class="fa fa-step-by-step text-primary mr-2"></i>正确下载步骤
+                </h3>
+                
+                <div class="space-y-3 pl-6">
+                  <div class="flex">
+                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3 mt-0.5">1</div>
+                    <p class="text-gray-600">确保浏览器允许弹出窗口（暂时关闭拦截器）</p>
+                  </div>
+                  <div class="flex">
+                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3 mt-0.5">2</div>
+                    <p class="text-gray-600">选择合适的下载方式（单独下载或ZIP打包）</p>
+                  </div>
+                  <div class="flex">
+                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3 mt-0.5">3</div>
+                    <p class="text-gray-600">点击"下载文件"按钮，等待下载开始</p>
+                  </div>
+                  <div class="flex">
+                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm mr-3 mt-0.5">4</div>
+                    <p class="text-gray-600">如果下载失败，点击"重试"按钮或查看错误提示</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                  <i class="fa fa-clock-o text-primary mr-2"></i>文件有效期
+                </h3>
+                <p class="text-gray-600 pl-6">转换后的文件将在服务器上保留24小时。为确保您能获取文件，请在转换完成后及时下载。超过有效期的文件将被自动删除，无法恢复。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-dark text-white py-8">
+    <div class="container mx-auto px-4">
+      <div class="grid md:grid-cols-3 gap-8">
+        <div>
+          <div class="flex items-center space-x-2 mb-4">
+            <i class="fa fa-file-pdf-o text-primary text-2xl"></i>
+            <h3 class="text-xl font-bold">PDF转换工具</h3>
+          </div>
+          <p class="text-gray-400 text-sm">高效的在线PDF转换工具，支持多种格式相互转换，操作简单，转换快速。</p>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-4">快速链接</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">首页</a></li>
+            <li><a href="#formats" class="text-gray-400 hover:text-white transition-custom">支持格式</a></li>
+            <li><a href="#download-help" class="text-gray-400 hover:text-white transition-custom">下载帮助</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-4">技术支持</h4>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center text-gray-400">
+              <i class="fa fa-envelope mr-2"></i>
+              <span>support@pdftool.com</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-800 mt-6 pt-4 flex flex-col md:flex-row justify-between items-center">
+        <p class="text-gray-500 text-xs mb-2 md:mb-0">© 2023 PDF转换工具. 保留所有权利.</p>
+        <div class="flex space-x-4">
+          <a href="#" class="text-gray-500 hover:text-gray-300 text-xs transition-custom">隐私政策</a>
+          <a href="#" class="text-gray-500 hover:text-gray-300 text-xs transition-custom">服务条款</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // 等待DOM加载完成
+    document.addEventListener('DOMContentLoaded', function() {
+      // 元素引用
+      const navbar = document.getElementById('navbar');
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+      const fileDropArea = document.getElementById('file-drop-area');
+      const fileInput = document.getElementById('file-input');
+      const fileListContainer = document.getElementById('file-list-container');
+      const fileList = document.getElementById('file-list');
+      const clearFilesButton = document.getElementById('clear-files');
+      const convertButton = document.getElementById('convert-button');
+      const conversionProgress = document.getElementById('conversion-progress');
+      const progressItems = document.getElementById('progress-items');
+      const overallProgressBar = document.getElementById('overall-progress-bar');
+      const overallPercentage = document.getElementById('overall-percentage');
+      const conversionComplete = document.getElementById('conversion-complete');
+      const completedFiles = document.getElementById('completed-files');
+      const newConversionButton = document.getElementById('new-conversion');
+      const downloadAllBtn = document.getElementById('download-all-btn');
+      const downloadOptions = document.getElementById('download-options');
+      const downloadStatus = document.getElementById('download-status');
+      const downloadStatusText = document.getElementById('download-status-text');
+      const downloadSuccess = document.getElementById('download-success');
+      const downloadSuccessText = document.getElementById('download-success-text');
+      const downloadError = document.getElementById('download-error');
+      const downloadErrorText = document.getElementById('download-error-text');
+      const retryDownload = document.getElementById('retry-download');
+      const outputFormat = document.getElementById('output-format');
+      const preparingDownload = document.getElementById('preparing-download');
+      const preparingProgress = document.getElementById('preparing-progress');
+      const changeLocation = document.getElementById('change-location');
+      const downloadLocation = document.getElementById('download-location');
+      
+      // 导航栏滚动效果
+      window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+          navbar.classList.add('py-2', 'shadow');
+          navbar.classList.remove('py-3', 'shadow-sm');
+        } else {
+          navbar.classList.add('py-3', 'shadow-sm');
+          navbar.classList.remove('py-2', 'shadow');
+        }
+      });
+      
+      // 移动端菜单切换
+      mobileMenuButton.addEventListener('click', function() {
+        mobileMenu.classList.toggle('hidden');
+      });
+      
+      // 更改下载位置
+      changeLocation.addEventListener('click', function() {
+        // 模拟更改下载位置
+        const locations = [
+          "文档文件夹",
+          "桌面",
+          "自定义文件夹",
+          "默认下载文件夹"
+        ];
+        const currentIndex = locations.indexOf(downloadLocation.textContent);
+        const nextIndex = (currentIndex + 1) % locations.length;
+        downloadLocation.textContent = locations[nextIndex];
+        
+        // 显示短暂提示
+        const originalText = this.textContent;
+        this.textContent = "已更改";
+        setTimeout(() => {
+          this.textContent = originalText;
+        }, 1500);
+      });
+      
+      // 文件拖放功能
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileDropArea.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        fileDropArea.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        fileDropArea.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight() {
+        fileDropArea.classList.add('file-drop-active');
+      }
+      
+      function unhighlight() {
+        fileDropArea.classList.remove('file-drop-active');
+      }
+      
+      // 处理文件拖放
+      fileDropArea.addEventListener('drop', handleDrop, false);
+      
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+      }
+      
+      // 处理文件选择
+      fileInput.addEventListener('change', function() {
+        handleFiles(this.files);
+      });
+      
+      // 点击上传区域触发文件选择
+      fileDropArea.addEventListener('click', function() {
+        fileInput.click();
+      });
+      
+      // 处理文件
+      function handleFiles(files) {
+        if (files.length === 0) return;
+        
+        // 显示文件列表容器
+        fileListContainer.classList.remove('hidden');
+        
+        // 清空现有列表
+        fileList.innerHTML = '';
+        
+        // 添加文件到列表
+        Array.from(files).forEach(file => {
+          // 只处理PDF文件
+          if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+            const fileSize = (file.size / (1024 * 1024)).toFixed(2); // MB
+            const fileItem = document.createElement('div');
+            fileItem.className = 'py-3 flex justify-between items-center';
+            fileItem.innerHTML = `
+              <div class="flex items-center">
+                <i class="fa fa-file-pdf-o text-red-500 mr-3"></i>
+                <div>
+                  <p class="font-medium text-gray-800 truncate max-w-xs">${file.name}</p>
+                  <p class="text-sm text-gray-500">${fileSize} MB</p>
+                </div>
+              </div>
+              <button class="text-gray-400 hover:text-red-500 transition-custom remove-file" data-name="${file.name}">
+                <i class="fa fa-times"></i>
+              </button>
+            `;
+            fileList.appendChild(fileItem);
+          }
+        });
+        
+        // 添加删除文件事件
+        document.querySelectorAll('.remove-file').forEach(button => {
+          button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.closest('div.py-3').remove();
+            
+            // 如果列表为空，隐藏容器
+            if (fileList.children.length === 0) {
+              fileListContainer.classList.add('hidden');
+            }
+          });
+        });
+      }
+      
+      // 清空文件列表
+      clearFilesButton.addEventListener('click', function() {
+        fileList.innerHTML = '';
+        fileListContainer.classList.add('hidden');
+      });
+      
+      // 开始转换
+      convertButton.addEventListener('click', function() {
+        // 隐藏文件列表，显示进度
+        fileListContainer.classList.add('hidden');
+        conversionProgress.classList.remove('hidden');
+        
+        // 获取所有文件
+        const fileItems = fileList.querySelectorAll('div.py-3');
+        const filesCount = fileItems.length;
+        
+        // 清空进度列表
+        progressItems.innerHTML = '';
+        
+        // 创建每个文件的进度条
+        fileItems.forEach((item, index) => {
+          const fileName = item.querySelector('p.font-medium').textContent;
+          const progressItem = document.createElement('div');
+          progressItem.className = 'space-y-1';
+          progressItem.innerHTML = `
+            <div class="flex justify-between text-sm">
+              <span>${fileName}</span>
+              <span class="file-percentage-${index}">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="file-progress-${index} bg-secondary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          `;
+          progressItems.appendChild(progressItem);
+        });
+        
+        // 模拟进度
+        simulateProgress(filesCount);
+      });
+      
+      // 模拟转换进度
+      function simulateProgress(filesCount) {
+        let overallProgress = 0;
+        const progressPerFile = 100 / filesCount;
+        let currentFile = 0;
+        
+        const interval = setInterval(() => {
+          if (currentFile < filesCount) {
+            // 更新当前文件的进度
+            const fileProgress = document.querySelector(`.file-progress-${currentFile}`);
+            const filePercentage = document.querySelector(`.file-percentage-${currentFile}`);
+            
+            let currentWidth = parseInt(fileProgress.style.width);
+            currentWidth += Math.random() * 10;
+            
+            if (currentWidth >= 100) {
+              currentWidth = 100;
+              currentFile++;
+            }
+            
+            fileProgress.style.width = `${currentWidth}%`;
+            filePercentage.textContent = `${Math.round(currentWidth)}%`;
+            
+            // 更新总体进度
+            overallProgress = (currentFile * progressPerFile) + (currentWidth / 100 * progressPerFile);
+            overallProgressBar.style.width = `${overallProgress}%`;
+            overallPercentage.textContent = `${Math.round(overallProgress)}%`;
+          } else {
+            // 所有文件转换完成
+            clearInterval(interval);
+            overallProgressBar.style.width = '100%';
+            overallPercentage.textContent = '100%';
+            
+            // 显示准备下载界面
+            setTimeout(() => {
+              conversionProgress.classList.add('hidden');
+              preparingDownload.classList.remove('hidden');
+              simulatePreparingDownload();
+            }, 1000);
+          }
+        }, 300);
+      }
+      
+      // 模拟准备下载过程
+      function simulatePreparingDownload() {
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 5;
+          preparingProgress.style.width = `${progress}%`;
+          
+          if (progress >= 100) {
+            clearInterval(interval);
+            // 准备完成，显示下载界面
+            setTimeout(() => {
+              preparingDownload.classList.add('hidden');
+              showConversionComplete();
+            }, 800);
+          }
+        }, 100);
+      }
+      
+      // 显示转换完成界面
+      function showConversionComplete() {
+        conversionComplete.classList.remove('hidden');
+        
+        // 重置所有状态提示
+        downloadStatus.classList.add('hidden');
+        downloadSuccess.classList.add('hidden');
+        downloadError.classList.add('hidden');
+        
+        // 清空完成文件列表
+        completedFiles.innerHTML = '';
+        
+        // 获取输出格式
+        const outputFormatVal = outputFormat.value;
+        const outputFormatText = outputFormat.options[outputFormat.selectedIndex].text.toUpperCase();
+        
+        // 添加完成的文件
+        const fileItems = fileList.querySelectorAll('div.py-3');
+        fileItems.forEach(item => {
+          const fileName = item.querySelector('p.font-medium').textContent;
+          const newFileName = fileName.replace('.pdf', `.${outputFormatVal}`);
+          const fileSize = item.querySelector('p.text-sm').textContent;
+          
+          const completedItem = document.createElement('div');
+          completedItem.className = 'py-3 flex justify-between items-center';
+          completedItem.innerHTML = `
+            <div class="flex items-center">
+              <i class="fa fa-file-text-o text-green-500 mr-3"></i>
+              <div>
+                <p class="font-medium text-gray-800 truncate max-w-xs">${newFileName}</p>
+                <p class="text-sm text-gray-500">${fileSize} · 转换为 ${outputFormatText}</p>
+              </div>
+            </div>
+            <button class="px-3 py-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-custom text-sm download-single" data-file="${newFileName}">
+              <i class="fa fa-download mr-1"></i>下载
+            </button>
+          `;
+          completedFiles.appendChild(completedItem);
+        });
+        
+        // 为单个文件下载按钮添加事件
+        document.querySelectorAll('.download-single').forEach(button => {
+          button.addEventListener('click', function() {
+            const fileName = this.getAttribute('data-file');
+            downloadSingleFile(fileName);
+          });
+        });
+      }
+      
+      // 下载单个文件
+      function downloadSingleFile(fileName) {
+        // 显示下载状态
+        downloadStatusText.textContent = `正在下载 ${fileName}...`;
+        downloadStatus.classList.remove('hidden');
+        downloadSuccess.classList.add('hidden');
+        downloadError.classList.add('hidden');
+        
+        // 模拟文件下载过程
+        setTimeout(() => {
+          // 提高成功率到95%
+          const success = Math.random() > 0.05;
+          
+          if (success) {
+            downloadStatus.classList.add('hidden');
+            downloadSuccessText.textContent = `${fileName} 已成功下载到 ${downloadLocation.textContent}`;
+            downloadSuccess.classList.remove('hidden');
+            
+            // 5秒后隐藏成功状态
+            setTimeout(() => {
+              downloadSuccess.classList.add('hidden');
+            }, 5000);
+            
+            // 实际项目中，这里会触发真实下载
+            triggerFileDownload(fileName);
+          } else {
+            downloadStatus.classList.add('hidden');
+            downloadErrorText.textContent = `无法下载 ${fileName}，请尝试解决方案`;
+            downloadError.classList.remove('hidden');
+          }
+        }, 1500);
+      }
+      
+      // 触发文件下载
+      function triggerFileDownload(fileName) {
+        // 创建一个模拟下载的链接
+        const a = document.createElement('a');
+        // 在实际应用中，这里应该是真实的文件URL
+        a.href = '#';
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      
+      // 下载所有文件
+      downloadAllBtn.addEventListener('click', function() {
+        const fileCount = completedFiles.children.length;
+        const downloadMethod = document.querySelector('input[name="download-method"]:checked').value;
+        const methodText = downloadMethod === 'zip' ? 'ZIP压缩包' : '多个文件';
+        
+        // 显示下载状态
+        downloadStatusText.textContent = `正在准备下载 ${methodText} (共 ${fileCount} 个文件)...`;
+        downloadStatus.classList.remove('hidden');
+        downloadSuccess.classList.add('hidden');
+        downloadError.classList.add('hidden');
+        
+        // 模拟文件下载过程
+        setTimeout(() => {
+          // 提高成功率到95%
+          const success = Math.random() > 0.05;
+          
+          if (success) {
+            downloadStatus.classList.add('hidden');
+            downloadSuccessText.textContent = `${methodText} 已成功下载到 ${downloadLocation.textContent}`;
+            downloadSuccess.classList.remove('hidden');
+            
+            // 5秒后隐藏成功状态
+            setTimeout(() => {
+              downloadSuccess.classList.add('hidden');
+            }, 5000);
+            
+            // 实际项目中，这里会触发真实下载
+            if (downloadMethod === 'zip') {
+              triggerFileDownload('converted_files.zip');
+            } else {
+              // 下载所有单个文件
+              document.querySelectorAll('.download-single').forEach(button => {
+                setTimeout(() => {
+                  button.click();
+                }, 300);
+              });
+            }
+          } else {
+            downloadStatus.classList.add('hidden');
+            downloadErrorText.textContent = `无法下载 ${methodText}，请尝试解决方案`;
+            downloadError.classList.remove('hidden');
+          }
+        }, 2000);
+      });
+      
+      // 重试下载
+      retryDownload.addEventListener('click', function() {
+        downloadError.classList.add('hidden');
+        downloadAllBtn.click();
+      });
+      
+      // 新的转换
+      newConversionButton.addEventListener('click', function() {
+        conversionComplete.classList.add('hidden');
+        preparingDownload.classList.add('hidden');
+        fileListContainer.classList.remove('hidden');
+      });
+      
+      // 平滑滚动
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          
+          const targetId = this.getAttribute('href');
+          if (targetId === '#') return;
+          
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop - 80,
+              behavior: 'smooth'
+            });
+            
+            // 关闭移动菜单
+            if (!mobileMenu.classList.contains('hidden')) {
+              mobileMenu.classList.add('hidden');
+            }
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
+    

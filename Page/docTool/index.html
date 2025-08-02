@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件格式转换工具 - 支持多种文档格式互转</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .format-card {
+                @apply relative bg-white rounded-xl p-4 shadow-md transition-all duration-300 hover:shadow-lg cursor-pointer border-2 border-transparent;
+            }
+            .format-card-selected {
+                @apply border-primary bg-blue-50;
+            }
+            .format-card-disabled {
+                @apply opacity-50 cursor-not-allowed;
+            }
+            .gradient-bg {
+                @apply bg-gradient-to-br from-primary to-accent;
+            }
+            .glass-effect {
+                @apply bg-white/80 backdrop-blur-md;
+            }
+            .pulse-animation {
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <header class="glass-effect sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-exchange text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">文件格式转换工具</h1>
+            </div>
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-gray-700 hover:text-primary transition-colors">首页</a>
+                <a href="#" class="text-gray-700 hover:text-primary transition-colors">支持的格式</a>
+                <a href="#" class="text-gray-700 hover:text-primary transition-colors">使用教程</a>
+                <a href="#" class="text-gray-700 hover:text-primary transition-colors">关于我们</a>
+            </nav>
+            <button class="md:hidden text-gray-700" id="menuToggle">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t animate-fadeIn">
+            <div class="container mx-auto px-4 py-3 flex flex-col space-y-3">
+                <a href="#" class="text-gray-700 hover:text-primary py-2 transition-colors">首页</a>
+                <a href="#" class="text-gray-700 hover:text-primary py-2 transition-colors">支持的格式</a>
+                <a href="#" class="text-gray-700 hover:text-primary py-2 transition-colors">使用教程</a>
+                <a href="#" class="text-gray-700 hover:text-primary py-2 transition-colors">关于我们</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- 介绍部分 -->
+        <section class="text-center mb-12 max-w-3xl mx-auto">
+            <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">简单高效的文件格式转换</h2>
+            <p class="text-gray-600 text-lg mb-6">支持 DOC, DOCX, XLS, XLSX, PPT, PPTX 等多种格式之间的相互转换，操作简单，转换快速。</p>
+            <div class="flex flex-wrap justify-center gap-2 mb-6">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">DOC</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">DOCX</span>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">XLS</span>
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">XLSX</span>
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">PPT</span>
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">PPTX</span>
+                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">更多格式...</span>
+            </div>
+        </section>
+
+        <!-- 转换流程区 -->
+        <section class="max-w-5xl mx-auto">
+            <!-- 步骤指示器 -->
+            <div class="flex justify-between items-center mb-10 relative">
+                <div class="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
+                <div class="absolute top-1/2 left-0 h-1 gradient-bg -translate-y-1/2 z-10 transition-all duration-500" id="progressBar" style="width: 25%"></div>
+                
+                <div class="relative z-20 flex flex-col items-center" id="step1Indicator">
+                    <div class="w-10 h-10 rounded-full gradient-bg text-white flex items-center justify-center mb-2">
+                        <i class="fa fa-file-o"></i>
+                    </div>
+                    <span class="text-sm font-medium">选择输入格式</span>
+                </div>
+                
+                <div class="relative z-20 flex flex-col items-center" id="step2Indicator">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mb-2 transition-all duration-300">
+                        <i class="fa fa-exchange"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500 transition-all duration-300">选择输出格式</span>
+                </div>
+                
+                <div class="relative z-20 flex flex-col items-center" id="step3Indicator">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mb-2 transition-all duration-300">
+                        <i class="fa fa-upload"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500 transition-all duration-300">上传文件</span>
+                </div>
+                
+                <div class="relative z-20 flex flex-col items-center" id="step4Indicator">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mb-2 transition-all duration-300">
+                        <i class="fa fa-download"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500 transition-all duration-300">下载结果</span>
+                </div>
+            </div>
+
+            <!-- 已选格式提示区 - 始终显示在步骤内容上方 -->
+            <div class="bg-white rounded-xl shadow-sm p-4 mb-6 hidden" id="selectionSummary">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center">
+                            <span class="text-sm font-medium text-gray-500 mr-2">输入格式:</span>
+                            <span id="inputFormatDisplay" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"></span>
+                        </div>
+                        <i class="fa fa-long-arrow-right text-gray-400"></i>
+                        <div class="flex items-center">
+                            <span class="text-sm font-medium text-gray-500 mr-2">输出格式:</span>
+                            <span id="outputFormatDisplay" class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium"></span>
+                        </div>
+                    </div>
+                    <button id="changeFormats" class="text-sm text-primary hover:text-primary/80 transition-colors hidden md:flex items-center">
+                        <i class="fa fa-pencil mr-1"></i> 更改
+                    </button>
+                </div>
+            </div>
+
+            <!-- 步骤内容区 -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                <!-- 步骤1: 选择输入格式 -->
+                <div id="step1" class="step-content">
+                    <h3 class="text-xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 rounded-full gradient-bg text-white flex items-center justify-center mr-3">1</span>
+                        选择输入文件格式
+                    </h3>
+                    
+                    <p class="text-gray-600 mb-6">请选择您要转换的文件的原始格式：</p>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="inputFormats">
+                        <!-- 格式卡片将通过JS动态生成 -->
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                        <div class="flex items-start">
+                            <i class="fa fa-info-circle text-primary mt-0.5 mr-3"></i>
+                            <p class="text-sm text-gray-700">提示：选择正确的输入格式可以确保转换效果更佳。如果不确定文件格式，可以查看文件扩展名（文件名后面的字母，如.docx）。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 步骤2: 选择输出格式 -->
+                <div id="step2" class="step-content hidden">
+                    <h3 class="text-xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 rounded-full gradient-bg text-white flex items-center justify-center mr-3">2</span>
+                        选择目标文件格式
+                    </h3>
+                    
+                    <p class="text-gray-600 mb-6">请选择您想要转换到的目标格式：</p>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="outputFormats">
+                        <!-- 格式卡片将通过JS动态生成 -->
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                        <div class="flex items-start">
+                            <i class="fa fa-lightbulb-o text-primary mt-0.5 mr-3"></i>
+                            <p class="text-sm text-gray-700">提示：仅显示与 <span id="currentInputFormatHint" class="font-medium"></span> 兼容的转换格式。某些格式转换可能会导致部分格式或内容丢失。</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex justify-between">
+                        <button id="backToStep1" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
+                            <i class="fa fa-arrow-left mr-2"></i> 返回
+                        </button>
+                        <button id="toStep3" class="px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition-opacity flex items-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            下一步 <i class="fa fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 步骤3: 上传文件 -->
+                <div id="step3" class="step-content hidden">
+                    <h3 class="text-xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 rounded-full gradient-bg text-white flex items-center justify-center mr-3">3</span>
+                        上传您的文件
+                    </h3>
+                    
+                    <div id="dropArea" class="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center hover:border-primary transition-colors mb-6 cursor-pointer">
+                        <i class="fa fa-cloud-upload text-5xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600 mb-2">拖放文件到此处，或点击选择文件</p>
+                        <p class="text-gray-400 text-sm">支持最大文件大小：100MB</p>
+                        <input type="file" id="fileInput" class="hidden" accept="" />
+                        <button id="browseFiles" class="mt-4 px-5 py-2 gradient-bg text-white rounded-lg hover:opacity-90 transition-opacity">
+                            选择文件
+                        </button>
+                    </div>
+                    
+                    <div id="filePreview" class="hidden mb-6">
+                        <div class="bg-gray-50 p-4 rounded-lg flex items-center">
+                            <i class="fa fa-file-text-o text-2xl text-primary mr-4"></i>
+                            <div class="flex-grow">
+                                <p id="fileName" class="font-medium"></p>
+                                <p id="fileSize" class="text-sm text-gray-500"></p>
+                            </div>
+                            <button id="removeFile" class="text-gray-400 hover:text-red-500 transition-colors">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-yellow-50 border border-yellow-100 rounded-lg mb-6">
+                        <div class="flex items-start">
+                            <i class="fa fa-exclamation-circle text-yellow-500 mt-0.5 mr-3"></i>
+                            <p class="text-sm text-gray-700">请上传 <span id="fileTypeHint" class="font-medium"></span> 格式的文件。上传的文件将被安全处理，转换完成后自动删除，不会被保存。</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex justify-between">
+                        <button id="backToStep2" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
+                            <i class="fa fa-arrow-left mr-2"></i> 返回
+                        </button>
+                        <button id="startConversion" class="px-6 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition-opacity flex items-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            开始转换 <i class="fa fa-cog ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 步骤4: 转换结果 -->
+                <div id="step4" class="step-content hidden">
+                    <h3 class="text-xl font-bold mb-6 flex items-center">
+                        <span class="w-8 h-8 rounded-full gradient-bg text-white flex items-center justify-center mr-3">4</span>
+                        转换完成
+                    </h3>
+                    
+                    <div id="conversionSuccess" class="text-center py-8">
+                        <div class="w-20 h-20 rounded-full bg-green-100 text-green-500 flex items-center justify-center mx-auto mb-6 pulse-animation">
+                            <i class="fa fa-check text-3xl"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-2">转换成功！</h4>
+                        <p class="text-gray-600 mb-6">您的文件已成功从 <span id="fromFormatText" class="font-medium"></span> 转换为 <span id="toFormatText" class="font-medium"></span></p>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg flex items-center max-w-md mx-auto mb-8">
+                            <i class="fa fa-file-text-o text-2xl text-primary mr-4"></i>
+                            <div class="flex-grow">
+                                <p id="convertedFileName" class="font-medium"></p>
+                                <p id="convertedFileSize" class="text-sm text-gray-500"></p>
+                            </div>
+                        </div>
+                        
+                        <button id="downloadFile" class="px-8 py-3 gradient-bg text-white rounded-lg hover:opacity-90 transition-opacity flex items-center mx-auto">
+                            <i class="fa fa-download mr-2"></i> 下载文件
+                        </button>
+                    </div>
+                    
+                    <div class="p-4 bg-green-50 border border-green-100 rounded-lg mt-8">
+                        <div class="flex items-start">
+                            <i class="fa fa-check-circle text-green-500 mt-0.5 mr-3"></i>
+                            <p class="text-sm text-gray-700">提示：下载链接将在24小时后失效。如果需要再次转换，可以点击下方按钮重新开始。</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 text-center">
+                        <button id="convertAnother" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            转换另一个文件
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 转换中状态 -->
+                <div id="converting" class="step-content hidden text-center py-10">
+                    <div class="w-16 h-16 border-4 border-gray-200 border-t-primary rounded-full animate-spin mx-auto mb-6"></div>
+                    <h4 class="text-xl font-bold mb-2">正在转换文件...</h4>
+                    <p class="text-gray-600">请稍候，我们正在处理您的文件</p>
+                    <div class="mt-6 w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="conversionProgress" class="gradient-bg h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-4">
+                        转换进度: <span id="progressPercentage">0%</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 支持的格式说明 -->
+        <section class="mt-16 max-w-5xl mx-auto">
+            <h3 class="text-2xl font-bold mb-6 text-center">支持的文件格式</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
+                        <i class="fa fa-file-word-o text-xl"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3">文档格式</h4>
+                    <ul class="text-gray-600 space-y-2">
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> DOC / DOCX</li>
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> TXT</li>
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> HTML</li>
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> RTF</li>
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> ODT</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 rounded-lg bg-green-100 text-green-600 flex items-center justify-center mb-4">
+                        <i class="fa fa-file-excel-o text-xl"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3">表格格式</h4>
+                    <ul class="text-gray-600 space-y-2">
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> XLS / XLSX</li>
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> CSV</li>
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> ODS</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+                    <div class="w-12 h-12 rounded-lg bg-red-100 text-red-600 flex items-center justify-center mb-4">
+                        <i class="fa fa-file-powerpoint-o text-xl"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3">演示文稿与其他</h4>
+                    <ul class="text-gray-600 space-y-2">
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> PPT / PPTX</li>
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> ODP</li>
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> XPS</li>
+                        <li><i class="fa fa-check text-green-500 mr-2"></i> OXPS</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white mt-16">
+        <div class="container mx-auto px-4 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fa fa-exchange text-primary text-xl"></i>
+                        <h3 class="text-lg font-bold">文件格式转换工具</h3>
+                    </div>
+                    <p class="text-gray-400 text-sm">简单、高效、安全的在线文件格式转换工具，支持多种文档格式互转。</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold mb-4">快速链接</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-primary transition-colors">首页</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">支持的格式</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">使用教程</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">常见问题</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold mb-4">联系我们</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center"><i class="fa fa-envelope-o mr-2"></i> support@example.com</li>
+                        <li class="flex items-center"><i class="fa fa-phone mr-2"></i> +123 456 7890</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold mb-4">关注我们</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
+                            <i class="fa fa-facebook"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
+                            <i class="fa fa-instagram"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
+                            <i class="fa fa-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-500 text-sm">
+                <p>&copy; 2023 文件格式转换工具 - 保留所有权利</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 格式数据及其转换关系
+        const formatData = {
+            // 文档格式
+            'doc': { 
+                name: 'Word 文档', 
+                icon: 'fa-file-word-o', 
+                color: 'text-blue-600',
+                canConvertTo: ['docx', 'txt', 'html', 'rtf', 'odt', 'pdf']
+            },
+            'docx': { 
+                name: 'Word 文档', 
+                icon: 'fa-file-word-o', 
+                color: 'text-blue-600',
+                canConvertTo: ['doc', 'txt', 'html', 'rtf', 'odt', 'pdf']
+            },
+            'txt': { 
+                name: '文本文件', 
+                icon: 'fa-file-text-o', 
+                color: 'text-gray-600',
+                canConvertTo: ['doc', 'docx', 'html', 'rtf', 'odt', 'pdf']
+            },
+            'html': { 
+                name: '网页文件', 
+                icon: 'fa-file-code-o', 
+                color: 'text-orange-600',
+                canConvertTo: ['doc', 'docx', 'txt', 'rtf', 'odt', 'pdf']
+            },
+            'rtf': { 
+                name: '富文本', 
+                icon: 'fa-file-text-o', 
+                color: 'text-purple-600',
+                canConvertTo: ['doc', 'docx', 'txt', 'html', 'odt', 'pdf']
+            },
+            'odt': { 
+                name: 'OpenDocument 文本', 
+                icon: 'fa-file-text-o', 
+                color: 'text-green-600',
+                canConvertTo: ['doc', 'docx', 'txt', 'html', 'rtf', 'pdf']
+            },
+            
+            // 表格格式
+            'xls': { 
+                name: 'Excel 表格', 
+                icon: 'fa-file-excel-o', 
+                color: 'text-green-600',
+                canConvertTo: ['xlsx', 'csv', 'ods', 'pdf']
+            },
+            'xlsx': { 
+                name: 'Excel 表格', 
+                icon: 'fa-file-excel-o', 
+                color: 'text-green-600',
+                canConvertTo: ['xls', 'csv', 'ods', 'pdf']
+            },
+            'csv': { 
+                name: '逗号分隔值', 
+                icon: 'fa-file-text-o', 
+                color: 'text-yellow-600',
+                canConvertTo: ['xls', 'xlsx', 'ods', 'pdf']
+            },
+            'ods': { 
+                name: 'OpenDocument 表格', 
+                icon: 'fa-file-excel-o', 
+                color: 'text-green-600',
+                canConvertTo: ['xls', 'xlsx', 'csv', 'pdf']
+            },
+            
+            // 演示文稿格式
+            'ppt': { 
+                name: 'PowerPoint 演示文稿', 
+                icon: 'fa-file-powerpoint-o', 
+                color: 'text-red-600',
+                canConvertTo: ['pptx', 'odp', 'pdf']
+            },
+            'pptx': { 
+                name: 'PowerPoint 演示文稿', 
+                icon: 'fa-file-powerpoint-o', 
+                color: 'text-red-600',
+                canConvertTo: ['ppt', 'odp', 'pdf']
+            },
+            'odp': { 
+                name: 'OpenDocument 演示文稿', 
+                icon: 'fa-file-powerpoint-o', 
+                color: 'text-orange-600',
+                canConvertTo: ['ppt', 'pptx', 'pdf']
+            },
+            
+            // 其他格式
+            'pdf': { 
+                name: 'PDF 文档', 
+                icon: 'fa-file-pdf-o', 
+                color: 'text-red-600',
+                canConvertTo: ['doc', 'docx', 'txt', 'html', 'rtf']
+            },
+            'xps': { 
+                name: 'XPS 文档', 
+                icon: 'fa-file-o', 
+                color: 'text-blue-600',
+                canConvertTo: ['pdf', 'docx']
+            },
+            'oxps': { 
+                name: '开放XPS文档', 
+                icon: 'fa-file-o', 
+                color: 'text-blue-600',
+                canConvertTo: ['pdf', 'docx']
+            }
+        };
+
+        // 存储用户选择的格式
+        let selectedInputFormat = null;
+        let selectedOutputFormat = null;
+        
+        // DOM 元素
+        const inputFormatsContainer = document.getElementById('inputFormats');
+        const outputFormatsContainer = document.getElementById('outputFormats');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const step4 = document.getElementById('step4');
+        const converting = document.getElementById('converting');
+        const progressBar = document.getElementById('progressBar');
+        const conversionProgress = document.getElementById('conversionProgress');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const fileInput = document.getElementById('fileInput');
+        const dropArea = document.getElementById('dropArea');
+        const browseFilesBtn = document.getElementById('browseFiles');
+        const filePreview = document.getElementById('filePreview');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFileBtn = document.getElementById('removeFile');
+        const fromFormatText = document.getElementById('fromFormatText');
+        const toFormatText = document.getElementById('toFormatText');
+        const convertedFileName = document.getElementById('convertedFileName');
+        const convertedFileSize = document.getElementById('convertedFileSize');
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const selectionSummary = document.getElementById('selectionSummary');
+        const inputFormatDisplay = document.getElementById('inputFormatDisplay');
+        const outputFormatDisplay = document.getElementById('outputFormatDisplay');
+        const changeFormatsBtn = document.getElementById('changeFormats');
+        const currentInputFormatHint = document.getElementById('currentInputFormatHint');
+        const fileTypeHint = document.getElementById('fileTypeHint');
+        const toStep3Btn = document.getElementById('toStep3');
+        const startConversionBtn = document.getElementById('startConversion');
+        
+        // 步骤指示器元素
+        const stepIndicators = [
+            document.getElementById('step1Indicator'),
+            document.getElementById('step2Indicator'),
+            document.getElementById('step3Indicator'),
+            document.getElementById('step4Indicator')
+        ];
+
+        // 初始化输入格式选择界面
+        function initInputFormats() {
+            inputFormatsContainer.innerHTML = '';
+            
+            // 按类别分组显示格式
+            const docFormats = ['doc', 'docx', 'txt', 'html', 'rtf', 'odt'];
+            const sheetFormats = ['xls', 'xlsx', 'csv', 'ods'];
+            const slideFormats = ['ppt', 'pptx', 'odp'];
+            const otherFormats = ['pdf', 'xps', 'oxps'];
+            
+            // 添加分组标题
+            addFormatGroup('文档格式', docFormats);
+            addFormatGroup('表格格式', sheetFormats);
+            addFormatGroup('演示文稿格式', slideFormats);
+            addFormatGroup('其他格式', otherFormats);
+        }
+        
+        // 添加格式分组
+        function addFormatGroup(title, formats) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'col-span-full';
+            
+            const titleDiv = document.createElement('h4');
+            titleDiv.className = 'text-sm font-medium text-gray-500 mb-3';
+            titleDiv.textContent = title;
+            groupDiv.appendChild(titleDiv);
+            
+            const formatsGrid = document.createElement('div');
+            formatsGrid.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3';
+            
+            formats.forEach(format => {
+                const formatInfo = formatData[format];
+                const formatCard = createFormatCard(format, formatInfo, true);
+                formatsGrid.appendChild(formatCard);
+            });
+            
+            groupDiv.appendChild(formatsGrid);
+            inputFormatsContainer.appendChild(groupDiv);
+        }
+        
+        // 创建格式选择卡片
+        function createFormatCard(format, formatInfo, isInput) {
+            const card = document.createElement('div');
+            card.className = 'format-card';
+            card.dataset.format = format;
+            
+            card.innerHTML = `
+                <div class="flex flex-col items-center">
+                    <i class="fa ${formatInfo.icon} ${formatInfo.color} text-2xl mb-2"></i>
+                    <span class="font-medium text-sm">${format.toUpperCase()}</span>
+                    <span class="text-xs text-gray-500 mt-1">${formatInfo.name}</span>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => {
+                if (isInput) {
+                    // 处理输入格式选择
+                    document.querySelectorAll('#inputFormats .format-card').forEach(el => {
+                        el.classList.remove('format-card-selected');
+                    });
+                    card.classList.add('format-card-selected');
+                    selectedInputFormat = format;
+                    
+                    // 更新输入格式显示
+                    inputFormatDisplay.textContent = format.toUpperCase();
+                    
+                    // 生成输出格式选项
+                    generateOutputFormats();
+                    
+                    // 切换到步骤2
+                    goToStep(2);
+                } else {
+                    // 处理输出格式选择
+                    document.querySelectorAll('#outputFormats .format-card').forEach(el => {
+                        el.classList.remove('format-card-selected');
+                    });
+                    card.classList.add('format-card-selected');
+                    selectedOutputFormat = format;
+                    
+                    // 更新输出格式显示
+                    outputFormatDisplay.textContent = format.toUpperCase();
+                    
+                    // 启用下一步按钮
+                    toStep3Btn.disabled = false;
+                }
+            });
+            
+            return card;
+        }
+        
+        // 生成输出格式选项
+        function generateOutputFormats() {
+            outputFormatsContainer.innerHTML = '';
+            
+            if (!selectedInputFormat) return;
+            
+            // 更新当前输入格式提示
+            currentInputFormatHint.textContent = selectedInputFormat.toUpperCase();
+            
+            const targetFormats = formatData[selectedInputFormat].canConvertTo;
+            
+            targetFormats.forEach(format => {
+                const formatInfo = formatData[format];
+                const formatCard = createFormatCard(format, formatInfo, false);
+                outputFormatsContainer.appendChild(formatCard);
+            });
+            
+            // 显示选择摘要
+            selectionSummary.classList.remove('hidden');
+        }
+        
+        // 切换到指定步骤
+        function goToStep(stepNumber) {
+            // 隐藏所有步骤
+            document.querySelectorAll('.step-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // 更新进度条
+            progressBar.style.width = `${(stepNumber - 1) * 25}%`;
+            
+            // 更新步骤指示器
+            stepIndicators.forEach((indicator, index) => {
+                const circle = indicator.querySelector('div');
+                const text = indicator.querySelector('span');
+                
+                if (index < stepNumber) {
+                    // 已完成步骤
+                    circle.className = 'w-10 h-10 rounded-full gradient-bg text-white flex items-center justify-center mb-2';
+                    text.className = 'text-sm font-medium';
+                } else if (index === stepNumber - 1) {
+                    // 当前步骤
+                    circle.className = 'w-10 h-10 rounded-full gradient-bg text-white flex items-center justify-center mb-2';
+                    text.className = 'text-sm font-medium';
+                } else {
+                    // 未完成步骤
+                    circle.className = 'w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center mb-2';
+                    text.className = 'text-sm font-medium text-gray-500';
+                }
+            });
+            
+            // 显示当前步骤
+            switch(stepNumber) {
+                case 1:
+                    step1.classList.remove('hidden');
+                    // 隐藏选择摘要
+                    selectionSummary.classList.add('hidden');
+                    break;
+                case 2:
+                    step2.classList.remove('hidden');
+                    // 显示选择摘要
+                    selectionSummary.classList.remove('hidden');
+                    // 重置输出格式选择状态
+                    selectedOutputFormat = null;
+                    outputFormatDisplay.textContent = '';
+                    toStep3Btn.disabled = true;
+                    break;
+                case 3:
+                    step3.classList.remove('hidden');
+                    // 显示选择摘要
+                    selectionSummary.classList.remove('hidden');
+                    // 设置文件选择器接受的格式
+                    fileInput.accept = `.${selectedInputFormat}`;
+                    // 更新文件类型提示
+                    fileTypeHint.textContent = selectedInputFormat.toUpperCase();
+                    // 重置文件上传区域
+                    fileInput.value = '';
+                    filePreview.classList.add('hidden');
+                    startConversionBtn.disabled = true;
+                    break;
+                case 4:
+                    step4.classList.remove('hidden');
+                    // 显示选择摘要
+                    selectionSummary.classList.remove('hidden');
+                    // 更新结果文本
+                    fromFormatText.textContent = selectedInputFormat.toUpperCase();
+                    toFormatText.textContent = selectedOutputFormat.toUpperCase();
+                    convertedFileName.textContent = fileName.textContent.replace(`.${selectedInputFormat}`, `.${selectedOutputFormat}`);
+                    convertedFileSize.textContent = fileSize.textContent;
+                    break;
+            }
+        }
+        
+        // 模拟文件转换
+        function simulateConversion() {
+            // 显示转换中状态
+            document.querySelectorAll('.step-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            converting.classList.remove('hidden');
+            
+            // 模拟进度
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    // 转换完成，进入步骤4
+                    setTimeout(() => {
+                        goToStep(4);
+                    }, 500);
+                }
+                conversionProgress.style.width = `${progress}%`;
+                progressPercentage.textContent = `${Math.round(progress)}%`;
+            }, 300);
+        }
+        
+        // 处理文件上传
+        function handleFileUpload(file) {
+            if (!file) return;
+            
+            // 验证文件格式
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            if (fileExtension !== selectedInputFormat) {
+                alert(`请上传${selectedInputFormat.toUpperCase()}格式的文件`);
+                fileInput.value = '';
+                return;
+            }
+            
+            // 显示文件预览
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            filePreview.classList.remove('hidden');
+            
+            // 启用转换按钮
+            startConversionBtn.disabled = false;
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 事件监听器
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化输入格式
+            initInputFormats();
+            
+            // 步骤导航按钮
+            document.getElementById('backToStep1').addEventListener('click', () => goToStep(1));
+            toStep3Btn.addEventListener('click', () => {
+                if (selectedOutputFormat) {
+                    goToStep(3);
+                } else {
+                    alert('请选择目标格式');
+                }
+            });
+            document.getElementById('backToStep2').addEventListener('click', () => goToStep(2));
+            startConversionBtn.addEventListener('click', () => {
+                if (fileInput.files.length > 0) {
+                    simulateConversion();
+                } else {
+                    alert('请上传文件');
+                }
+            });
+            document.getElementById('convertAnother').addEventListener('click', () => {
+                // 重置选择
+                selectedInputFormat = null;
+                selectedOutputFormat = null;
+                fileInput.value = '';
+                filePreview.classList.add('hidden');
+                initInputFormats();
+                goToStep(1);
+            });
+            document.getElementById('downloadFile').addEventListener('click', () => {
+                alert('文件下载已开始');
+            });
+            
+            // 更改格式按钮
+            changeFormatsBtn.addEventListener('click', () => {
+                goToStep(2);
+            });
+            
+            // 文件上传相关
+            browseFilesBtn.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+            
+            removeFileBtn.addEventListener('click', () => {
+                fileInput.value = '';
+                filePreview.classList.add('hidden');
+                startConversionBtn.disabled = true;
+            });
+            
+            // 拖放功能
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.classList.add('border-primary');
+                dropArea.classList.add('bg-blue-50');
+            });
+            
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.classList.remove('border-primary');
+                dropArea.classList.remove('bg-blue-50');
+            });
+            
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('border-primary');
+                dropArea.classList.remove('bg-blue-50');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileUpload(e.dataTransfer.files[0]);
+                }
+            });
+            
+            dropArea.addEventListener('click', () => fileInput.click());
+            
+            // 移动端菜单
+            menuToggle.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
