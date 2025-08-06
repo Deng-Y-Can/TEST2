@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy文本对比工具2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        // 定义基础颜色
+                        leftOnly: '#FFE8E8',
+                        leftOnlyText: '#B71C1C',
+                        rightOnly: '#E8F4FF',
+                        rightOnlyText: '#0D47A1',
+                        modified: '#FFF3E0',
+                        modifiedText: '#E65100',
+                        diffCharLeft: '#B71C1C',
+                        diffCharRight: '#0D47A1',
+                        cursorLine: '#E0E0E0',
+                    },
+                    fontFamily: {
+                        mono: ['Consolas', 'Monaco', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .line-number {
+                user-select: none;
+                text-align: right;
+                min-width: 3rem;
+                padding-right: 1rem;
+                color: #9CA3AF;
+            }
+
+            .move-btn {
+                opacity: 0;
+                transition: opacity 0.2s ease;
+            }
+
+            .line-item:hover .move-btn {
+                opacity: 1;
+            }
+
+            .diff-char {
+                font-weight: 600;
+                text-decoration: underline;
+                text-underline-offset: 2px;
+            }
+
+            .cursor-highlight {
+                animation: cursorPulse 2s infinite;
+            }
+
+            @keyframes cursorPulse {
+                0%, 100% {
+                    opacity: 0.5;
+                }
+
+                50% {
+                    opacity: 0.8;
+                }
+            }
+            /* 行样式类 */
+            .line-normal {
+                background-color: #FFFFFF;
+                color: #374151;
+                border-left: 3px solid transparent;
+            }
+
+            .line-left-only {
+                background-color: theme('colors.leftOnly');
+                color: theme('colors.leftOnlyText');
+                border-left: 3px solid theme('colors.leftOnlyText');
+            }
+
+            .line-right-only {
+                background-color: theme('colors.rightOnly');
+                color: theme('colors.rightOnlyText');
+                border-left: 3px solid theme('colors.rightOnlyText');
+            }
+
+            .line-modified {
+                background-color: theme('colors.modified');
+                color: theme('colors.modifiedText');
+                border-left: 3px solid theme('colors.modifiedText');
+            }
+
+            .line-highlight {
+                transition: all 0.2s ease;
+            }
+
+                .line-highlight:hover {
+                    filter: brightness(0.98);
+                }
+            /* 开关样式 - 确保状态变化可见 */
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 40px;
+                height: 20px;
+            }
+
+                .toggle-switch input {
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+
+            .toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: .3s;
+                border-radius: 34px;
+            }
+
+                .toggle-slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 16px;
+                    width: 16px;
+                    left: 2px;
+                    bottom: 2px;
+                    background-color: white;
+                    transition: .3s;
+                    border-radius: 50%;
+                }
+
+            input:checked + .toggle-slider {
+                background-color: #4F46E5;
+            }
+
+                input:checked + .toggle-slider:before {
+                    transform: translateX(20px);
+                }
+            /* 颜色选择器样式 */
+            .color-input {
+                width: 36px;
+                height: 30px;
+                padding: 2px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <header class="mb-6 text-center">
+            <h1 class="text-[clamp(1.6rem,4vw,2.2rem)] font-bold text-gray-800 mb-2">文本对比工具</h1>
+            <p class="text-gray-600">实时对比两段文本，支持行级和字符级差异显示</p>
+        </header>
+
+        <!-- 控制栏 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- 左侧：文件操作 -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <button id="clearBtn" class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md transition-all">
+                        <i class="fa fa-trash"></i>
+                        <span>清空文本</span>
+                    </button>
+                    <button id="swapBtn" class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md transition-all">
+                        <i class="fa fa-exchange"></i>
+                        <span>交换文本</span>
+                    </button>
+                </div>
+
+                <!-- 中间：对比选项 - 带明确的视觉反馈 -->
+                <div class="flex flex-wrap items-center gap-6">
+                    <div class="flex items-center gap-2">
+                        <label for="caseSensitive" class="text-sm font-medium text-gray-700">区分大小写</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="caseSensitive" checked />
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span id="caseSensitiveStatus" class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">启用</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="charDiff" class="text-sm font-medium text-gray-700">字符级对比</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="charDiff" checked />
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span id="charDiffStatus" class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">启用</span>
+                    </div>
+                </div>
+
+                <!-- 右侧：颜色设置按钮 -->
+                <div class="flex justify-end">
+                    <button id="colorSettingsBtn" class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md transition-all">
+                        <i class="fa fa-paint-brush"></i>
+                        <span>颜色设置</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 颜色设置面板 - 修复显示问题 -->
+        <div id="colorSettingsPanel" class="hidden bg-white rounded-lg shadow-md border border-gray-200 p-4 mb-6 transform transition-all duration-300 ease-in-out">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fa fa-sliders mr-2 text-primary"></i>颜色自定义
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 左侧颜色设置 -->
+                <div>
+                    <h4 class="font-medium text-gray-700 mb-3">左侧独有行</h4>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label class="w-28 text-sm">背景色:</label>
+                        <input type="color" id="leftOnlyBg" class="color-input" value="#FFE8E8">
+                        <input type="text" id="leftOnlyBgHex" class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" value="#FFE8E8">
+                    </div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label class="w-28 text-sm">文字色:</label>
+                        <input type="color" id="leftOnlyText" class="color-input" value="#B71C1C">
+                        <input type="text" id="leftOnlyTextHex" class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" value="#B71C1C">
+                    </div>
+
+                    <h4 class="font-medium text-gray-700 mb-3 mt-5">修改行</h4>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label class="w-28 text-sm">背景色:</label>
+                        <input type="color" id="modifiedBg" class="color-input" value="#FFF3E0">
+                        <input type="text" id="modifiedBgHex" class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" value="#FFF3E0">
+                    </div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label class="w-28 text-sm">文字色:</label>
+                        <input type="color" id="modifiedText" class="color-input" value="#E65100">
+                        <input type="text" id="modifiedTextHex" class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" value="#E65100">
+                    </div>
+                </div>
+
+                <!-- 右侧颜色设置 -->
+                <div>
+                    <h4 class="font-medium text-gray-700 mb-3">右侧独有行</h4>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label class="w-28 text-sm">背景色:</label>
+                        <input type="color" id="rightOnlyBg" class="color-input" value="#E8F4FF">
+                        <input type="text" id="rightOnlyBgHex" class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" value="#E8F4FF">
+                    </div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label class="w-28 text-sm">文字色:</label>
+                        <input type="color" id="rightOnlyText" class="color-input" value="#0D47A1">
+                        <input type="text" id="rightOnlyTextHex" class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" value="#0D47A1">
+                    </div>
+
+                    <h4 class="font-medium text-gray-700 mb-3 mt-5">差异字符</h4>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label class="w-28 text-sm">左侧差异:</label>
+                        <input type="color" id="diffCharLeft" class="color-input" value="#B71C1C">
+                        <input type="text" id="diffCharLeftHex" class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" value="#B71C1C">
+                    </div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label class="w-28 text-sm">右侧差异:</label>
+                        <input type="color" id="diffCharRight" class="color-input" value="#0D47A1">
+                        <input type="text" id="diffCharRightHex" class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" value="#0D47A1">
+                    </div>
+
+                    <h4 class="font-medium text-gray-700 mb-3 mt-5">光标行</h4>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label class="w-28 text-sm">背景色:</label>
+                        <input type="color" id="cursorLineBg" class="color-input" value="#E0E0E0">
+                        <input type="text" id="cursorLineBgHex" class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" value="#E0E0E0">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end gap-3">
+                <button id="resetColorsBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors">
+                    重置默认
+                </button>
+                <button id="applyColorsBtn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+                    应用设置
+                </button>
+            </div>
+        </div>
+
+        <!-- 图例说明 -->
+        <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6 text-sm">
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-leftOnly mr-2" id="legendLeftOnly"></span>
+                <span>左侧独有行</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-rightOnly mr-2" id="legendRightOnly"></span>
+                <span>右侧独有行</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-modified mr-2" id="legendModified"></span>
+                <span>修改行</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-transparent text-diffCharLeft border border-gray-300 mr-2">A</span>
+                <span>左侧差异字符</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-transparent text-diffCharRight border border-gray-300 mr-2">A</span>
+                <span>右侧差异字符</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 左侧文本区域 -->
+            <div class="flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fa fa-file-text-o mr-2 text-primary"></i>
+                        原始文本
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <label for="uploadLeft" class="cursor-pointer flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-md text-sm transition-all">
+                            <i class="fa fa-upload"></i>
+                            <span>导入文件</span>
+                        </label>
+                        <input type="file" id="uploadLeft" accept=".txt,.html,.css,.js,.json,.md" class="hidden" />
+                        <div class="text-sm text-gray-500">
+                            <span id="leftLineCount">0</span> 行 |
+                            <span id="leftCharCount">0</span> 字符
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
+                    <!-- 可视化文本区域 -->
+                    <div id="leftTextContainer" class="min-h-[500px] max-h-[700px] overflow-y-auto font-mono text-sm p-4">
+                        <div class="text-container whitespace-pre">
+                            <div class="text-gray-500 italic text-center py-10">请输入文本内容...</div>
+                        </div>
+                    </div>
+
+                    <!-- 实际输入文本框 -->
+                    <textarea id="leftText"
+                              class="absolute inset-0 w-full h-full bg-transparent p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono text-sm opacity-0"
+                              placeholder="输入或粘贴文本到这里..."></textarea>
+                </div>
+            </div>
+
+            <!-- 右侧文本区域 -->
+            <div class="flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fa fa-file-text mr-2 text-primary"></i>
+                        对比文本
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <label for="uploadRight" class="cursor-pointer flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-md text-sm transition-all">
+                            <i class="fa fa-upload"></i>
+                            <span>导入文件</span>
+                        </label>
+                        <input type="file" id="uploadRight" accept=".txt,.html,.css,.js,.json,.md" class="hidden" />
+                        <div class="text-sm text-gray-500">
+                            <span id="rightLineCount">0</span> 行 |
+                            <span id="rightCharCount">0</span> 字符
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
+                    <!-- 可视化文本区域 -->
+                    <div id="rightTextContainer" class="min-h-[500px] max-h-[700px] overflow-y-auto font-mono text-sm p-4">
+                        <div class="text-container whitespace-pre">
+                            <div class="text-gray-500 italic text-center py-10">请输入文本内容...</div>
+                        </div>
+                    </div>
+
+                    <!-- 实际输入文本框 -->
+                    <textarea id="rightText"
+                              class="absolute inset-0 w-full h-full bg-transparent p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono text-sm opacity-0"
+                              placeholder="输入或粘贴文本到这里..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 颜色配置
+        let colorConfig = {
+            leftOnlyBg: '#FFE8E8',
+            leftOnlyText: '#B71C1C',
+            rightOnlyBg: '#E8F4FF',
+            rightOnlyText: '#0D47A1',
+            modifiedBg: '#FFF3E0',
+            modifiedText: '#E65100',
+            diffCharLeft: '#B71C1C',
+            diffCharRight: '#0D47A1',
+            cursorLineBg: '#E0E0E0'
+        };
+
+        // DOM元素
+        const leftText = document.getElementById('leftText');
+        const rightText = document.getElementById('rightText');
+        const leftTextContainer = document.getElementById('leftTextContainer').querySelector('.text-container');
+        const rightTextContainer = document.getElementById('rightTextContainer').querySelector('.text-container');
+        const clearBtn = document.getElementById('clearBtn');
+        const swapBtn = document.getElementById('swapBtn');
+        const caseSensitive = document.getElementById('caseSensitive');
+        const charDiff = document.getElementById('charDiff');
+        const caseSensitiveStatus = document.getElementById('caseSensitiveStatus');
+        const charDiffStatus = document.getElementById('charDiffStatus');
+        const uploadLeft = document.getElementById('uploadLeft');
+        const uploadRight = document.getElementById('uploadRight');
+        const colorSettingsBtn = document.getElementById('colorSettingsBtn');
+        const colorSettingsPanel = document.getElementById('colorSettingsPanel');
+        const applyColorsBtn = document.getElementById('applyColorsBtn');
+        const resetColorsBtn = document.getElementById('resetColorsBtn');
+        const leftLineCount = document.getElementById('leftLineCount');
+        const rightLineCount = document.getElementById('rightLineCount');
+        const leftCharCount = document.getElementById('leftCharCount');
+        const rightCharCount = document.getElementById('rightCharCount');
+
+        // 存储文本内容和差异信息
+        let leftContent = '';
+        let rightContent = '';
+        let diffInfo = {
+            left: [], // 左侧每行的差异类型
+            right: [] // 右侧每行的差异类型
+        };
+        let activeTextarea = null; // 当前激活的文本框
+
+        // 初始化事件监听
+        function initEventListeners() {
+            // 监听文本变化
+            leftText.addEventListener('input', handleLeftInput);
+            rightText.addEventListener('input', handleRightInput);
+
+            // 监听焦点事件
+            leftText.addEventListener('focus', () => { activeTextarea = leftText; updateCursorHighlight(); });
+            rightText.addEventListener('focus', () => { activeTextarea = rightText; updateCursorHighlight(); });
+            leftText.addEventListener('blur', () => { if (activeTextarea === leftText) activeTextarea = null; updateCursorHighlight(); });
+            rightText.addEventListener('blur', () => { if (activeTextarea === rightText) activeTextarea = null; updateCursorHighlight(); });
+
+            // 监听滚动事件 - 保持左右滚动位置同步
+            leftTextContainer.parentElement.addEventListener('scroll', syncScroll);
+            rightTextContainer.parentElement.addEventListener('scroll', syncScroll);
+
+            // 监听光标位置变化
+            document.addEventListener('selectionchange', () => {
+                if (activeTextarea === leftText) {
+                    scrollToCursor(leftText, leftTextContainer.parentElement);
+                    updateCursorHighlight();
+                } else if (activeTextarea === rightText) {
+                    scrollToCursor(rightText, rightTextContainer.parentElement);
+                    updateCursorHighlight();
+                }
+            });
+
+            // 清空按钮
+            clearBtn.addEventListener('click', clearAllText);
+
+            // 交换按钮
+            swapBtn.addEventListener('click', swapTexts);
+
+            // 区分大小写切换 - 添加明确的视觉反馈
+            caseSensitive.addEventListener('change', function () {
+                // 更新状态标签
+                if (this.checked) {
+                    caseSensitiveStatus.textContent = '启用';
+                    caseSensitiveStatus.className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full';
+                } else {
+                    caseSensitiveStatus.textContent = '禁用';
+                    caseSensitiveStatus.className = 'text-xs px-2 py-1 bg-gray-100 text-gray-800 rounded-full';
+                }
+                // 重新对比
+                compareTexts();
+            });
+
+            // 字符级对比切换 - 添加明确的视觉反馈
+            charDiff.addEventListener('change', function () {
+                // 更新状态标签
+                if (this.checked) {
+                    charDiffStatus.textContent = '启用';
+                    charDiffStatus.className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full';
+                } else {
+                    charDiffStatus.textContent = '禁用';
+                    charDiffStatus.className = 'text-xs px-2 py-1 bg-gray-100 text-gray-800 rounded-full';
+                }
+                // 重新显示
+                updateTextDisplay();
+            });
+
+            // 文件上传
+            uploadLeft.addEventListener('change', (e) => handleFileUpload(e, 'left'));
+            uploadRight.addEventListener('change', (e) => handleFileUpload(e, 'right'));
+
+            // 颜色设置面板
+            colorSettingsBtn.addEventListener('click', toggleColorSettings);
+            applyColorsBtn.addEventListener('click', applyColorSettings);
+            resetColorsBtn.addEventListener('click', resetColorSettings);
+
+            // 颜色选择器事件
+            setupColorInputListeners();
+
+            // 初始化
+            updateTextDisplay();
+            updateCounters();
+            updateColorLegends();
+        }
+
+        // 设置颜色输入框监听
+        function setupColorInputListeners() {
+            // 为每个颜色选择器添加事件监听
+            Object.keys(colorConfig).forEach(key => {
+                const colorInput = document.getElementById(key);
+                const hexInput = document.getElementById(`${key}Hex`);
+
+                if (colorInput && hexInput) {
+                    // 初始化输入框值
+                    colorInput.value = colorConfig[key];
+                    hexInput.value = colorConfig[key];
+
+                    // 颜色选择器变化时更新文本框
+                    colorInput.addEventListener('input', () => {
+                        hexInput.value = colorInput.value;
+                    });
+
+                    // 文本框变化时更新颜色选择器
+                    hexInput.addEventListener('input', () => {
+                        if (/^#([0-9A-F]{3}){1,2}$/i.test(hexInput.value)) {
+                            colorInput.value = hexInput.value;
+                        }
+                    });
+                }
+            });
+        }
+
+        // 切换颜色设置面板
+        function toggleColorSettings() {
+            colorSettingsPanel.classList.toggle('hidden');
+        }
+
+        // 应用颜色设置
+        function applyColorSettings() {
+            // 更新颜色配置
+            let colorsUpdated = false;
+            Object.keys(colorConfig).forEach(key => {
+                const hexInput = document.getElementById(`${key}Hex`);
+                if (hexInput && /^#([0-9A-F]{3}){1,2}$/i.test(hexInput.value) && hexInput.value !== colorConfig[key]) {
+                    colorConfig[key] = hexInput.value;
+                    colorsUpdated = true;
+                }
+            });
+
+            if (colorsUpdated) {
+                // 更新CSS变量和行样式
+                updateLineStyles();
+
+                // 更新图例
+                updateColorLegends();
+
+                // 重新渲染文本
+                updateTextDisplay();
+
+                // 显示提示
+                alert('颜色设置已应用');
+            }
+
+            // 隐藏面板
+            colorSettingsPanel.classList.add('hidden');
+        }
+
+        // 重置颜色设置
+        function resetColorSettings() {
+            // 重置为默认值
+            const defaultColors = {
+                leftOnlyBg: '#FFE8E8',
+                leftOnlyText: '#B71C1C',
+                rightOnlyBg: '#E8F4FF',
+                rightOnlyText: '#0D47A1',
+                modifiedBg: '#FFF3E0',
+                modifiedText: '#E65100',
+                diffCharLeft: '#B71C1C',
+                diffCharRight: '#0D47A1',
+                cursorLineBg: '#E0E0E0'
+            };
+
+            // 更新输入框和配置
+            Object.keys(defaultColors).forEach(key => {
+                const colorInput = document.getElementById(key);
+                const hexInput = document.getElementById(`${key}Hex`);
+
+                if (colorInput && hexInput) {
+                    colorInput.value = defaultColors[key];
+                    hexInput.value = defaultColors[key];
+                    colorConfig[key] = defaultColors[key];
+                }
+            });
+
+            // 更新CSS和显示
+            updateLineStyles();
+            updateColorLegends();
+            updateTextDisplay();
+        }
+
+        // 更新行样式 - 动态修改CSS
+        function updateLineStyles() {
+            // 移除已存在的样式
+            const existingStyle = document.getElementById('dynamicLineStyles');
+            if (existingStyle) {
+                existingStyle.remove();
+            }
+
+            // 创建新的样式元素
+            const style = document.createElement('style');
+            style.id = 'dynamicLineStyles';
+            style.textContent = `
+                    .line-left-only {
+                        background-color: ${colorConfig.leftOnlyBg};
+                        color: ${colorConfig.leftOnlyText};
+                        border-left: 3px solid ${colorConfig.leftOnlyText};
+                    }
+                    .line-right-only {
+                        background-color: ${colorConfig.rightOnlyBg};
+                        color: ${colorConfig.rightOnlyText};
+                        border-left: 3px solid ${colorConfig.rightOnlyText};
+                    }
+                    .line-modified {
+                        background-color: ${colorConfig.modifiedBg};
+                        color: ${colorConfig.modifiedText};
+                        border-left: 3px solid ${colorConfig.modifiedText};
+                    }
+                    .text-diffCharLeft {
+                        color: ${colorConfig.diffCharLeft};
+                    }
+                    .text-diffCharRight {
+                        color: ${colorConfig.diffCharRight};
+                    }
+                    .bg-cursorLine {
+                        background-color: ${colorConfig.cursorLineBg} !important;
+                    }
+                `;
+
+            // 添加到头部
+            document.head.appendChild(style);
+        }
+
+        // 更新颜色图例
+        function updateColorLegends() {
+            document.getElementById('legendLeftOnly').style.backgroundColor = colorConfig.leftOnlyBg;
+            document.getElementById('legendRightOnly').style.backgroundColor = colorConfig.rightOnlyBg;
+            document.getElementById('legendModified').style.backgroundColor = colorConfig.modifiedBg;
+            document.getElementById('legendDiffLeft').style.color = colorConfig.diffCharLeft;
+            document.getElementById('legendDiffRight').style.color = colorConfig.diffCharRight;
+        }
+
+        // 处理左侧文本输入
+        function handleLeftInput() {
+            leftContent = leftText.value;
+            updateTextDisplay();
+            compareTexts();
+            updateCounters();
+        }
+
+        // 处理右侧文本输入
+        function handleRightInput() {
+            rightContent = rightText.value;
+            updateTextDisplay();
+            compareTexts();
+            updateCounters();
+        }
+
+        // 更新文本显示（带行号和差异标记）
+        function updateTextDisplay() {
+            // 显示左侧文本
+            const leftLines = leftContent.split('\n');
+            leftTextContainer.innerHTML = leftLines.length === 1 && leftLines[0] === ''
+                ? '<div class="text-gray-500 italic text-center py-10">请输入文本内容...</div>'
+                : '';
+
+            leftLines.forEach((line, index) => {
+                const lineType = diffInfo.left[index] || 'normal';
+                const rightLine = rightContent.split('\n')[index] || '';
+                const lineEl = createLineElement(
+                    line,
+                    index + 1,
+                    lineType,
+                    'left',
+                    rightLine
+                );
+                leftTextContainer.appendChild(lineEl);
+            });
+
+            // 显示右侧文本
+            const rightLines = rightContent.split('\n');
+            rightTextContainer.innerHTML = rightLines.length === 1 && rightLines[0] === ''
+                ? '<div class="text-gray-500 italic text-center py-10">请输入文本内容...</div>'
+                : '';
+
+            rightLines.forEach((line, index) => {
+                const lineType = diffInfo.right[index] || 'normal';
+                const leftLine = leftContent.split('\n')[index] || '';
+                const lineEl = createLineElement(
+                    line,
+                    index + 1,
+                    lineType,
+                    'right',
+                    leftLine
+                );
+                rightTextContainer.appendChild(lineEl);
+            });
+
+            // 更新光标高亮
+            updateCursorHighlight();
+        }
+
+        // 创建行元素
+        function createLineElement(content, lineNumber, lineType, side, compareLine) {
+            const lineEl = document.createElement('div');
+
+            // 应用基础类和行类型类
+            let lineClasses = 'line-item line-highlight flex items-center py-0.5 px-1 w-full';
+            switch (lineType) {
+                case 'leftOnly':
+                    lineClasses += ' line-left-only';
+                    break;
+                case 'rightOnly':
+                    lineClasses += ' line-right-only';
+                    break;
+                case 'modified':
+                    lineClasses += ' line-modified';
+                    break;
+                default:
+                    lineClasses += ' line-normal';
+            }
+            lineEl.className = lineClasses;
+            lineEl.dataset.lineNumber = lineNumber;
+
+            // 行号
+            const lineNumEl = document.createElement('span');
+            lineNumEl.className = 'line-number';
+            lineNumEl.textContent = lineNumber;
+
+            // 文本内容
+            const contentEl = document.createElement('span');
+            contentEl.className = 'flex-grow';
+
+            // 如果启用字符级对比且是修改行，则标记差异字符
+            if (charDiff.checked && lineType === 'modified') {
+                contentEl.innerHTML = highlightDiffChars(content, compareLine, side);
+            } else {
+                contentEl.textContent = content;
+            }
+
+            // 移动按钮
+            const moveBtn = document.createElement('button');
+            moveBtn.className = 'move-btn p-1 rounded hover:bg-gray-200 text-gray-600';
+            moveBtn.innerHTML = side === 'left'
+                ? '<i class="fa fa-arrow-right"></i>'
+                : '<i class="fa fa-arrow-left"></i>';
+            moveBtn.onclick = (e) => {
+                e.stopPropagation();
+                moveLine(lineNumber - 1, side);
+            };
+
+            lineEl.appendChild(lineNumEl);
+            lineEl.appendChild(contentEl);
+            lineEl.appendChild(moveBtn);
+
+            return lineEl;
+        }
+
+        // 高亮显示差异字符
+        function highlightDiffChars(content, compareLine, side) {
+            // 准备比较的文本（考虑大小写）
+            const text1 = caseSensitive.checked ? content : content.toLowerCase();
+            const text2 = caseSensitive.checked ? compareLine : compareLine.toLowerCase();
+
+            // 使用LCS算法查找最长公共子序列
+            const lcs = findLCS(text1, text2);
+            let result = '';
+            let i = 0, j = 0;
+
+            for (const char of lcs) {
+                // 添加text1中在LCS字符前的差异字符
+                while (i < text1.length && text1[i] !== char) {
+                    const originalChar = content[i] || '';
+                    const diffClass = side === 'left' ? 'text-diffCharLeft' : 'text-diffCharRight';
+                    result += `<span class="diff-char ${diffClass}">${escapeHtml(originalChar)}</span>`;
+                    i++;
+                }
+
+                // 添加text2中在LCS字符前的差异字符
+                while (j < text2.length && text2[j] !== char) {
+                    j++;
+                }
+
+                // 添加LCS中的公共字符
+                if (i < text1.length) {
+                    result += escapeHtml(content[i]);
+                    i++;
+                    j++;
+                }
+            }
+
+            // 添加剩余的差异字符
+            while (i < text1.length) {
+                const originalChar = content[i] || '';
+                const diffClass = side === 'left' ? 'text-diffCharLeft' : 'text-diffCharRight';
+                result += `<span class="diff-char ${diffClass}">${escapeHtml(originalChar)}</span>`;
+                i++;
+            }
+
+            return result;
+        }
+
+        // 查找最长公共子序列(LCS)
+        function findLCS(str1, str2) {
+            const m = str1.length;
+            const n = str2.length;
+
+            // 创建二维数组存储LCS长度
+            const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+            // 填充DP表
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (str1[i - 1] === str2[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1] + 1;
+                    } else {
+                        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                    }
+                }
+            }
+
+            // 回溯找到LCS
+            let i = m, j = n;
+            const lcs = [];
+
+            while (i > 0 && j > 0) {
+                if (str1[i - 1] === str2[j - 1]) {
+                    lcs.unshift(str1[i - 1]);
+                    i--;
+                    j--;
+                } else if (dp[i - 1][j] > dp[i][j - 1]) {
+                    i--;
+                } else {
+                    j--;
+                }
+            }
+
+            return lcs;
+        }
+
+        // HTML转义函数
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 对比文本 - 行级对比
+        function compareTexts() {
+            const leftLines = leftContent.split('\n');
+            const rightLines = rightContent.split('\n');
+
+            // 重置差异信息
+            diffInfo = {
+                left: new Array(leftLines.length).fill('normal'),
+                right: new Array(rightLines.length).fill('normal')
+            };
+
+            // 准备用于比较的行（考虑大小写）
+            const compareLeftLines = caseSensitive.checked
+                ? leftLines.map(l => l)
+                : leftLines.map(l => l.toLowerCase());
+            const compareRightLines = caseSensitive.checked
+                ? rightLines.map(l => l)
+                : rightLines.map(l => l.toLowerCase());
+
+            // 构建相似度矩阵
+            const matrix = Array.from({ length: leftLines.length + 1 }, () =>
+                Array(rightLines.length + 1).fill(0)
+            );
+
+            for (let i = 1; i <= leftLines.length; i++) {
+                for (let j = 1; j <= rightLines.length; j++) {
+                    if (compareLeftLines[i - 1] === compareRightLines[j - 1]) {
+                        matrix[i][j] = matrix[i - 1][j - 1] + 1;
+                    } else {
+                        matrix[i][j] = Math.max(matrix[i - 1][j], matrix[i][j - 1]);
+                    }
+                }
+            }
+
+            // 回溯找到匹配的行
+            const matched = new Set();
+            let i = leftLines.length, j = rightLines.length;
+
+            while (i > 0 && j > 0) {
+                if (compareLeftLines[i - 1] === compareRightLines[j - 1]) {
+                    matched.add(`${i - 1},${j - 1}`);
+                    i--;
+                    j--;
+                } else if (matrix[i - 1][j] > matrix[i][j - 1]) {
+                    i--;
+                } else {
+                    j--;
+                }
+            }
+
+            // 1. 标记修改行（位置相同但内容不同）
+            const minLen = Math.min(leftLines.length, rightLines.length);
+            for (let k = 0; k < minLen; k++) {
+                if (compareLeftLines[k] !== compareRightLines[k] &&
+                    !matched.has(`${k},${k}`)) {
+                    diffInfo.left[k] = 'modified';
+                    diffInfo.right[k] = 'modified';
+                }
+            }
+
+            // 2. 标记左侧独有行
+            for (let k = 0; k < leftLines.length; k++) {
+                let isUnique = true;
+                for (let l = 0; l < rightLines.length; l++) {
+                    if (compareLeftLines[k] === compareRightLines[l]) {
+                        isUnique = false;
+                        break;
+                    }
+                }
+                if (isUnique && diffInfo.left[k] === 'normal') {
+                    diffInfo.left[k] = 'leftOnly';
+                }
+            }
+
+            // 3. 标记右侧独有行
+            for (let k = 0; k < rightLines.length; k++) {
+                let isUnique = true;
+                for (let l = 0; l < leftLines.length; l++) {
+                    if (compareRightLines[k] === compareLeftLines[l]) {
+                        isUnique = false;
+                        break;
+                    }
+                }
+                if (isUnique && diffInfo.right[k] === 'normal') {
+                    diffInfo.right[k] = 'rightOnly';
+                }
+            }
+
+            // 更新显示
+            updateTextDisplay();
+        }
+
+        // 移动行
+        function moveLine(lineIndex, fromSide) {
+            const fromLines = fromSide === 'left'
+                ? leftContent.split('\n')
+                : rightContent.split('\n');
+            const toLines = fromSide === 'left'
+                ? rightContent.split('\n')
+                : leftContent.split('\n');
+
+            // 获取要移动的行内容
+            const lineToMove = fromLines[lineIndex];
+            if (typeof lineToMove === 'undefined') return;
+
+            // 从源文本中移除行
+            fromLines.splice(lineIndex, 1);
+
+            // 添加到目标文本的对应位置
+            if (lineIndex < toLines.length) {
+                toLines.splice(lineIndex, 0, lineToMove);
+            } else {
+                toLines.push(lineToMove);
+            }
+
+            // 更新文本内容
+            if (fromSide === 'left') {
+                leftContent = fromLines.join('\n');
+                rightContent = toLines.join('\n');
+            } else {
+                rightContent = fromLines.join('\n');
+                leftContent = toLines.join('\n');
+            }
+
+            // 更新文本框和显示
+            leftText.value = leftContent;
+            rightText.value = rightContent;
+            updateTextDisplay();
+            compareTexts();
+            updateCounters();
+        }
+
+        // 同步滚动
+        function syncScroll(e) {
+            if (e.target === leftTextContainer.parentElement) {
+                rightTextContainer.parentElement.scrollTop = e.target.scrollTop;
+                rightTextContainer.parentElement.scrollLeft = e.target.scrollLeft;
+            } else if (e.target === rightTextContainer.parentElement) {
+                leftTextContainer.parentElement.scrollTop = e.target.scrollTop;
+                leftTextContainer.parentElement.scrollLeft = e.target.scrollLeft;
+            }
+        }
+
+        // 滚动到光标位置
+        function scrollToCursor(textarea, container) {
+            if (document.activeElement !== textarea) return;
+
+            try {
+                const cursorPos = textarea.selectionStart;
+                const textUpToCursor = textarea.value.substring(0, cursorPos);
+
+                // 创建临时元素计算光标位置
+                const tempDiv = document.createElement('div');
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.visibility = 'hidden';
+                tempDiv.style.whiteSpace = 'pre';
+                tempDiv.style.font = getComputedStyle(textarea).font;
+                tempDiv.style.padding = getComputedStyle(textarea).padding;
+                tempDiv.textContent = textUpToCursor;
+                document.body.appendChild(tempDiv);
+
+                // 计算滚动位置
+                const cursorHeight = tempDiv.offsetHeight;
+                const containerHeight = container.clientHeight;
+
+                if (cursorHeight > container.scrollTop + containerHeight ||
+                    cursorHeight < container.scrollTop) {
+                    container.scrollTop = Math.max(0, cursorHeight - containerHeight / 2);
+                }
+
+                document.body.removeChild(tempDiv);
+            } catch (error) {
+                console.log('滚动到光标位置时出错:', error);
+            }
+        }
+
+        // 更新光标所在行高亮
+        function updateCursorHighlight() {
+            // 移除所有现有高亮
+            document.querySelectorAll('.cursor-highlight').forEach(el => {
+                el.classList.remove('bg-cursorLine', 'cursor-highlight');
+            });
+
+            if (!activeTextarea) return;
+
+            try {
+                // 获取光标位置
+                const cursorPos = activeTextarea.selectionStart;
+                const text = activeTextarea.value;
+
+                // 计算光标所在行
+                let lineNumber = 1;
+                for (let i = 0; i < cursorPos; i++) {
+                    if (text[i] === '\n') {
+                        lineNumber++;
+                    }
+                }
+
+                // 获取对应的文本容器
+                const container = activeTextarea === leftText
+                    ? leftTextContainer
+                    : rightTextContainer;
+
+                // 高亮当前行
+                const lineElement = container.querySelector(`[data-line-number="${lineNumber}"]`);
+                if (lineElement) {
+                    lineElement.classList.add('bg-cursorLine', 'cursor-highlight');
+                }
+            } catch (error) {
+                console.log('更新光标高亮时出错:', error);
+            }
+        }
+
+        // 清空所有文本
+        function clearAllText() {
+            leftContent = '';
+            rightContent = '';
+            leftText.value = '';
+            rightText.value = '';
+            updateTextDisplay();
+            compareTexts();
+            updateCounters();
+        }
+
+        // 交换文本
+        function swapTexts() {
+            const temp = leftContent;
+            leftContent = rightContent;
+            rightContent = temp;
+            leftText.value = leftContent;
+            rightText.value = rightContent;
+            updateTextDisplay();
+            compareTexts();
+            updateCounters();
+        }
+
+        // 处理文件上传
+        function handleFileUpload(event, side) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 重置文件输入
+            event.target.value = '';
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const content = e.target.result;
+                if (side === 'left') {
+                    leftContent = content;
+                    leftText.value = content;
+                } else {
+                    rightContent = content;
+                    rightText.value = content;
+                }
+                updateTextDisplay();
+                compareTexts();
+                updateCounters();
+
+                // 聚焦到上传的文本框
+                if (side === 'left') {
+                    leftText.focus();
+                } else {
+                    rightText.focus();
+                }
+            };
+
+            // 读取文件内容
+            reader.readAsText(file, 'UTF-8');
+            reader.onerror = function () {
+                alert('文件读取失败，请尝试其他文件');
+            };
+        }
+
+        // 更新计数器
+        function updateCounters() {
+            const leftLines = leftContent.split('\n');
+            const rightLines = rightContent.split('\n');
+
+            leftLineCount.textContent = leftLines.length;
+            rightLineCount.textContent = rightLines.length;
+            leftCharCount.textContent = leftContent.length;
+            rightCharCount.textContent = rightContent.length;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initEventListeners();
+            updateLineStyles(); // 初始化行样式
+        });
+    </script>
+</body>
+</html>
