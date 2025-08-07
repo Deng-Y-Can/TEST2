@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档扫描模拟器 - 支持PDF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入PDF生成库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36BFFA',
+                        neutral: '#F5F7FA',
+                        dark: '#1D2129',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scan-frame {
+                border: 2px dashed rgba(22, 93, 255, 0.5);
+                animation: pulse 2s infinite;
+            }
+            .scan-effect {
+                background: linear-gradient(to bottom, 
+                    rgba(22, 93, 255, 0) 0%,
+                    rgba(22, 93, 255, 0.2) 50%,
+                    rgba(22, 93, 255, 0) 100%);
+                animation: scan 2s linear infinite;
+            }
+            .image-preview {
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+            .image-preview:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+        }
+
+        @keyframes pulse {
+            0% { border-color: rgba(22, 93, 255, 0.5); }
+            50% { border-color: rgba(22, 93, 255, 1); }
+            100% { border-color: rgba(22, 93, 255, 0.5); }
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="font-inter bg-neutral min-h-screen flex flex-col">
+    <!-- 顶部导航 -->
+    <header class="bg-white shadow-sm py-4 px-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-file-text-o text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-dark">文档扫描模拟器</h1>
+            </div>
+            <div class="text-gray-500 text-sm">
+                <span id="scan-count">已扫描: 0 个文档</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="flex-grow container mx-auto p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左侧：扫描区域 -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-camera text-primary mr-2"></i>扫描区域
+                    </h2>
+                    
+                    <!-- 摄像头预览区域 -->
+                    <div id="camera-container" class="relative w-full rounded-lg overflow-hidden aspect-video bg-gray-100 mb-4">
+                        <video id="camera-preview" class="w-full h-full object-cover" autoplay playsinline></video>
+                        <div class="scan-frame absolute inset-0 m-8 rounded"></div>
+                        <div class="scan-effect absolute inset-8 m-0 rounded"></div>
+                        <div id="no-camera" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 hidden">
+                            <i class="fa fa-camera-slr text-5xl mb-4 opacity-30"></i>
+                            <p>请允许摄像头权限或上传图片</p>
+                        </div>
+                    </div>
+
+                    <!-- 控制按钮 -->
+                    <div class="flex flex-wrap gap-3 justify-center">
+                        <button id="start-camera" class="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition flex items-center">
+                            <i class="fa fa-play mr-2"></i>启动摄像头
+                        </button>
+                        <button id="capture-btn" class="px-5 py-2.5 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition flex items-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fa fa-camera mr-2"></i>拍摄
+                        </button>
+                        <button id="upload-btn" class="px-5 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center">
+                            <i class="fa fa-upload mr-2"></i>上传图片
+                        </button>
+                        <input type="file" id="file-input" accept="image/*" class="hidden">
+                    </div>
+                </div>
+
+                <!-- 图像处理 -->
+                <div id="image-editor" class="bg-white rounded-xl shadow-sm p-6 hidden fade-in">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-magic text-primary mr-2"></i>图像处理
+                    </h2>
+                    
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="md:w-1/2">
+                            <img id="edit-preview" class="w-full rounded-lg shadow-sm" src="" alt="待处理的图像">
+                        </div>
+                        
+                        <div class="md:w-1/2 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">滤镜效果</label>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <button class="filter-btn p-1 border-2 border-transparent hover:border-primary rounded" data-filter="original">
+                                        <span class="block text-xs">原图</span>
+                                    </button>
+                                    <button class="filter-btn p-1 border-2 border-transparent hover:border-primary rounded" data-filter="grayscale">
+                                        <span class="block text-xs">黑白</span>
+                                    </button>
+                                    <button class="filter-btn p-1 border-2 border-transparent hover:border-primary rounded" data-filter="contrast">
+                                        <span class="block text-xs">高对比</span>
+                                    </button>
+                                    <button class="filter-btn p-1 border-2 border-transparent hover:border-primary rounded" data-filter="sepia">
+                                        <span class="block text-xs">复古</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">亮度</label>
+                                <input type="range" id="brightness" min="0" max="200" value="100" class="w-full accent-primary">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">对比度</label>
+                                <input type="range" id="contrast" min="0" max="200" value="100" class="w-full accent-primary">
+                            </div>
+                            
+                            <div class="pt-2">
+                                <div class="flex gap-3">
+                                    <button id="save-image" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition flex items-center justify-center">
+                                        <i class="fa fa-image mr-2"></i>保存为图片
+                                    </button>
+                                    <button id="save-pdf" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center">
+                                        <i class="fa fa-file-pdf-o mr-2"></i>保存为PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：扫描历史 -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm p-6 h-full">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-history text-primary mr-2"></i>扫描历史
+                    </h2>
+                    
+                    <div id="scan-history" class="space-y-4 max-h-[calc(100vh-380px)] overflow-y-auto pr-2">
+                        <div class="text-center text-gray-500 py-10">
+                            <i class="fa fa-folder-open-o text-4xl mb-3 opacity-30"></i>
+                            <p>暂无扫描记录</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-100 space-y-3">
+                        <button id="download-all-images" class="w-full px-4 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fa fa-download mr-2"></i>下载全部图片
+                        </button>
+                        <button id="download-all-pdf" class="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fa fa-file-pdf-o mr-2"></i>合并为PDF文档
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-4 px-6">
+        <div class="container mx-auto text-center text-gray-500 text-sm">
+            <p>文档扫描模拟器 &copy; 2023 - 支持图片和PDF导出</p>
+        </div>
+    </footer>
+
+    <!-- 加载提示 -->
+    <div id="loading" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg flex items-center gap-3">
+            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+            <p id="loading-text">正在处理...</p>
+        </div>
+    </div>
+
+    <script>
+        // 初始化PDF库
+        const { jsPDF } = window.jspdf;
+        
+        // DOM元素
+        const cameraPreview = document.getElementById('camera-preview');
+        const startCameraBtn = document.getElementById('start-camera');
+        const captureBtn = document.getElementById('capture-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+        const noCamera = document.getElementById('no-camera');
+        const imageEditor = document.getElementById('image-editor');
+        const editPreview = document.getElementById('edit-preview');
+        const saveImageBtn = document.getElementById('save-image');
+        const savePdfBtn = document.getElementById('save-pdf');
+        const scanHistory = document.getElementById('scan-history');
+        const scanCount = document.getElementById('scan-count');
+        const downloadAllImagesBtn = document.getElementById('download-all-images');
+        const downloadAllPdfBtn = document.getElementById('download-all-pdf');
+        const brightnessSlider = document.getElementById('brightness');
+        const contrastSlider = document.getElementById('contrast');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loading-text');
+        
+        // 全局变量
+        let stream = null;
+        let currentImage = null;
+        let currentFilter = 'original';
+        let scannedImages = []; // 存储所有扫描图像的dataURL
+        
+        // 显示加载状态
+        function showLoading(text = '正在处理...') {
+            loadingText.textContent = text;
+            loading.classList.remove('hidden');
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            loading.classList.add('hidden');
+        }
+        
+        // 启动摄像头
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment', // 优先使用后置摄像头
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                
+                cameraPreview.srcObject = stream;
+                noCamera.classList.add('hidden');
+                captureBtn.disabled = false;
+                startCameraBtn.disabled = true;
+                startCameraBtn.innerHTML = '<i class="fa fa-check mr-2"></i>摄像头已启动';
+                startCameraBtn.classList.remove('bg-primary');
+                startCameraBtn.classList.add('bg-green-500');
+            } catch (err) {
+                console.error('无法访问摄像头:', err);
+                noCamera.classList.remove('hidden');
+                noCamera.innerHTML = `
+                    <i class="fa fa-exclamation-triangle text-5xl mb-4 text-yellow-500"></i>
+                    <p>无法访问摄像头，请检查权限或尝试上传图片</p>
+                `;
+            }
+        });
+        
+        // 拍摄照片
+        captureBtn.addEventListener('click', () => {
+            if (!stream) return;
+            
+            // 创建一个canvas来捕获当前视频帧
+            const canvas = document.createElement('canvas');
+            canvas.width = cameraPreview.videoWidth;
+            canvas.height = cameraPreview.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+            
+            // 将canvas转换为图像URL
+            currentImage = canvas.toDataURL('image/jpeg');
+            showImageEditor(currentImage);
+        });
+        
+        // 上传图片
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentImage = event.target.result;
+                showImageEditor(currentImage);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // 显示图像编辑器
+        function showImageEditor(imageData) {
+            editPreview.src = imageData;
+            imageEditor.classList.remove('hidden');
+            // 重置滤镜和调整项
+            currentFilter = 'original';
+            brightnessSlider.value = 100;
+            contrastSlider.value = 100;
+            updateImageFilters();
+            // 高亮选中的滤镜按钮
+            filterBtns.forEach(btn => {
+                if (btn.dataset.filter === currentFilter) {
+                    btn.classList.add('border-primary');
+                } else {
+                    btn.classList.remove('border-primary');
+                }
+            });
+            
+            // 滚动到编辑器
+            imageEditor.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 滤镜按钮事件
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentFilter = btn.dataset.filter;
+                // 更新选中状态
+                filterBtns.forEach(b => b.classList.remove('border-primary'));
+                btn.classList.add('border-primary');
+                updateImageFilters();
+            });
+        });
+        
+        // 亮度和对比度调整
+        brightnessSlider.addEventListener('input', updateImageFilters);
+        contrastSlider.addEventListener('input', updateImageFilters);
+        
+        // 更新图像滤镜
+        function updateImageFilters() {
+            const brightness = brightnessSlider.value / 100;
+            const contrast = contrastSlider.value / 100;
+            
+            let filter = `brightness(${brightness}) contrast(${contrast})`;
+            
+            switch(currentFilter) {
+                case 'grayscale':
+                    filter += ' grayscale(1)';
+                    break;
+                case 'contrast':
+                    filter += ' contrast(1.5) brightness(1.2)';
+                    break;
+                case 'sepia':
+                    filter += ' sepia(0.6)';
+                    break;
+                // original 不添加额外滤镜
+            }
+            
+            editPreview.style.filter = filter;
+        }
+        
+        // 保存为图像
+        saveImageBtn.addEventListener('click', () => {
+            showLoading('正在保存图像...');
+            
+            // 创建一个canvas应用当前滤镜
+            const canvas = document.createElement('canvas');
+            const img = new Image();
+            
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                
+                // 应用滤镜
+                ctx.filter = editPreview.style.filter;
+                ctx.drawImage(img, 0, 0);
+                
+                // 获取处理后的图像数据
+                const processedImage = canvas.toDataURL('image/jpeg');
+                
+                // 添加到历史记录
+                addToHistory(processedImage);
+                
+                // 隐藏编辑器和加载状态
+                imageEditor.classList.add('hidden');
+                hideLoading();
+            };
+            
+            img.src = currentImage;
+        });
+        
+        // 保存为PDF
+        savePdfBtn.addEventListener('click', () => {
+            showLoading('正在生成PDF...');
+            
+            // 创建一个canvas应用当前滤镜
+            const canvas = document.createElement('canvas');
+            const img = new Image();
+            
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                
+                // 应用滤镜
+                ctx.filter = editPreview.style.filter;
+                ctx.drawImage(img, 0, 0);
+                
+                // 获取处理后的图像数据
+                const processedImage = canvas.toDataURL('image/jpeg');
+                
+                // 添加到历史记录
+                addToHistory(processedImage);
+                
+                // 直接生成单页PDF
+                const pdf = new jsPDF('p', 'px', [img.width, img.height]);
+                pdf.addImage(processedImage, 'JPEG', 0, 0, img.width, img.height);
+                
+                // 保存PDF
+                const timestamp = new Date().getTime();
+                pdf.save(`扫描文档_${timestamp}.pdf`);
+                
+                // 隐藏编辑器和加载状态
+                imageEditor.classList.add('hidden');
+                hideLoading();
+            };
+            
+            img.src = currentImage;
+        });
+        
+        // 添加到历史记录
+        function addToHistory(imageData) {
+            scannedImages.push(imageData);
+            
+            // 更新计数
+            scanCount.textContent = `已扫描: ${scannedImages.length} 个文档`;
+            
+            // 启用下载按钮
+            downloadAllImagesBtn.disabled = false;
+            downloadAllPdfBtn.disabled = false;
+            
+            // 清空"暂无记录"提示
+            if (scanHistory.querySelector('div.text-center')) {
+                scanHistory.innerHTML = '';
+            }
+            
+            // 创建预览元素
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'image-preview bg-gray-50 rounded-lg overflow-hidden shadow-sm fade-in';
+            previewDiv.innerHTML = `
+                <img src="${imageData}" alt="扫描文档" class="w-full h-40 object-cover">
+                <div class="p-3 flex justify-between items-center">
+                    <span class="text-sm text-gray-600">文档 ${scannedImages.length}</span>
+                    <div class="flex gap-2">
+                        <button class="view-btn p-1.5 text-gray-600 hover:text-primary" title="查看">
+                            <i class="fa fa-eye"></i>
+                        </button>
+                        <button class="download-img-btn p-1.5 text-gray-600 hover:text-primary" title="下载图片">
+                            <i class="fa fa-image"></i>
+                        </button>
+                        <button class="download-pdf-btn p-1.5 text-gray-600 hover:text-red-500" title="下载PDF">
+                            <i class="fa fa-file-pdf-o"></i>
+                        </button>
+                        <button class="delete-btn p-1.5 text-gray-600 hover:text-red-500" title="删除">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到历史记录容器
+            scanHistory.prepend(previewDiv);
+            
+            // 添加事件监听
+            const viewBtn = previewDiv.querySelector('.view-btn');
+            const downloadImgBtn = previewDiv.querySelector('.download-img-btn');
+            const downloadPdfBtn = previewDiv.querySelector('.download-pdf-btn');
+            const deleteBtn = previewDiv.querySelector('.delete-btn');
+            
+            viewBtn.addEventListener('click', () => {
+                currentImage = imageData;
+                showImageEditor(currentImage);
+            });
+            
+            downloadImgBtn.addEventListener('click', () => {
+                const link = document.createElement('a');
+                link.href = imageData;
+                link.download = `扫描文档_${new Date().getTime()}.jpg`;
+                link.click();
+            });
+            
+            downloadPdfBtn.addEventListener('click', () => {
+                showLoading('正在生成PDF...');
+                
+                const img = new Image();
+                img.onload = () => {
+                    const pdf = new jsPDF('p', 'px', [img.width, img.height]);
+                    pdf.addImage(imageData, 'JPEG', 0, 0, img.width, img.height);
+                    
+                    const timestamp = new Date().getTime();
+                    pdf.save(`扫描文档_${timestamp}.pdf`);
+                    hideLoading();
+                };
+                img.src = imageData;
+            });
+            
+            deleteBtn.addEventListener('click', () => {
+                if (confirm('确定要删除这个扫描记录吗？')) {
+                    // 从数组中移除
+                    const index = scannedImages.indexOf(imageData);
+                    if (index !== -1) {
+                        scannedImages.splice(index, 1);
+                    }
+                    
+                    // 更新计数
+                    scanCount.textContent = `已扫描: ${scannedImages.length} 个文档`;
+                    
+                    // 更新按钮状态
+                    if (scannedImages.length === 0) {
+                        downloadAllImagesBtn.disabled = true;
+                        downloadAllPdfBtn.disabled = true;
+                    }
+                    
+                    // 如果没有记录了，显示提示
+                    if (scannedImages.length === 0) {
+                        scanHistory.innerHTML = `
+                            <div class="text-center text-gray-500 py-10">
+                                <i class="fa fa-folder-open-o text-4xl mb-3 opacity-30"></i>
+                                <p>暂无扫描记录</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // 移除元素
+                    previewDiv.remove();
+                }
+            });
+        }
+        
+        // 下载全部图片
+        downloadAllImagesBtn.addEventListener('click', () => {
+            if (scannedImages.length === 0) return;
+            
+            alert(`将下载 ${scannedImages.length} 个图像文件`);
+            scannedImages.forEach((img, index) => {
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = img;
+                    link.download = `扫描文档_${new Date().getTime()}_${index + 1}.jpg`;
+                    link.click();
+                }, index * 500); // 延迟下载，避免浏览器限制
+            });
+        });
+        
+        // 合并为PDF文档
+        downloadAllPdfBtn.addEventListener('click', async () => {
+            if (scannedImages.length === 0) return;
+            
+            showLoading(`正在合并 ${scannedImages.length} 页为PDF...`);
+            
+            try {
+                // 创建PDF文档，使用第一页的尺寸
+                const firstImg = new Image();
+                firstImg.src = scannedImages[0];
+                
+                await new Promise(resolve => {
+                    firstImg.onload = resolve;
+                });
+                
+                // 创建PDF，使用A4尺寸作为默认
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                
+                // 逐个添加图片到PDF
+                for (let i = 0; i < scannedImages.length; i++) {
+                    if (i > 0) {
+                        pdf.addPage(); // 添加新页面
+                    }
+                    
+                    const img = new Image();
+                    img.src = scannedImages[i];
+                    
+                    await new Promise(resolve => {
+                        img.onload = resolve;
+                    });
+                    
+                    // 计算图像比例以适应页面
+                    const imgRatio = img.width / img.height;
+                    const pageRatio = pageWidth / pageHeight;
+                    
+                    let imgWidth, imgHeight;
+                    
+                    if (imgRatio > pageRatio) {
+                        // 图像更宽，按宽度缩放
+                        imgWidth = pageWidth * 0.9; // 留10%边距
+                        imgHeight = imgWidth / imgRatio;
+                    } else {
+                        // 图像更高，按高度缩放
+                        imgHeight = pageHeight * 0.9; // 留10%边距
+                        imgWidth = imgHeight * imgRatio;
+                    }
+                    
+                    // 计算居中位置
+                    const x = (pageWidth - imgWidth) / 2;
+                    const y = (pageHeight - imgHeight) / 2;
+                    
+                    // 添加图像到PDF
+                    pdf.addImage(img, 'JPEG', x, y, imgWidth, imgHeight);
+                }
+                
+                // 保存PDF
+                const timestamp = new Date().getTime();
+                pdf.save(`扫描文档_合并_${timestamp}.pdf`);
+            } catch (error) {
+                console.error('PDF生成错误:', error);
+                alert('生成PDF时出错，请重试');
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        // 页面关闭时停止摄像头
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
