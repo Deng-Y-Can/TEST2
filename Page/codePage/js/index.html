@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodePulse | 修复版JavaScript调试工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        danger: '#EF4444',
+                        editor: '#0F172A',
+                        panel: '#1E293B',
+                        'panel-light': '#334155'
+                    },
+                    fontFamily: {
+                        code: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .editor-shadow {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            }
+            .btn-effect {
+                @apply transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0;
+            }
+            .line-active {
+                @apply bg-primary/20 border-l-4 border-primary;
+            }
+            .line-error {
+                @apply bg-danger/20 border-l-4 border-danger;
+            }
+            .line-breakpoint {
+                @apply bg-accent/10;
+            }
+            .custom-scrollbar::-webkit-scrollbar {
+                @apply w-2 h-2;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                @apply bg-transparent;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                @apply bg-gray-600 rounded-full hover:bg-gray-500;
+            }
+        }
+    </style>
+    
+    <!-- 导入字体 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800 font-sans flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-md bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center">
+                    <i class="fa fa-code text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">CodePulse</h1>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-1">
+                <button id="newBtn" class="px-3 py-1.5 rounded hover:bg-gray-100 text-sm transition-colors">
+                    <i class="fa fa-file-o mr-1"></i> 新建
+                </button>
+                <button id="saveBtn" class="px-3 py-1.5 rounded hover:bg-gray-100 text-sm transition-colors">
+                    <i class="fa fa-save mr-1"></i> 保存
+                </button>
+            </div>
+            
+            <div class="flex items-center">
+                <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
+                    <i class="fa fa-moon-o"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-6 flex flex-col">
+        <!-- 调试控制区 -->
+        <div class="bg-white rounded-lg shadow-sm p-3 mb-4 flex flex-wrap items-center gap-2 border border-gray-100">
+            <div class="flex items-center gap-2">
+                <button id="runBtn" class="bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-md flex items-center btn-effect">
+                    <i class="fa fa-play mr-2"></i> 运行
+                </button>
+                <button id="debugBtn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center btn-effect">
+                    <i class="fa fa-bug mr-2"></i> 调试
+                </button>
+                <div class="h-5 w-px bg-gray-300 mx-1"></div>
+                <button id="stepOverBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md flex items-center btn-effect" disabled>
+                    <i class="fa fa-step-over mr-1"></i> 单步
+                </button>
+                <button id="continueBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md flex items-center btn-effect" disabled>
+                    <i class="fa fa-play-circle mr-1"></i> 继续
+                </button>
+                <button id="stopBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md flex items-center btn-effect" disabled>
+                    <i class="fa fa-stop mr-1"></i> 停止
+                </button>
+            </div>
+            
+            <div class="ml-auto flex items-center gap-2">
+                <button id="formatBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md flex items-center btn-effect">
+                    <i class="fa fa-indent mr-1"></i> 格式化
+                </button>
+                <button id="clearBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md flex items-center btn-effect">
+                    <i class="fa fa-trash-o mr-1"></i> 清空
+                </button>
+                <button id="sampleBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md flex items-center btn-effect">
+                    <i class="fa fa-file-text-o mr-1"></i> 示例
+                </button>
+            </div>
+        </div>
+        
+        <!-- 状态指示器 -->
+        <div id="statusBar" class="mb-4 text-sm text-gray-500 flex items-center">
+            <span id="executionStatus" class="flex items-center">
+                <i class="fa fa-circle-o text-gray-400 mr-1"></i> 就绪
+            </span>
+            <span class="mx-3">|</span>
+            <span id="lineCount">0 行</span>
+            <span class="mx-3">|</span>
+            <span id="breakpointCount">0 个断点</span>
+            <span class="mx-3">|</span>
+            <span class="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                <i class="fa fa-keyboard-o mr-1"></i> F9: 切换断点 | Ctrl+Enter: 运行
+            </span>
+        </div>
+        
+        <!-- 主工作区 -->
+        <div class="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- 代码编辑器区域 -->
+            <div class="lg:col-span-2 flex flex-col h-[calc(100vh-220px)]">
+                <div class="bg-editor rounded-t-lg p-3 border-b border-gray-700 flex justify-between items-center">
+                    <div class="text-gray-300 font-medium">script.js</div>
+                    <div class="flex items-center gap-2">
+                        <button id="wordWrapBtn" class="text-gray-400 hover:text-white p-1.5 rounded hover:bg-gray-700 transition-colors">
+                            <i class="fa fa-align-left"></i>
+                        </button>
+                        <button id="expandEditorBtn" class="text-gray-400 hover:text-white p-1.5 rounded hover:bg-gray-700 transition-colors">
+                            <i class="fa fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 编辑器容器 - 修复代码显示不全问题 -->
+                <div class="flex-grow bg-editor relative overflow-hidden rounded-b-lg">
+                    <!-- 行号区域 - 调整宽度确保不遮挡代码 -->
+                    <div id="lineNumbers" class="absolute left-0 top-0 bottom-0 w-10 bg-panel-light text-gray-400 font-code text-sm flex flex-col py-2 overflow-hidden select-none">
+                        <!-- 行号将通过JS动态生成 -->
+                    </div>
+                    
+                    <!-- 断点区域 - 增大点击区域 -->
+                    <div id="breakpointGutter" class="absolute left-10 top-0 bottom-0 w-6 bg-panel-light overflow-hidden cursor-pointer">
+                        <!-- 断点将通过JS动态生成 -->
+                    </div>
+                    
+                    <!-- 代码编辑区域 - 增加左侧内边距确保代码可见 -->
+                    <div class="pl-16 h-full">
+                        <textarea id="codeEditor" class="w-full h-full bg-transparent text-gray-100 p-2 pl-1 font-code text-sm md:text-base resize-none focus:outline-none custom-scrollbar" 
+                            placeholder="在此输入JavaScript代码..." spellcheck="false"></textarea>
+                    </div>
+                    
+                    <!-- 执行位置标记 -->
+                    <div id="executionMarker" class="hidden absolute left-10 w-6 h-6 bg-secondary text-white rounded-full flex items-center justify-center text-xs font-bold">
+                        →
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 调试面板区域 -->
+            <div class="flex flex-col h-[calc(100vh-220px)]">
+                <!-- 面板标签 -->
+                <div class="bg-panel rounded-t-lg flex border-b border-gray-700">
+                    <button data-panel="output" class="panel-tab flex-1 py-3 px-2 text-white font-medium bg-primary">
+                        <i class="fa fa-terminal mr-1"></i> 输出
+                    </button>
+                    <button data-panel="variables" class="panel-tab flex-1 py-3 px-2 text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-vars mr-1"></i> 变量
+                    </button>
+                    <button data-panel="watch" class="panel-tab flex-1 py-3 px-2 text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-eye mr-1"></i> 监视
+                    </button>
+                </div>
+                
+                <!-- 输出面板 -->
+                <div id="outputPanel" class="flex-grow bg-panel text-gray-100 font-code text-sm overflow-auto p-3 custom-scrollbar">
+                    <div class="text-gray-500 italic">代码输出将显示在这里...<br>按 <kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-xs">运行</kbd> 执行代码，或按 <kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-xs">调试</kbd> 开始调试会话</div>
+                </div>
+                
+                <!-- 变量面板 -->
+                <div id="variablesPanel" class="hidden flex-grow bg-panel text-gray-100 font-code text-sm overflow-auto p-3 custom-scrollbar">
+                    <div class="text-gray-500 italic">调试时将显示变量信息</div>
+                </div>
+                
+                <!-- 监视面板 -->
+                <div id="watchPanel" class="hidden flex-grow bg-panel text-gray-100 font-code text-sm overflow-auto custom-scrollbar">
+                    <div class="p-3 text-gray-500 italic">添加表达式以监视其值</div>
+                    <div class="border-t border-gray-700 p-2">
+                        <div class="flex">
+                            <input type="text" id="watchExpression" placeholder="添加监视表达式..." 
+                                class="flex-grow bg-panel-light border border-gray-600 rounded-l px-2 py-1.5 text-sm focus:outline-none focus:border-primary">
+                            <button id="addWatchBtn" class="bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-r btn-effect">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="watchExpressions" class="mt-2 space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部状态栏 -->
+    <footer class="bg-gray-800 text-gray-400 text-sm py-2">
+        <div class="container mx-auto px-4 flex flex-wrap justify-between items-center">
+            <div>
+                <span>CodePulse 1.0</span>
+                <span class="mx-2">•</span>
+                <span>JavaScript 调试工具</span>
+            </div>
+            <div class="flex items-center gap-4 mt-2 sm:mt-0">
+                <div class="flex items-center">
+                    <kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-xs mr-2">Ctrl+Enter</kbd>
+                    <span>运行</span>
+                </div>
+                <div class="flex items-center">
+                    <kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-xs mr-2">F10</kbd>
+                    <span>单步</span>
+                </div>
+                <div class="flex items-center">
+                    <kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-xs mr-2">F9</kbd>
+                    <span>断点</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 通知组件 -->
+    <div id="notification" class="fixed bottom-4 right-4 bg-dark text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center z-50">
+        <i id="notificationIcon" class="fa fa-info-circle mr-2"></i>
+        <span id="notificationText">通知消息</span>
+    </div>
+
+    <script>
+        // 应用状态管理
+        const appState = {
+            code: '',
+            lines: [],
+            breakpoints: new Set(),
+            currentLine: null,
+            errorLine: null,
+            isDebugging: false,
+            debugStep: 0,
+            variables: {},
+            watchExpressions: [],
+            callStack: [],
+            darkMode: false,
+            activePanel: 'output',
+            wordWrap: false
+        };
+
+        // DOM 元素引用
+        const codeEditor = document.getElementById('codeEditor');
+        const lineNumbers = document.getElementById('lineNumbers');
+        const breakpointGutter = document.getElementById('breakpointGutter');
+        const executionMarker = document.getElementById('executionMarker');
+        const statusBar = document.getElementById('statusBar');
+        const executionStatus = document.getElementById('executionStatus');
+        const lineCount = document.getElementById('lineCount');
+        const breakpointCount = document.getElementById('breakpointCount');
+        
+        // 面板元素
+        const outputPanel = document.getElementById('outputPanel');
+        const variablesPanel = document.getElementById('variablesPanel');
+        const watchPanel = document.getElementById('watchPanel');
+        const panelTabs = document.querySelectorAll('.panel-tab');
+        
+        // 按钮元素
+        const runBtn = document.getElementById('runBtn');
+        const debugBtn = document.getElementById('debugBtn');
+        const stepOverBtn = document.getElementById('stepOverBtn');
+        const continueBtn = document.getElementById('continueBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const formatBtn = document.getElementById('formatBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const sampleBtn = document.getElementById('sampleBtn');
+        const themeToggle = document.getElementById('themeToggle');
+        const wordWrapBtn = document.getElementById('wordWrapBtn');
+        const expandEditorBtn = document.getElementById('expandEditorBtn');
+        const newBtn = document.getElementById('newBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        
+        // 监视面板元素
+        const watchExpression = document.getElementById('watchExpression');
+        const addWatchBtn = document.getElementById('addWatchBtn');
+        const watchExpressions = document.getElementById('watchExpressions');
+        
+        // 通知元素
+        const notification = document.getElementById('notification');
+        const notificationIcon = document.getElementById('notificationIcon');
+        const notificationText = document.getElementById('notificationText');
+        
+        // 示例代码
+        const sampleCode = `// JavaScript 调试示例
+function calculateTotal(prices, taxRate = 0.08) {
+    // 计算商品总价和税费
+    let subtotal = 0;
+    
+    // 累加所有商品价格
+    for (let i = 0; i < prices.length; i++) {
+        subtotal += prices[i];
+    }
+    
+    // 计算税费和总计
+    const tax = subtotal * taxRate;
+    const total = subtotal + tax;
+    
+    return { subtotal, tax, total };
+}
+
+// 商品价格列表
+const prices = [29.99, 19.99, 9.99, 49.99];
+
+// 计算总价
+const result = calculateTotal(prices);
+
+// 输出结果
+console.log("===== 购物清单 =====");
+console.log("商品小计: $" + result.subtotal.toFixed(2));
+console.log("税费 (8%): $" + result.tax.toFixed(2));
+console.log("总计: $" + result.total.toFixed(2));
+console.log("====================");
+
+// 演示条件断点效果
+const discount = result.total > 100 ? 0.9 : 1;
+console.log("折扣: " + (100 - discount * 100) + "%");
+console.log("折扣后总价: $" + (result.total * discount).toFixed(2));`;
+        
+        // 初始化应用
+        function initApp() {
+            // 设置初始代码
+            codeEditor.value = sampleCode;
+            updateCodeState();
+            
+            // 初始化事件监听 - 增强断点点击处理
+            setupEventListeners();
+            
+            // 聚焦编辑器
+            codeEditor.focus();
+            
+            // 更新状态显示
+            updateStatusBar();
+            
+            // 显示使用提示
+            showNotification('提示', '点击代码左侧灰色区域可设置断点 (F9)', 'info');
+        }
+        
+        // 设置事件监听器 - 修复断点点击问题
+        function setupEventListeners() {
+            // 编辑器内容变化
+            codeEditor.addEventListener('input', updateCodeState);
+            codeEditor.addEventListener('scroll', syncScroll);
+            
+            // 断点点击事件 - 增强处理确保可靠触发
+            breakpointGutter.addEventListener('click', handleBreakpointClick);
+            breakpointGutter.addEventListener('mousedown', (e) => e.preventDefault()); // 防止文本选择
+            
+            // 按钮事件
+            runBtn.addEventListener('click', runCode);
+            debugBtn.addEventListener('click', startDebugging);
+            stepOverBtn.addEventListener('click', stepOver);
+            continueBtn.addEventListener('click', continueExecution);
+            stopBtn.addEventListener('click', stopDebugging);
+            formatBtn.addEventListener('click', formatCode);
+            clearBtn.addEventListener('click', clearEditor);
+            sampleBtn.addEventListener('click', loadSampleCode);
+            themeToggle.addEventListener('click', toggleTheme);
+            wordWrapBtn.addEventListener('click', toggleWordWrap);
+            expandEditorBtn.addEventListener('click', toggleEditorExpand);
+            newBtn.addEventListener('click', createNewFile);
+            saveBtn.addEventListener('click', saveCode);
+            
+            // 面板切换
+            panelTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const panel = tab.getAttribute('data-panel');
+                    switchPanel(panel);
+                });
+            });
+            
+            // 监视表达式
+            addWatchBtn.addEventListener('click', addWatchExpression);
+            watchExpression.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    addWatchExpression();
+                }
+            });
+            
+            // 快捷键支持 - 增强断点快捷键
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+        }
+        
+        // 更新代码状态
+        function updateCodeState() {
+            appState.code = codeEditor.value;
+            appState.lines = appState.code.split('\n');
+            
+            // 更新行号和断点显示
+            renderLineNumbers();
+            renderBreakpoints();
+            
+            // 清除所有高亮
+            clearLineHighlights();
+            
+            // 更新状态条
+            updateStatusBar();
+        }
+        
+        // 渲染行号
+        function renderLineNumbers() {
+            lineNumbers.innerHTML = '';
+            
+            for (let i = 1; i <= appState.lines.length; i++) {
+                const lineNumEl = document.createElement('div');
+                lineNumEl.className = 'line-number h-6 flex items-center justify-end pr-2 select-none';
+                lineNumEl.textContent = i;
+                lineNumbers.appendChild(lineNumEl);
+            }
+        }
+        
+        // 渲染断点 - 增强视觉反馈
+        function renderBreakpoints() {
+            breakpointGutter.innerHTML = '';
+            
+            for (let i = 1; i <= appState.lines.length; i++) {
+                const breakpointEl = document.createElement('div');
+                breakpointEl.className = 'breakpoint-marker h-6 relative w-full';
+                breakpointEl.dataset.line = i;
+                
+                // 断点标记 - 增大尺寸提高可见性
+                const marker = document.createElement('div');
+                marker.className = appState.breakpoints.has(i) 
+                    ? 'absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-accent cursor-pointer shadow-md'
+                    : 'absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-transparent cursor-pointer hover:bg-accent/30';
+                
+                // 添加脉冲动画效果提高可见性
+                if (appState.breakpoints.has(i)) {
+                    const pulse = document.createElement('div');
+                    pulse.className = 'absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-accent/30 animate-ping';
+                    marker.appendChild(pulse);
+                }
+                
+                breakpointEl.appendChild(marker);
+                breakpointGutter.appendChild(breakpointEl);
+            }
+        }
+        
+        // 处理断点点击 - 修复断点无法设置问题
+        function handleBreakpointClick(e) {
+            // 增强点击区域检测
+            const rect = breakpointGutter.getBoundingClientRect();
+            const y = e.clientY - rect.top;
+            const lineHeight = 24; // 行高
+            const lineNum = Math.floor(y / lineHeight) + 1;
+            
+            if (lineNum >= 1 && lineNum <= appState.lines.length) {
+                toggleBreakpoint(lineNum);
+            }
+        }
+        
+        // 切换断点
+        function toggleBreakpoint(lineNum) {
+            if (appState.breakpoints.has(lineNum)) {
+                appState.breakpoints.delete(lineNum);
+            } else {
+                appState.breakpoints.add(lineNum);
+            }
+            
+            // 更新断点显示
+            renderBreakpoints();
+            highlightBreakpointLines();
+            
+            // 更新状态条
+            updateStatusBar();
+            
+            // 显示通知确认操作
+            showNotification(
+                appState.breakpoints.has(lineNum) ? '添加断点' : '移除断点', 
+                `第 ${lineNum} 行`,
+                'info'
+            );
+        }
+        
+        // 同步滚动
+        function syncScroll() {
+            lineNumbers.scrollTop = codeEditor.scrollTop;
+            breakpointGutter.scrollTop = codeEditor.scrollTop;
+        }
+        
+        // 切换面板
+        function switchPanel(panelName) {
+            appState.activePanel = panelName;
+            
+            // 隐藏所有面板
+            outputPanel.classList.add('hidden');
+            variablesPanel.classList.add('hidden');
+            watchPanel.classList.add('hidden');
+            
+            // 显示选中的面板
+            document.getElementById(`${panelName}Panel`).classList.remove('hidden');
+            
+            // 更新标签样式
+            panelTabs.forEach(tab => {
+                if (tab.getAttribute('data-panel') === panelName) {
+                    tab.classList.add('bg-primary', 'text-white');
+                    tab.classList.remove('text-gray-400');
+                } else {
+                    tab.classList.remove('bg-primary', 'text-white');
+                    tab.classList.add('text-gray-400');
+                }
+            });
+            
+            // 更新变量面板内容
+            if (panelName === 'variables') {
+                updateVariablesPanel();
+            } else if (panelName === 'watch') {
+                updateWatchExpressions();
+            }
+        }
+        
+        // 更新状态栏
+        function updateStatusBar() {
+            lineCount.textContent = `${appState.lines.length} 行`;
+            breakpointCount.textContent = `${appState.breakpoints.size} 个断点`;
+        }
+        
+        // 显示通知
+        function showNotification(title, message, type = 'info') {
+            notificationText.textContent = `${title}: ${message}`;
+            
+            // 设置图标
+            notificationIcon.className = 'fa mr-2';
+            switch(type) {
+                case 'success':
+                    notificationIcon.classList.add('fa-check-circle', 'text-green-400');
+                    break;
+                case 'error':
+                    notificationIcon.classList.add('fa-exclamation-circle', 'text-red-400');
+                    break;
+                case 'warning':
+                    notificationIcon.classList.add('fa-exclamation-triangle', 'text-yellow-400');
+                    break;
+                default:
+                    notificationIcon.classList.add('fa-info-circle', 'text-blue-400');
+            }
+            
+            // 显示通知
+            notification.classList.remove('translate-y-20', 'opacity-0');
+            notification.classList.add('translate-y-0', 'opacity-100');
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                notification.classList.remove('translate-y-0', 'opacity-100');
+                notification.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+        
+        // 重写console.log
+        function overrideConsoleLog() {
+            // 保存原始console.log
+            appState.originalConsoleLog = console.log;
+            
+            // 重写console.log
+            console.log = function(...args) {
+                // 保留原始行为
+                appState.originalConsoleLog(...args);
+                
+                // 格式化输出
+                const timestamp = new Date().toLocaleTimeString();
+                let outputHtml = `<div class="mb-1"><span class="text-gray-400">[${timestamp}]</span> `;
+                
+                args.forEach((arg, index) => {
+                    if (index > 0) outputHtml += ' ';
+                    
+                    if (typeof arg === 'object') {
+                        try {
+                            outputHtml += `<span class="text-green-400">${JSON.stringify(arg, null, 2)}</span>`;
+                        } catch (e) {
+                            outputHtml += `<span class="text-yellow-400">[复杂对象]</span>`;
+                        }
+                    } else if (typeof arg === 'number') {
+                        outputHtml += `<span class="text-blue-400">${arg}</span>`;
+                    } else if (typeof arg === 'boolean') {
+                        outputHtml += `<span class="text-purple-400">${arg}</span>`;
+                    } else {
+                        outputHtml += `<span>${arg}</span>`;
+                    }
+                });
+                
+                outputHtml += '</div>';
+                
+                // 添加到输出面板
+                outputPanel.innerHTML += outputHtml;
+                
+                // 滚动到底部
+                outputPanel.scrollTop = outputPanel.scrollHeight;
+            };
+        }
+        
+        // 恢复原始console.log
+        function restoreConsoleLog() {
+            if (appState.originalConsoleLog) {
+                console.log = appState.originalConsoleLog;
+                appState.originalConsoleLog = null;
+            }
+        }
+        
+        // 运行代码
+        function runCode() {
+            // 重置调试状态
+            stopDebugging(false);
+            
+            // 清空输出
+            outputPanel.innerHTML = '';
+            
+            // 重写console.log
+            overrideConsoleLog();
+            
+            try {
+                // 创建执行上下文并运行代码
+                const result = new Function(appState.code)();
+                
+                // 如果有返回值，显示它
+                if (result !== undefined) {
+                    console.log(`返回值:`, result);
+                }
+                
+                showNotification('成功', '代码执行完成', 'success');
+            } catch (error) {
+                handleExecutionError(error);
+            } finally {
+                // 恢复console.log
+                restoreConsoleLog();
+            }
+        }
+        
+        // 开始调试
+        function startDebugging() {
+            // 如果已经在调试中，先停止
+            if (appState.isDebugging) {
+                stopDebugging();
+            }
+            
+            // 初始化调试状态
+            appState.isDebugging = true;
+            appState.debugStep = 0;
+            appState.currentLine = null;
+            appState.errorLine = null;
+            appState.variables = {};
+            appState.callStack = [];
+            
+            // 清空输出
+            outputPanel.innerHTML = '';
+            
+            // 重写console.log
+            overrideConsoleLog();
+            
+            // 更新按钮状态
+            updateDebugButtons();
+            
+            // 显示调试开始消息
+            console.log('<span class="text-primary">调试会话开始。使用单步或继续按钮控制执行。</span>');
+            
+            // 准备调试环境
+            prepareDebugEnvironment();
+            
+            // 执行第一步
+            executeNextStep();
+            
+            showNotification('调试', '调试会话已开始', 'info');
+        }
+        
+        // 准备调试环境
+        function prepareDebugEnvironment() {
+            // 创建一个安全的沙箱环境执行代码
+            try {
+                // 创建调试包装器
+                appState.debugger = new Function(`
+                    const __code__ = ${JSON.stringify(appState.lines)};
+                    const __variables__ = {};
+                    const __callStack__ = [];
+                    let __currentLine__ = 0;
+                    let __done__ = false;
+                    
+                    // 跟踪函数调用
+                    function __trackCall__(funcName) {
+                        __callStack__.push({
+                            function: funcName,
+                            line: __currentLine__ + 1
+                        });
+                        return __callStack__.length - 1;
+                    }
+                    
+                    function __trackReturn__(stackIndex) {
+                        if (__callStack__.length > stackIndex) {
+                            __callStack__.splice(stackIndex, 1);
+                        }
+                    }
+                    
+                    // 收集变量
+                    function __collectVariables__() {
+                        const vars = {};
+                        for (const key in this) {
+                            if (!key.startsWith('__') && typeof this[key] !== 'function') {
+                                try {
+                                    vars[key] = JSON.parse(JSON.stringify(this[key]));
+                                } catch (e) {
+                                    vars[key] = '[无法序列化]';
+                                }
+                            }
+                        }
+                        return vars;
+                    }
+                    
+                    // 执行一行代码
+                    function __executeLine__(lineNum) {
+                        if (lineNum >= __code__.length) {
+                            __done__ = true;
+                            return { done: true };
+                        }
+                        
+                        __currentLine__ = lineNum;
+                        const codeLine = __code__[lineNum];
+                        
+                        try {
+                            // 执行当前行
+                            eval(codeLine);
+                            
+                            // 收集变量
+                            const vars = __collectVariables__.call(this);
+                            return {
+                                success: true,
+                                variables: vars,
+                                line: lineNum + 1
+                            };
+                        } catch (error) {
+                            return {
+                                success: false,
+                                error: {
+                                    message: error.message,
+                                    line: lineNum + 1
+                                }
+                            };
+                        }
+                    }
+                    
+                    // 返回调试控制对象
+                    return {
+                        executeLine: __executeLine__.bind(this),
+                        getState: () => ({
+                            currentLine: __currentLine__,
+                            done: __done__,
+                            variables: __collectVariables__.call(this),
+                            callStack: [...__callStack__]
+                        }),
+                        trackCall: __trackCall__,
+                        trackReturn: __trackReturn__
+                    };
+                `);
+                
+            } catch (error) {
+                handleExecutionError(error);
+                stopDebugging();
+            }
+        }
+        
+        // 单步执行
+        function stepOver() {
+            if (!appState.isDebugging || !appState.debugger) return;
+            
+            executeNextStep();
+        }
+        
+        // 继续执行到下一个断点
+        function continueExecution() {
+            if (!appState.isDebugging || !appState.debugger) return;
+            
+            let hasBreakpoint = false;
+            const currentLine = appState.debugger.getState().currentLine;
+            
+            // 检查是否有后续断点
+            for (let i = currentLine + 1; i < appState.lines.length; i++) {
+                if (appState.breakpoints.has(i + 1)) {
+                    hasBreakpoint = true;
+                    break;
+                }
+            }
+            
+            if (hasBreakpoint) {
+                // 有断点，执行到下一个断点
+                executeUntilBreakpoint();
+            } else {
+                // 没有断点，执行剩余代码
+                executeRemainingCode();
+            }
+        }
+        
+        // 执行下一步
+        function executeNextStep() {
+            if (!appState.debugger || appState.debugger.getState().done) {
+                completeDebugging();
+                return;
+            }
+            
+            try {
+                // 获取当前状态
+                const currentState = appState.debugger.getState();
+                const result = appState.debugger.executeLine(currentState.currentLine);
+                
+                if (result.done) {
+                    completeDebugging();
+                    return;
+                }
+                
+                if (!result.success) {
+                    handleExecutionError(result.error);
+                    stopDebugging();
+                    return;
+                }
+                
+                // 更新应用状态
+                appState.currentLine = result.line;
+                appState.variables = result.variables;
+                appState.debugStep = currentState.currentLine + 1;
+                
+                // 更新UI
+                updateDebugUI();
+                
+                // 检查是否命中断点
+                if (appState.breakpoints.has(appState.currentLine)) {
+                    console.log(`<span class="text-accent">已命中断点：第 ${appState.currentLine} 行</span>`);
+                }
+                
+                // 更新变量面板
+                updateVariablesPanel();
+                updateWatchExpressions();
+                
+            } catch (error) {
+                handleExecutionError(error);
+                stopDebugging();
+            }
+        }
+        
+        // 执行直到遇到断点
+        function executeUntilBreakpoint() {
+            let hitBreakpoint = false;
+            
+            while (!hitBreakpoint && !appState.debugger.getState().done) {
+                const nextLine = appState.debugger.getState().currentLine + 1;
+                
+                // 检查下一行是否是断点
+                if (appState.breakpoints.has(nextLine + 1)) {
+                    hitBreakpoint = true;
+                }
+                
+                // 执行下一步
+                executeNextStep();
+                
+                // 如果遇到错误，停止执行
+                if (appState.errorLine) {
+                    break;
+                }
+            }
+        }
+        
+        // 执行剩余代码
+        function executeRemainingCode() {
+            while (!appState.debugger.getState().done && !appState.errorLine) {
+                executeNextStep();
+            }
+            
+            if (!appState.errorLine) {
+                completeDebugging();
+            }
+        }
+        
+        // 完成调试
+        function completeDebugging() {
+            console.log('<span class="text-green-400">调试会话已完成</span>');
+            stopDebugging(false);
+            showNotification('完成', '调试会话已结束', 'success');
+        }
+        
+        // 停止调试
+        function stopDebugging(showNotification = true) {
+            appState.isDebugging = false;
+            appState.debugger = null;
+            appState.currentLine = null;
+            appState.errorLine = null;
+            
+            // 清除高亮
+            clearLineHighlights();
+            hideExecutionMarker();
+            
+            // 恢复console.log
+            restoreConsoleLog();
+            
+            // 更新按钮状态
+            updateDebugButtons();
+            
+            // 更新面板
+            updateVariablesPanel();
+            
+            if (showNotification) {
+                showNotification('已停止', '调试会话已终止', 'info');
+            }
+        }
+        
+        // 更新调试UI
+        function updateDebugUI() {
+            // 清除所有高亮
+            clearLineHighlights();
+            
+            // 高亮当前行
+            if (appState.currentLine) {
+                highlightCurrentLine(appState.currentLine);
+                
+                // 显示执行标记
+                positionExecutionMarker(appState.currentLine);
+                
+                // 滚动到当前行
+                scrollToLine(appState.currentLine);
+            }
+            
+            // 高亮断点行
+            highlightBreakpointLines();
+        }
+        
+        // 高亮当前行
+        function highlightCurrentLine(lineNum) {
+            if (!lineNum || lineNum < 1 || lineNum > appState.lines.length) return;
+            
+            // 计算行位置
+            const textArea = codeEditor;
+            const lines = textArea.value.split('\n');
+            let pos = 0;
+            
+            for (let i = 0; i < lineNum - 1; i++) {
+                pos += lines[i].length + 1; // +1 是换行符
+            }
+            
+            // 保存当前选择
+            const start = textArea.selectionStart;
+            const end = textArea.selectionEnd;
+            
+            // 选择行并应用高亮
+            textArea.focus();
+            textArea.setSelectionRange(pos, pos + lines[lineNum - 1].length);
+            document.execCommand('hiliteColor', false, '#4F46E520');
+            
+            // 恢复选择
+            textArea.setSelectionRange(start, end);
+        }
+        
+        // 高亮断点行
+        function highlightBreakpointLines() {
+            appState.breakpoints.forEach(lineNum => {
+                if (lineNum === appState.currentLine) return; // 已被当前行高亮
+                
+                const textArea = codeEditor;
+                const lines = textArea.value.split('\n');
+                let pos = 0;
+                
+                for (let i = 0; i < lineNum - 1; i++) {
+                    pos += lines[i].length + 1;
+                }
+                
+                // 保存当前选择
+                const start = textArea.selectionStart;
+                const end = textArea.selectionEnd;
+                
+                // 选择行并应用断点高亮
+                textArea.focus();
+                textArea.setSelectionRange(pos, pos + lines[lineNum - 1].length);
+                document.execCommand('hiliteColor', false, '#F59E0B10');
+                
+                // 恢复选择
+                textArea.setSelectionRange(start, end);
+            });
+        }
+        
+        // 清除行高亮
+        function clearLineHighlights() {
+            const textArea = codeEditor;
+            
+            // 保存当前选择
+            const start = textArea.selectionStart;
+            const end = textArea.selectionEnd;
+            
+            // 清除所有高亮
+            textArea.focus();
+            textArea.setSelectionRange(0, textArea.value.length);
+            document.execCommand('hiliteColor', false, 'transparent');
+            
+            // 恢复选择
+            textArea.setSelectionRange(start, end);
+        }
+        
+        // 定位执行标记
+        function positionExecutionMarker(lineNum) {
+            if (!lineNum || lineNum < 1 || lineNum > appState.lines.length) {
+                hideExecutionMarker();
+                return;
+            }
+            
+            // 获取行元素
+            const lineElement = lineNumbers.children[lineNum - 1];
+            if (lineElement) {
+                // 显示并定位标记
+                executionMarker.style.top = `${lineElement.offsetTop}px`;
+                executionMarker.classList.remove('hidden');
+            }
+        }
+        
+        // 隐藏执行标记
+        function hideExecutionMarker() {
+            executionMarker.classList.add('hidden');
+        }
+        
+        // 滚动到指定行
+        function scrollToLine(lineNum) {
+            if (!lineNum || lineNum < 1 || lineNum > appState.lines.length) return;
+            
+            const lineElement = lineNumbers.children[lineNum - 1];
+            if (lineElement) {
+                // 滚动到行位置，稍微居中
+                codeEditor.scrollTop = lineElement.offsetTop - codeEditor.clientHeight / 3;
+            }
+        }
+        
+        // 处理执行错误
+        function handleExecutionError(error) {
+            // 显示错误信息
+            console.log(`<span class="text-danger">错误: ${error.message}</span>`);
+            
+            // 尝试确定错误行号
+            let errorLine = error.line || null;
+            
+            // 从错误堆栈中提取行号
+            if (!errorLine && error.stack) {
+                const match = error.stack.match(/:(\d+):\d+/);
+                if (match && match[1]) {
+                    const lineNum = parseInt(match[1]);
+                    if (!isNaN(lineNum) && lineNum <= appState.lines.length) {
+                        errorLine = lineNum;
+                    }
+                }
+            }
+            
+            // 高亮错误行
+            if (errorLine) {
+                appState.errorLine = errorLine;
+                
+                // 高亮错误行
+                const textArea = codeEditor;
+                const lines = textArea.value.split('\n');
+                let pos = 0;
+                
+                for (let i = 0; i < errorLine - 1; i++) {
+                    pos += lines[i].length + 1;
+                }
+                
+                // 保存当前选择
+                const start = textArea.selectionStart;
+                const end = textArea.selectionEnd;
+                
+                // 选择行并应用错误高亮
+                textArea.focus();
+                textArea.setSelectionRange(pos, pos + lines[errorLine - 1].length);
+                document.execCommand('hiliteColor', false, '#EF444420');
+                
+                // 恢复选择
+                textArea.setSelectionRange(start, end);
+                
+                // 滚动到错误行
+                scrollToLine(errorLine);
+            }
+            
+            showNotification('错误', error.message, 'error');
+        }
+        
+        // 更新变量面板
+        function updateVariablesPanel() {
+            if (!appState.isDebugging || Object.keys(appState.variables).length === 0) {
+                variablesPanel.innerHTML = '<div class="text-gray-500 italic">调试时将显示变量信息</div>';
+                return;
+            }
+            
+            let html = '<div class="space-y-3">';
+            
+            // 按字母顺序排序变量
+            const sortedVariables = Object.entries(appState.variables).sort((a, b) => a[0].localeCompare(b[0]));
+            
+            sortedVariables.forEach(([name, value]) => {
+                let valueStr, typeClass;
+                
+                // 确定值的类型和显示方式
+                if (typeof value === 'string') {
+                    valueStr = `"${value}"`;
+                    typeClass = 'text-green-400';
+                } else if (typeof value === 'number') {
+                    valueStr = value.toString();
+                    typeClass = 'text-blue-400';
+                } else if (typeof value === 'boolean') {
+                    valueStr = value.toString();
+                    typeClass = 'text-purple-400';
+                } else if (value === null) {
+                    valueStr = 'null';
+                    typeClass = 'text-gray-400';
+                } else if (typeof value === 'object') {
+                    try {
+                        valueStr = JSON.stringify(value, null, 2);
+                        typeClass = 'text-yellow-400';
+                    } catch (e) {
+                        valueStr = '[复杂对象]';
+                        typeClass = 'text-yellow-400';
+                    }
+                } else {
+                    valueStr = value.toString();
+                    typeClass = 'text-gray-300';
+                }
+                
+                html += `
+                    <div class="variable-item">
+                        <div class="font-medium text-white">${name}</div>
+                        <div class="ml-3 mt-1 text-sm ${typeClass}">${valueStr}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            variablesPanel.innerHTML = html;
+        }
+        
+        // 添加监视表达式
+        function addWatchExpression() {
+            const expression = watchExpression.value.trim();
+            if (!expression) return;
+            
+            // 检查表达式是否已存在
+            const exists = appState.watchExpressions.some(item => item.expression === expression);
+            if (exists) {
+                showNotification('提示', '该表达式已在监视列表中', 'warning');
+                return;
+            }
+            
+            // 添加到监视列表
+            appState.watchExpressions.push({
+                expression,
+                value: null,
+                error: null
+            });
+            
+            // 清空输入
+            watchExpression.value = '';
+            
+            // 更新监视面板
+            updateWatchExpressions();
+            
+            showNotification('成功', '已添加监视表达式', 'success');
+        }
+        
+        // 更新监视表达式
+        function updateWatchExpressions() {
+            if (appState.watchExpressions.length === 0) {
+                watchExpressions.innerHTML = '<div class="text-gray-500 italic">没有监视表达式</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            appState.watchExpressions.forEach((watch, index) => {
+                // 计算表达式值
+                if (appState.isDebugging && appState.variables) {
+                    try {
+                        // 在安全的环境中计算表达式
+                        const value = new Function(...Object.keys(appState.variables), 
+                            `return ${watch.expression};`)(...Object.values(appState.variables));
+                        
+                        watch.value = value;
+                        watch.error = null;
+                    } catch (e) {
+                        watch.value = null;
+                        watch.error = e.message;
+                    }
+                }
+                
+                // 格式化值显示
+                let valueHtml = '';
+                if (watch.error) {
+                    valueHtml = `<div class="text-red-400 text-sm">${watch.error}</div>`;
+                } else if (watch.value !== null && watch.value !== undefined) {
+                    if (typeof watch.value === 'object') {
+                        try {
+                            valueHtml = `<div class="text-yellow-400 text-sm">${JSON.stringify(watch.value, null, 2)}</div>`;
+                        } catch (e) {
+                            valueHtml = `<div class="text-yellow-400 text-sm">[复杂对象]</div>`;
+                        }
+                    } else if (typeof watch.value === 'string') {
+                        valueHtml = `<div class="text-green-400 text-sm">"${watch.value}"</div>`;
+                    } else if (typeof watch.value === 'number') {
+                        valueHtml = `<div class="text-blue-400 text-sm">${watch.value}</div>`;
+                    } else if (typeof watch.value === 'boolean') {
+                        valueHtml = `<div class="text-purple-400 text-sm">${watch.value}</div>`;
+                    } else {
+                        valueHtml = `<div class="text-gray-300 text-sm">${watch.value}</div>`;
+                    }
+                } else {
+                    valueHtml = `<div class="text-gray-500 text-sm">未定义</div>`;
+                }
+                
+                html += `
+                    <div class="watch-item p-2 bg-panel-light rounded-md flex justify-between items-start">
+                        <div class="flex-grow">
+                            <div class="font-medium text-white">${watch.expression}</div>
+                            ${valueHtml}
+                        </div>
+                        <button class="remove-watch ml-2 text-gray-400 hover:text-danger transition-colors" data-index="${index}">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            
+            watchExpressions.innerHTML = html;
+            
+            // 添加删除事件
+            document.querySelectorAll('.remove-watch').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.closest('.remove-watch').dataset.index);
+                    if (!isNaN(index) && index >= 0 && index < appState.watchExpressions.length) {
+                        const removed = appState.watchExpressions.splice(index, 1)[0];
+                        updateWatchExpressions();
+                        showNotification('已移除', `监视表达式: ${removed.expression}`, 'info');
+                    }
+                });
+            });
+        }
+        
+        // 更新调试按钮状态
+        function updateDebugButtons() {
+            const isDebugging = appState.isDebugging;
+            
+            runBtn.disabled = isDebugging;
+            debugBtn.disabled = isDebugging;
+            
+            stepOverBtn.disabled = !isDebugging;
+            continueBtn.disabled = !isDebugging;
+            stopBtn.disabled = !isDebugging;
+            
+            // 更新按钮样式
+            if (isDebugging) {
+                stepOverBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
+                stepOverBtn.classList.add('bg-primary', 'hover:bg-primary/90', 'text-white');
+                
+                continueBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
+                continueBtn.classList.add('bg-accent', 'hover:bg-accent/90', 'text-white');
+                
+                stopBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
+                stopBtn.classList.add('bg-danger', 'hover:bg-danger/90', 'text-white');
+            } else {
+                stepOverBtn.classList.add('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
+                stepOverBtn.classList.remove('bg-primary', 'hover:bg-primary/90', 'text-white');
+                
+                continueBtn.classList.add('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
+                continueBtn.classList.remove('bg-accent', 'hover:bg-accent/90', 'text-white');
+                
+                stopBtn.classList.add('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
+                stopBtn.classList.remove('bg-danger', 'hover:bg-danger/90', 'text-white');
+            }
+            
+            // 更新执行状态
+            if (isDebugging) {
+                executionStatus.innerHTML = `<i class="fa fa-pause text-primary mr-1"></i> 调试中 - 第 ${appState.currentLine || 0} 行`;
+            } else {
+                executionStatus.innerHTML = `<i class="fa fa-circle-o text-gray-400 mr-1"></i> 就绪`;
+            }
+        }
+        
+        // 格式化代码
+        function formatCode() {
+            try {
+                // 简单的代码格式化实现
+                let formatted = appState.code
+                    .replace(/({|}|\(|\)|;)\s*/g, '$1\n')
+                    .replace(/,\s*/g, ', ')
+                    .replace(/\n{3,}/g, '\n\n')
+                    .replace(/^\s+/gm, '');
+                
+                // 基本缩进处理
+                let indentLevel = 0;
+                const indentSize = 4;
+                const lines = formatted.split('\n');
+                
+                formatted = lines.map(line => {
+                    // 减少缩进
+                    if (line.includes('}') || line.includes(')')) {
+                        indentLevel = Math.max(0, indentLevel - 1);
+                    }
+                    
+                    // 添加缩进
+                    const indent = ' '.repeat(indentLevel * indentSize);
+                    
+                    // 增加缩进
+                    if (line.includes('{') || line.includes('(') && !line.includes(')')) {
+                        indentLevel++;
+                    }
+                    
+                    return indent + line.trim();
+                }).join('\n');
+                
+                // 更新编辑器
+                codeEditor.value = formatted;
+                updateCodeState();
+                
+                showNotification('成功', '代码已格式化', 'success');
+            } catch (error) {
+                showNotification('失败', `格式化错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 清空编辑器
+        function clearEditor() {
+            if (confirm('确定要清空代码编辑器吗？')) {
+                codeEditor.value = '';
+                updateCodeState();
+                codeEditor.focus();
+                showNotification('已清空', '代码编辑器已重置', 'info');
+            }
+        }
+        
+        // 加载示例代码
+        function loadSampleCode() {
+            codeEditor.value = sampleCode;
+            updateCodeState();
+            showNotification('已加载', '示例代码已加载', 'info');
+        }
+        
+        // 切换主题
+        function toggleTheme() {
+            appState.darkMode = !appState.darkMode;
+            
+            document.body.classList.toggle('bg-gray-900');
+            document.body.classList.toggle('bg-gray-50');
+            document.body.classList.toggle('text-white');
+            document.body.classList.toggle('text-gray-800');
+            
+            // 更新图标
+            const icon = themeToggle.querySelector('i');
+            if (appState.darkMode) {
+                icon.classList.remove('fa-moon-o');
+                icon.classList.add('fa-sun-o');
+            } else {
+                icon.classList.remove('fa-sun-o');
+                icon.classList.add('fa-moon-o');
+            }
+            
+            showNotification('主题切换', appState.darkMode ? '已切换到亮色主题' : '已切换到暗色主题', 'info');
+        }
+        
+        // 切换自动换行
+        function toggleWordWrap() {
+            appState.wordWrap = !appState.wordWrap;
+            
+            codeEditor.classList.toggle('whitespace-pre-wrap');
+            codeEditor.classList.toggle('whitespace-pre');
+            
+            // 更新图标
+            const icon = wordWrapBtn.querySelector('i');
+            if (appState.wordWrap) {
+                icon.classList.remove('fa-align-left');
+                icon.classList.add('fa-align-justify');
+                wordWrapBtn.classList.add('bg-gray-700', 'text-white');
+                wordWrapBtn.classList.remove('text-gray-400');
+            } else {
+                icon.classList.remove('fa-align-justify');
+                icon.classList.add('fa-align-left');
+                wordWrapBtn.classList.remove('bg-gray-700', 'text-white');
+                wordWrapBtn.classList.add('text-gray-400');
+            }
+            
+            showNotification('设置', appState.wordWrap ? '已启用自动换行' : '已禁用自动换行', 'info');
+        }
+        
+        // 切换编辑器全屏
+        function toggleEditorExpand() {
+            const mainWorkspace = document.querySelector('.grid.grid-cols-1.lg\\:grid-cols-3');
+            
+            if (mainWorkspace.classList.contains('lg:col-span-3')) {
+                // 恢复正常视图
+                mainWorkspace.classList.remove('lg:col-span-3');
+                mainWorkspace.classList.add('lg:col-span-2');
+                expandEditorBtn.querySelector('i').classList.remove('fa-compress');
+                expandEditorBtn.querySelector('i').classList.add('fa-expand');
+                showNotification('视图', '已恢复正常视图', 'info');
+            } else {
+                // 全屏编辑器
+                mainWorkspace.classList.remove('lg:col-span-2');
+                mainWorkspace.classList.add('lg:col-span-3');
+                expandEditorBtn.querySelector('i').classList.remove('fa-expand');
+                expandEditorBtn.querySelector('i').classList.add('fa-compress');
+                showNotification('视图', '已切换到全屏编辑', 'info');
+            }
+        }
+        
+        // 新建文件
+        function createNewFile() {
+            if (appState.code.trim() !== '' && !confirm('当前有未保存的代码，确定要新建文件吗？')) {
+                return;
+            }
+            
+            codeEditor.value = '';
+            updateCodeState();
+            codeEditor.focus();
+            showNotification('新建', '已创建新文件', 'info');
+        }
+        
+        // 保存代码
+        function saveCode() {
+            if (!appState.code.trim()) {
+                showNotification('提示', '没有可保存的代码', 'warning');
+                return;
+            }
+            
+            // 创建一个Blob并下载
+            const blob = new Blob([appState.code], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'script.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('已保存', '代码已保存为script.js', 'success');
+        }
+        
+        // 处理键盘快捷键 - 增强断点快捷键
+        function handleKeyboardShortcuts(e) {
+            // Ctrl+Enter: 运行代码
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                if (!appState.isDebugging) runCode();
+                return;
+            }
+            
+            // F10: 单步执行
+            if (e.key === 'F10') {
+                e.preventDefault();
+                if (appState.isDebugging) stepOver();
+                return;
+            }
+            
+            // F5: 继续执行
+            if (e.key === 'F5') {
+                e.preventDefault();
+                if (appState.isDebugging) {
+                    continueExecution();
+                } else {
+                    startDebugging();
+                }
+                return;
+            }
+            
+            // F9: 切换断点 - 增强实现
+            if (e.key === 'F9') {
+                e.preventDefault();
+                // 获取当前行
+                const cursorPos = codeEditor.selectionStart;
+                const code = codeEditor.value;
+                const lineNum = code.substring(0, cursorPos).split('\n').length;
+                
+                if (lineNum >= 1 && lineNum <= appState.lines.length) {
+                    toggleBreakpoint(lineNum);
+                    // 视觉反馈
+                    const lineElement = lineNumbers.children[lineNum - 1];
+                    if (lineElement) {
+                        lineElement.classList.add('bg-accent/30');
+                        setTimeout(() => {
+                            lineElement.classList.remove('bg-accent/30');
+                        }, 300);
+                    }
+                }
+                return;
+            }
+            
+            // Ctrl+S: 保存
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveCode();
+                return;
+            }
+        }
+        
+        // 初始化应用
+        window.addEventListener('load', initApp);
+    </script>
+</body>
+</html>
