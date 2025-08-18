@@ -1205,7 +1205,7 @@
                 </div>
             </div>
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400 text-sm">
-                <p>&copy; 2023 Candy颜色工具集 - 专业的颜色工具解决方案</p>
+                <p>&copy; 2025 Candy颜色工具集 - 专业的颜色工具解决方案</p>
             </div>
         </div>
     </footer>
@@ -1471,7 +1471,7 @@ function initColorPicker() {
             return hex.length === 1 ? '0' + hex : hex;
         };
         
-        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
     }
     
     // 事件监听 - 颜色选择器
@@ -2405,7 +2405,7 @@ function initColorConverter() {
     updateConversion();
 }
 
-// 对比度检查工具功能
+// 对比度检查工具功能 - 修复了常量赋值错误
 function initContrastChecker() {
     const bgColorInput = document.getElementById('bg-color');
     const bgColorValue = document.getElementById('bg-color-value');
@@ -2450,16 +2450,18 @@ function initContrastChecker() {
         return 0.2126 * R + 0.7152 * G + 0.0722 * B;
     }
     
-    // 计算对比度比率
+    // 计算对比度比率 - 修复了常量赋值错误
     function getContrastRatio(color1, color2) {
         const rgb1 = hexToRgb(color1);
         const rgb2 = hexToRgb(color2);
         
-        const l1 = getRelativeLuminance(rgb1.r, rgb1.g, rgb1.b);
-        const l2 = getRelativeLuminance(rgb2.r, rgb2.g, rgb2.b);
+        // 使用let而不是const声明变量，因为需要可能交换它们的值
+        let l1 = getRelativeLuminance(rgb1.r, rgb1.g, rgb1.b);
+        let l2 = getRelativeLuminance(rgb2.r, rgb2.g, rgb2.b);
         
         // 确保l1是较亮的颜色
         if (l1 < l2) {
+            // 交换变量值
             [l1, l2] = [l2, l1];
         }
         
