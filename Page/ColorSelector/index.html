@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy高级颜色工具集 | 取色、渐变、转换与分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .gradient-bg {
+                background-size: 200% 200%;
+                animation: gradientShift 8s ease infinite;
+            }
+
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+
+                .card-hover:hover {
+                    transform: translateY(-5px);
+                }
+
+            .input-focus {
+                @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none;
+            }
+
+            .btn-primary {
+                @apply bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg;
+            }
+
+            .btn-secondary {
+                @apply bg-secondary hover:bg-secondary/90 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg;
+            }
+
+            .btn-accent {
+                @apply bg-accent hover:bg-accent/90 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg;
+            }
+
+            .tool-tab-active {
+                @apply border-primary text-primary bg-primary/5;
+            }
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-50 text-dark min-h-screen">
+    <!-- 导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-eyedropper text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    Candy颜色工具集
+                </h1>
+            </div>
+            <nav class="hidden md:flex space-x-6">
+                <a href="#tools-overview" class="font-medium hover:text-primary transition-colors">工具概览</a>
+                <a href="#color-picker" class="font-medium hover:text-primary transition-colors">取色器</a>
+                <a href="#gradient-generator" class="font-medium hover:text-primary transition-colors">渐变生成器</a>
+                <a href="#additional-tools" class="font-medium hover:text-primary transition-colors">更多工具</a>
+            </nav>
+            <button class="md:hidden text-dark text-xl" id="mobile-menu-button">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-md absolute w-full">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="#tools-overview" class="py-2 font-medium hover:text-primary transition-colors">工具概览</a>
+                <a href="#color-picker" class="py-2 font-medium hover:text-primary transition-colors">取色器</a>
+                <a href="#gradient-generator" class="py-2 font-medium hover:text-primary transition-colors">渐变生成器</a>
+                <a href="#additional-tools" class="py-2 font-medium hover:text-primary transition-colors">更多工具</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- 英雄区域 -->
+        <section class="mb-16 text-center">
+            <h2 class="text-[clamp(1.8rem,4vw,3rem)] font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                专业颜色工具集
+            </h2>
+            <p class="text-gray-600 max-w-2xl mx-auto text-lg">
+                一站式颜色解决方案，满足开发者和设计师的所有颜色需求
+            </p>
+        </section>
+
+        <!-- 工具概览 -->
+        <section id="tools-overview" class="mb-20">
+            <h3 class="text-2xl font-bold mb-8 text-center">工具概览</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- 取色器卡片 -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-primary">
+                    <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+                        <i class="fa fa-eyedropper text-xl"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-2">颜色取色器</h4>
+                    <p class="text-gray-600 mb-4">从屏幕或图片中提取颜色，支持多种格式显示</p>
+                    <a href="#color-picker" class="text-primary font-medium flex items-center hover:underline">
+                        使用工具 <i class="fa fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+
+                <!-- 渐变生成器卡片 -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-secondary">
+                    <div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary mb-4">
+                        <i class="fa fa-magic text-xl"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-2">渐变生成器</h4>
+                    <p class="text-gray-600 mb-4">创建精美的线性和径向渐变，生成CSS代码</p>
+                    <a href="#gradient-generator" class="text-secondary font-medium flex items-center hover:underline">
+                        使用工具 <i class="fa fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+
+                <!-- 颜色转换工具卡片 -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-accent">
+                    <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-4">
+                        <i class="fa fa-exchange text-xl"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-2">颜色转换</h4>
+                    <p class="text-gray-600 mb-4">在各种颜色格式之间进行精确转换</p>
+                    <a href="#color-converter" class="text-accent font-medium flex items-center hover:underline">
+                        使用工具 <i class="fa fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+
+                <!-- 对比度检查工具卡片 -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-amber-500">
+                    <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 mb-4">
+                        <i class="fa fa-balance-scale text-xl"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold mb-2">对比度检查</h4>
+                    <p class="text-gray-600 mb-4">检查颜色对比度是否符合可访问性标准</p>
+                    <a href="#contrast-checker" class="text-amber-500 font-medium flex items-center hover:underline">
+                        使用工具 <i class="fa fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 取色器部分 -->
+        <section id="color-picker" class="mb-20">
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 card-hover">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white mr-3">
+                        <i class="fa fa-eyedropper"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">颜色取色器</h3>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- 左侧：取色区域 -->
+                    <div class="space-y-6">
+                        <!-- 颜色选择器 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">选择颜色</label>
+                            <div class="flex items-center space-x-4">
+                                <input type="color" id="color-input" class="w-16 h-16 rounded-lg cursor-pointer border-2 border-gray-200" value="#3B82F6">
+                                <div id="selected-color" class="w-full h-16 rounded-lg gradient-bg" style="background-color: #3B82F6;"></div>
+                            </div>
+                        </div>
+
+                        <!-- 快速颜色预设 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-3">快速预设</label>
+                            <div class="flex flex-wrap gap-2" id="color-presets">
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#000000" style="background-color: #000000;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#FFFFFF" style="background-color: #FFFFFF;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#FF0000" style="background-color: #FF0000;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#00FF00" style="background-color: #00FF00;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#0000FF" style="background-color: #0000FF;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#FFFF00" style="background-color: #FFFF00;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#FF00FF" style="background-color: #FF00FF;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#00FFFF" style="background-color: #00FFFF;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#FF5733" style="background-color: #FF5733;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#33FF57" style="background-color: #33FF57;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#3357FF" style="background-color: #3357FF;"></span>
+                                <span class="w-8 h-8 rounded-full cursor-pointer border border-gray-200" data-color="#808080" style="background-color: #808080;"></span>
+                            </div>
+                        </div>
+
+                        <!-- 图片上传 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">上传图片取色</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer" id="image-upload-area">
+                                <input type="file" id="image-upload" accept="image/*" class="hidden">
+                                <i class="fa fa-upload text-gray-400 text-3xl mb-2"></i>
+                                <p class="text-gray-500">点击上传图片或拖放至此处</p>
+                            </div>
+                            <div id="image-preview-container" class="hidden mt-4 relative">
+                                <img id="image-preview" class="max-w-full max-h-64 rounded-lg shadow-md" alt="预览图片">
+                                <div id="image-picker-indicator" class="hidden absolute w-6 h-6 border-2 border-white rounded-full transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                    <div class="absolute inset-0 w-2 h-2 bg-white rounded-full m-auto"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：颜色信息和CSS代码 -->
+                    <div class="space-y-6">
+                        <!-- 颜色值显示 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-3">颜色值</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <p class="text-sm text-gray-500">HEX</p>
+                                    <div class="flex">
+                                        <input type="text" id="hex-value" class="w-full px-3 py-2 border border-gray-300 rounded-l-lg input-focus" readonly>
+                                        <button class="copy-btn bg-gray-100 hover:bg-gray-200 px-3 rounded-r-lg transition-colors" data-target="hex-value">
+                                            <i class="fa fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-sm text-gray-500">RGB</p>
+                                    <div class="flex">
+                                        <input type="text" id="rgb-value" class="w-full px-3 py-2 border border-gray-300 rounded-l-lg input-focus" readonly>
+                                        <button class="copy-btn bg-gray-100 hover:bg-gray-200 px-3 rounded-r-lg transition-colors" data-target="rgb-value">
+                                            <i class="fa fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-sm text-gray-500">RGBA</p>
+                                    <div class="flex">
+                                        <input type="text" id="rgba-value" class="w-full px-3 py-2 border border-gray-300 rounded-l-lg input-focus" readonly>
+                                        <button class="copy-btn bg-gray-100 hover:bg-gray-200 px-3 rounded-r-lg transition-colors" data-target="rgba-value">
+                                            <i class="fa fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-sm text-gray-500">HSL</p>
+                                    <div class="flex">
+                                        <input type="text" id="hsl-value" class="w-full px-3 py-2 border border-gray-300 rounded-l-lg input-focus" readonly>
+                                        <button class="copy-btn bg-gray-100 hover:bg-gray-200 px-3 rounded-r-lg transition-colors" data-target="hsl-value">
+                                            <i class="fa fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alpha 透明度控制 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label for="alpha-control" class="text-gray-700 font-medium">透明度</label>
+                                <span id="alpha-value" class="text-gray-500">100%</span>
+                            </div>
+                            <input type="range" id="alpha-control" min="0" max="100" value="100"
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+
+                        </div>
+
+                        <!-- 相关颜色 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-3">相关颜色</label>
+                            <div class="grid grid-cols-4 gap-2" id="related-colors">
+                                <div class="relative h-16 rounded overflow-hidden cursor-pointer group" data-color="">
+                                    <div class="absolute inset-0" id="complementary-color"></div>
+                                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
+                                        互补色
+                                    </div>
+                                </div>
+                                <div class="relative h-16 rounded overflow-hidden cursor-pointer group" data-color="">
+                                    <div class="absolute inset-0" id="analogous-color-1"></div>
+                                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
+                                        类似色1
+                                    </div>
+                                </div>
+                                <div class="relative h-16 rounded overflow-hidden cursor-pointer group" data-color="">
+                                    <div class="absolute inset-0" id="analogous-color-2"></div>
+                                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
+                                        类似色2
+                                    </div>
+                                </div>
+                                <div class="relative h-16 rounded overflow-hidden cursor-pointer group" data-color="">
+                                    <div class="absolute inset-0" id="triadic-color"></div>
+                                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
+                                        三角色
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CSS 代码 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">CSS 代码</label>
+                            <div class="relative">
+                                <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto"><code id="color-css-code">background-color: #3B82F6;</code></pre>
+                                <button class="copy-btn absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 p-1.5 rounded transition-colors" data-target="color-css-code">
+                                    <i class="fa fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 渐变生成器部分 -->
+        <section id="gradient-generator" class="mb-20">
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 card-hover">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-white mr-3">
+                        <i class="fa fa-magic"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">渐变色生成器</h3>
+                </div>
+
+                <div class="grid md:grid-cols-5 gap-8">
+                    <!-- 左侧：控制面板 -->
+                    <div class="md:col-span-2 space-y-6">
+                        <!-- 颜色选择 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <label class="text-gray-700 font-medium">渐变颜色</label>
+                                <button id="add-color" class="text-secondary hover:text-secondary/80 text-sm font-medium flex items-center transition-colors">
+                                    <i class="fa fa-plus-circle mr-1"></i> 添加颜色
+                                </button>
+                            </div>
+                            <div id="gradient-colors" class="space-y-3">
+                                <div class="gradient-color-item flex items-center space-x-3">
+                                    <input type="color" class="gradient-color w-10 h-10 rounded cursor-pointer border border-gray-200" value="#3B82F6">
+                                    <input type="range" class="gradient-position flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-400" min="0" max="100" value="0">
+                                    <input type="number" class="gradient-position-input w-12 px-2 py-1 border border-gray-300 rounded text-center text-sm input-focus" min="0" max="100" value="0">
+                                    <span class="text-gray-400">%</span>
+                                    <button class="remove-color text-gray-400 hover:text-red-500 transition-colors opacity-50" disabled>
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="gradient-color-item flex items-center space-x-3">
+                                    <input type="color" class="gradient-color w-10 h-10 rounded cursor-pointer border border-gray-200" value="#10B981">
+                                    <input type="range" class="gradient-position flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-400" min="0" max="100" value="100">
+                                    <input type="number" class="gradient-position-input w-12 px-2 py-1 border border-gray-300 rounded text-center text-sm input-focus" min="0" max="100" value="100">
+                                    <span class="text-gray-400">%</span>
+                                    <button class="remove-color text-gray-400 hover:text-red-500 transition-colors opacity-50" disabled>
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 预设渐变 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-3">预设渐变</label>
+                            <div class="grid grid-cols-3 gap-2" id="gradient-presets">
+                                <div class="h-12 rounded cursor-pointer" data-gradient="linear-gradient(45deg, #3B82F6, #8B5CF6)" style="background: linear-gradient(45deg, #3B82F6, #8B5CF6)"></div>
+                                <div class="h-12 rounded cursor-pointer" data-gradient="linear-gradient(45deg, #10B981, #3B82F6)" style="background: linear-gradient(45deg, #10B981, #3B82F6)"></div>
+                                <div class="h-12 rounded cursor-pointer" data-gradient="linear-gradient(45deg, #F59E0B, #EF4444)" style="background: linear-gradient(45deg, #F59E0B, #EF4444)"></div>
+                                <div class="h-12 rounded cursor-pointer" data-gradient="linear-gradient(135deg, #8B5CF6, #EC4899)" style="background: linear-gradient(135deg, #8B5CF6, #EC4899)"></div>
+                                <div class="h-12 rounded cursor-pointer" data-gradient="linear-gradient(90deg, #6366F1, #10B981)" style="background: linear-gradient(90deg, #6366F1, #10B981)"></div>
+                                <div class="h-12 rounded cursor-pointer" data-gradient="radial-gradient(circle, #F97316, #EC4899)" style="background: radial-gradient(circle, #F97316, #EC4899)"></div>
+                            </div>
+                        </div>
+
+                        <!-- 渐变设置 -->
+                        <div class="space-y-4">
+                            <label class="block text-gray-700 font-medium">渐变类型</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                    <input type="radio" name="gradient-type" value="linear" checked class="mr-2 accent-secondary">
+                                    <span>线性渐变</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                    <input type="radio" name="gradient-type" value="radial" class="mr-2 accent-secondary">
+                                    <span>径向渐变</span>
+                                </label>
+                            </div>
+
+                            <!-- 线性渐变角度 -->
+                            <div id="linear-options" class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <label for="gradient-angle" class="text-gray-700 font-medium">角度</label>
+                                    <span id="angle-value" class="text-gray-500">90deg</span>
+                                </div>
+                                <input type="range" id="gradient-angle" min="0" max="360" value="90"
+                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-secondary">
+
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    <button class="angle-preset px-3 py-1 text-sm border border-gray-200 rounded hover:border-secondary hover:text-secondary transition-colors" data-angle="0">0°</button>
+                                    <button class="angle-preset px-3 py-1 text-sm border border-gray-200 rounded hover:border-secondary hover:text-secondary transition-colors" data-angle="45">45°</button>
+                                    <button class="angle-preset px-3 py-1 text-sm border border-gray-200 rounded hover:border-secondary hover:text-secondary transition-colors" data-angle="90">90°</button>
+                                    <button class="angle-preset px-3 py-1 text-sm border border-gray-200 rounded hover:border-secondary hover:text-secondary transition-colors" data-angle="135">135°</button>
+                                    <button class="angle-preset px-3 py-1 text-sm border border-gray-200 rounded hover:border-secondary hover:text-secondary transition-colors" data-angle="180">180°</button>
+                                    <button class="angle-preset px-3 py-1 text-sm border border-gray-200 rounded hover:border-secondary hover:text-secondary transition-colors" data-angle="270">270°</button>
+                                </div>
+                            </div>
+
+                            <!-- 径向渐变选项 -->
+                            <div id="radial-options" class="space-y-3 hidden">
+                                <label class="block text-gray-700 font-medium">形状</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <label class="flex items-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="gradient-shape" value="ellipse" checked class="mr-2 accent-secondary">
+                                        <span>椭圆形</span>
+                                    </label>
+                                    <label class="flex items-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="gradient-shape" value="circle" class="mr-2 accent-secondary">
+                                        <span>圆形</span>
+                                    </label>
+                                </div>
+
+                                <label class="block text-gray-700 font-medium">位置</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="flex items-center justify-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="gradient-position" value="center" checked class="mr-2 accent-secondary">
+                                        <span>中心</span>
+                                    </label>
+                                    <label class="flex items-center justify-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="gradient-position" value="top" class="mr-2 accent-secondary">
+                                        <span>顶部</span>
+                                    </label>
+                                    <label class="flex items-center justify-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="gradient-position" value="bottom" class="mr-2 accent-secondary">
+                                        <span>底部</span>
+                                    </label>
+                                    <label class="flex items-center justify-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="gradient-position" value="left" class="mr-2 accent-secondary">
+                                        <span>左侧</span>
+                                    </label>
+                                    <label class="flex items-center justify-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="gradient-position" value="right" class="mr-2 accent-secondary">
+                                        <span>右侧</span>
+                                    </label>
+                                    <label class="flex items-center justify-center p-2 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="gradient-position" value="custom" class="mr-2 accent-secondary">
+                                        <span>自定义</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 展示形状 -->
+                            <div class="space-y-2">
+                                <label class="block text-gray-700 font-medium">展示形状</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="display-shape" value="rectangle" checked class="mr-2 accent-secondary">
+                                        <span>矩形</span>
+                                    </label>
+                                    <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-secondary transition-colors">
+                                        <input type="radio" name="display-shape" value="circle" class="mr-2 accent-secondary">
+                                        <span>圆形</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：预览和CSS代码 -->
+                    <div class="md:col-span-3 space-y-6">
+                        <!-- 预览区域 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-3">预览</label>
+                            <div id="gradient-preview-container" class="w-full h-64 flex items-center justify-center bg-gray-100 rounded-xl p-4">
+                                <div id="gradient-preview" class="w-full h-full rounded-xl" style="background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);"></div>
+                            </div>
+
+                            <!-- 扩展预览 -->
+                            <div class="grid grid-cols-3 gap-4 mt-4">
+                                <div class="h-20 rounded-lg border border-gray-200 overflow-hidden">
+                                    <div class="h-full" id="preview-text" style="background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">文本</div>
+                                </div>
+                                <div class="h-20 rounded-lg border border-gray-200 overflow-hidden">
+                                    <div class="h-full" id="preview-button" style="background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; margin: 4px;">按钮</div>
+                                </div>
+                                <div class="h-20 rounded-lg border border-gray-200 overflow-hidden">
+                                    <div class="h-full" id="preview-card" style="background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; padding: 8px;">卡片</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CSS 代码 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">CSS 代码</label>
+                            <div class="relative">
+                                <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto"><code id="gradient-css-code">background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);</code></pre>
+                                <button class="copy-btn absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 p-1.5 rounded transition-colors" data-target="gradient-css-code">
+                                    <i class="fa fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 示例代码 -->
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">完整示例代码</label>
+                            <div class="relative">
+                                <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto"><code id="full-css-example">&lt;div style="width: 100px; height: 100px; background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%); border-radius: 6px;"&gt;&lt;/div&gt;</code></pre>
+                                <button class="copy-btn absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 p-1.5 rounded transition-colors" data-target="full-css-example">
+                                    <i class="fa fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 更多工具 -->
+        <section id="additional-tools" class="mb-20">
+            <h3 class="text-2xl font-bold mb-8 text-center">更多颜色工具</h3>
+
+            <!-- 工具标签切换 -->
+            <div class="border-b border-gray-200 mb-8">
+                <div class="flex flex-wrap -mb-px">
+                    <button class="tool-tab tool-tab-active py-4 px-6 border-b-2 font-medium text-sm transition-colors" data-tab="color-converter">
+                        <i class="fa fa-exchange mr-2"></i>颜色转换
+                    </button>
+                    <button class="tool-tab py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors" data-tab="contrast-checker">
+                        <i class="fa fa-balance-scale mr-2"></i>对比度检查
+                    </button>
+                    <button class="tool-tab py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors" data-tab="palette-generator">
+                        <i class="fa fa-th mr-2"></i>调色板生成
+                    </button>
+                    <button class="tool-tab py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors" data-tab="filter-generator">
+                        <i class="fa fa-adjust mr-2"></i>滤镜效果
+                    </button>
+                </div>
+            </div>
+
+            <!-- 颜色转换工具 -->
+            <div class="tool-content" id="color-converter-content">
+                <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 card-hover">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <h4 class="text-xl font-semibold">颜色格式转换</h4>
+                            <p class="text-gray-600">在各种颜色格式之间进行精确转换，支持HEX、RGB、RGBA、HSL和HSLA格式。</p>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="convert-hex" class="block text-gray-700 font-medium mb-2">HEX</label>
+                                    <input type="text" id="convert-hex" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" placeholder="#RRGGBB 或 #RGB">
+                                </div>
+
+                                <div>
+                                    <label for="convert-rgb" class="block text-gray-700 font-medium mb-2">RGB</label>
+                                    <input type="text" id="convert-rgb" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" placeholder="rgb(255, 255, 255)">
+                                </div>
+
+                                <div>
+                                    <label for="convert-rgba" class="block text-gray-700 font-medium mb-2">RGBA</label>
+                                    <input type="text" id="convert-rgba" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" placeholder="rgba(255, 255, 255, 1)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="h-32 rounded-lg" id="converter-preview" style="background-color: #3B82F6;"></div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="convert-hsl" class="block text-gray-700 font-medium mb-2">HSL</label>
+                                    <input type="text" id="convert-hsl" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" placeholder="hsl(210, 100%, 50%)">
+                                </div>
+
+                                <div>
+                                    <label for="convert-hsla" class="block text-gray-700 font-medium mb-2">HSLA</label>
+                                    <input type="text" id="convert-hsla" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" placeholder="hsla(210, 100%, 50%, 1)">
+                                </div>
+
+                                <div>
+                                    <label for="convert-name" class="block text-gray-700 font-medium mb-2">颜色名称</label>
+                                    <input type="text" id="convert-name" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus bg-gray-50" placeholder="例如：blue" readonly>
+                                </div>
+                            </div>
+
+                            <button id="copy-all-formats" class="btn-accent w-full flex items-center justify-center">
+                                <i class="fa fa-copy mr-2"></i> 复制所有格式
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 对比度检查工具 -->
+            <div class="tool-content hidden" id="contrast-checker-content">
+                <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 card-hover">
+                    <h4 class="text-xl font-semibold mb-6">颜色对比度检查器</h4>
+                    <p class="text-gray-600 mb-6">检查两种颜色的对比度是否符合WCAG可访问性标准，确保文本内容易于阅读。</p>
+
+                    <div class="grid md:grid-cols-2 gap-8 mb-8">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">背景色</label>
+                                <div class="flex items-center space-x-4">
+                                    <input type="color" id="bg-color" class="w-12 h-12 rounded cursor-pointer border border-gray-200" value="#FFFFFF">
+                                    <input type="text" id="bg-color-value" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg input-focus" value="#FFFFFF">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">文本色</label>
+                                <div class="flex items-center space-x-4">
+                                    <input type="color" id="text-color" class="w-12 h-12 rounded cursor-pointer border border-gray-200" value="#000000">
+                                    <input type="text" id="text-color-value" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg input-focus" value="#000000">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">文本大小</label>
+                                <select id="text-size" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus">
+                                    <option value="small">小文本 (小于18pt / 24px)</option>
+                                    <option value="large">大文本 (18pt / 24px 或粗体14pt / 18.66px以上)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="p-6 rounded-lg" id="contrast-preview" style="background-color: #FFFFFF; border: 1px solid #ddd;">
+                                <p style="color: #000000; margin: 0; font-size: 16px;">这是一段示例文本</p>
+                                <p style="color: #000000; margin: 10px 0 0; font-size: 24px; font-weight: bold;">这是一段大号粗体文本</p>
+                            </div>
+
+                            <div id="contrast-ratio" class="p-4 bg-gray-50 rounded-lg text-center">
+                                <p class="text-gray-600 mb-1">对比度 ratio</p>
+                                <p class="text-2xl font-bold">21:1</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h5 class="font-semibold mb-4">WCAG 可访问性标准</h5>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <div class="p-4 border border-gray-200 rounded-lg text-center" id="aa-standard">
+                                <p class="font-medium mb-2">AA 标准</p>
+                                <p class="text-sm text-gray-600 mb-2">正常文本: 4.5:1</p>
+                                <p class="text-sm text-gray-600">大文本: 3:1</p>
+                                <div class="mt-3 inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm">
+                                    符合标准
+                                </div>
+                            </div>
+
+                            <div class="p-4 border border-gray-200 rounded-lg text-center" id="aaa-standard">
+                                <p class="font-medium mb-2">AAA 标准</p>
+                                <p class="text-sm text-gray-600 mb-2">正常文本: 7:1</p>
+                                <p class="text-sm text-gray-600">大文本: 4.5:1</p>
+                                <div class="mt-3 inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm">
+                                    符合标准
+                                </div>
+                            </div>
+
+                            <div class="p-4 border border-gray-200 rounded-lg">
+                                <p class="font-medium mb-2">建议</p>
+                                <ul class="text-sm text-gray-600 space-y-1" id="contrast-suggestions">
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                        <span>此颜色组合适合所有文本</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 调色板生成工具 -->
+            <div class="tool-content hidden" id="palette-generator-content">
+                <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 card-hover">
+                    <h4 class="text-xl font-semibold mb-6">调色板生成器</h4>
+                    <p class="text-gray-600 mb-6">基于主色调生成协调的颜色组合，适用于网站和应用程序设计。</p>
+
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">主色调</label>
+                                <div class="flex items-center space-x-4">
+                                    <input type="color" id="primary-palette-color" class="w-12 h-12 rounded cursor-pointer border border-gray-200" value="#3B82F6">
+                                    <input type="text" id="primary-palette-value" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg input-focus" value="#3B82F6">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">调色板类型</label>
+                                <select id="palette-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus">
+                                    <option value="monochromatic">单色</option>
+                                    <option value="analogous">类似色</option>
+                                    <option value="complementary">互补色</option>
+                                    <option value="split-complementary">分裂互补</option>
+                                    <option value="triadic">三角色</option>
+                                    <option value="tetradic">四角色</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">色调调整</label>
+                                <input type="range" id="hue-adjust" min="-180" max="180" value="0"
+                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                    <span>-180°</span>
+                                    <span>0°</span>
+                                    <span>+180°</span>
+                                </div>
+                            </div>
+
+                            <button id="generate-palette" class="btn-accent w-full">
+                                <i class="fa fa-refresh mr-2"></i> 生成调色板
+                            </button>
+                        </div>
+
+                        <div class="md:col-span-2 space-y-6">
+                            <div id="color-palette" class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                <div class="palette-color relative rounded-lg overflow-hidden h-40 cursor-pointer group" data-color="#3B82F6">
+                                    <div class="absolute inset-0" style="background-color: #3B82F6;"></div>
+                                    <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
+                                        <p class="font-medium">主色</p>
+                                        <p>#3B82F6</p>
+                                    </div>
+                                    <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button class="copy-palette-color bg-white text-dark px-3 py-1 rounded text-sm font-medium">
+                                            复制颜色
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="palette-color relative rounded-lg overflow-hidden h-40 cursor-pointer group" data-color="#5B9AFF">
+                                    <div class="absolute inset-0" style="background-color: #5B9AFF;"></div>
+                                    <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
+                                        <p class="font-medium">亮色</p>
+                                        <p>#5B9AFF</p>
+                                    </div>
+                                    <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button class="copy-palette-color bg-white text-dark px-3 py-1 rounded text-sm font-medium">
+                                            复制颜色
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="palette-color relative rounded-lg overflow-hidden h-40 cursor-pointer group" data-color="#2563EB">
+                                    <div class="absolute inset-0" style="background-color: #2563EB;"></div>
+                                    <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
+                                        <p class="font-medium">暗色</p>
+                                        <p>#2563EB</p>
+                                    </div>
+                                    <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button class="copy-palette-color bg-white text-dark px-3 py-1 rounded text-sm font-medium">
+                                            复制颜色
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="palette-color relative rounded-lg overflow-hidden h-40 cursor-pointer group" data-color="#93C5FD">
+                                    <div class="absolute inset-0" style="background-color: #93C5FD;"></div>
+                                    <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
+                                        <p class="font-medium">极亮色</p>
+                                        <p>#93C5FD</p>
+                                    </div>
+                                    <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button class="copy-palette-color bg-white text-dark px-3 py-1 rounded text-sm font-medium">
+                                            复制颜色
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="palette-color relative rounded-lg overflow-hidden h-40 cursor-pointer group" data-color="#1D4ED8">
+                                    <div class="absolute inset-0" style="background-color: #1D4ED8;"></div>
+                                    <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
+                                        <p class="font-medium">极暗色</p>
+                                        <p>#1D4ED8</p>
+                                    </div>
+                                    <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button class="copy-palette-color bg-white text-dark px-3 py-1 rounded text-sm font-medium">
+                                            复制颜色
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">CSS 变量代码</label>
+                                <div class="relative">
+                                    <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto"><code id="palette-css-code">:root {
+  --primary-color: #3B82F6;
+  --light-color: #5B9AFF;
+  --dark-color: #2563EB;
+  --very-light-color: #93C5FD;
+  --very-dark-color: #1D4ED8;
+}</code></pre>
+                                    <button class="copy-btn absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 p-1.5 rounded transition-colors" data-target="palette-css-code">
+                                        <i class="fa fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 滤镜效果工具 -->
+            <div class="tool-content hidden" id="filter-generator-content">
+                <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 card-hover">
+                    <h4 class="text-xl font-semibold mb-6">CSS 滤镜效果生成器</h4>
+                    <p class="text-gray-600 mb-6">调整各种CSS滤镜参数，实时预览效果并生成代码。</p>
+
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <!-- 原始图片选择 -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">示例图片</label>
+                                <div class="grid grid-cols-3 gap-2" id="filter-images">
+                                    <img src="https://picsum.photos/id/29/100/100" alt="示例图片1" class="w-full h-20 object-cover rounded cursor-pointer filter-image-selected border-2 border-accent">
+                                    <img src="https://picsum.photos/id/65/100/100" alt="示例图片2" class="w-full h-20 object-cover rounded cursor-pointer border-2 border-transparent">
+                                    <img src="https://picsum.photos/id/96/100/100" alt="示例图片3" class="w-full h-20 object-cover rounded cursor-pointer border-2 border-transparent">
+                                </div>
+
+                                <div class="mt-4">
+                                    <label class="block text-gray-700 font-medium mb-2">或上传自己的图片</label>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-accent transition-colors cursor-pointer" id="filter-image-upload-area">
+                                        <input type="file" id="filter-image-upload" accept="image/*" class="hidden">
+                                        <i class="fa fa-upload text-gray-400 text-xl mb-1"></i>
+                                        <p class="text-gray-500 text-sm">上传图片</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 滤镜控制 -->
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="brightness" class="text-gray-700 text-sm">亮度 (brightness)</label>
+                                        <span id="brightness-value" class="text-gray-500 text-sm">100%</span>
+                                    </div>
+                                    <input type="range" id="brightness" min="0" max="200" value="100"
+                                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="contrast" class="text-gray-700 text-sm">对比度 (contrast)</label>
+                                        <span id="contrast-value" class="text-gray-500 text-sm">100%</span>
+                                    </div>
+                                    <input type="range" id="contrast" min="0" max="200" value="100"
+                                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="saturate" class="text-gray-700 text-sm">饱和度 (saturate)</label>
+                                        <span id="saturate-value" class="text-gray-500 text-sm">100%</span></span>
+                                    </div>
+                                    <input type="range" id="saturate" min="0" max="200" value="100"
+                                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="grayscale" class="text-gray-700 text-sm">灰度 (grayscale)</label>
+                                        <span id="grayscale-value" class="text-gray-500 text-sm">0%</span>
+                                    </div>
+                                    <input type="range" id="grayscale" min="0" max="100" value="0"
+                                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="sepia" class="text-gray-700 text-sm">褐色调 (sepia)</label>
+                                        <span id="sepia-value" class="text-gray-500 text-sm">0%</span>
+                                    </div>
+                                    <input type="range" id="sepia" min="0" max="100" value="0"
+                                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="hue-rotate" class="text-gray-700 text-sm">色相旋转 (hue-rotate)</label>
+                                        <span id="hue-rotate-value" class="text-gray-500 text-sm">0°</span>
+                                    </div>
+                                    <input type="range" id="hue-rotate" min="0" max="360" value="0"
+                                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="invert" class="text-gray-700 text-sm">反色 (invert)</label>
+                                        <span id="invert-value" class="text-gray-500 text-sm">0%</span>
+                                    </div>
+                                    <input type="range" id="invert" min="0" max="100" value="0"
+                                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="opacity-filter" class="text-gray-700 text-sm">透明度 (opacity)</label>
+                                        <span id="opacity-filter-value" class="text-gray-500 text-sm">100%</span>
+                                    </div>
+                                    <input type="range" id="opacity-filter" min="0" max="100" value="100"
+                                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="blur" class="text-gray-700 text-sm">模糊 (blur)</label>
+                                        <span id="blur-value" class="text-gray-500 text-sm">0px</span>
+                                    </div>
+                                    <input type="range" id="blur" min="0" max="20" step="0.1" value="0"
+                                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+                            </div>
+
+                            <button id="reset-filters" class="w-full py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                重置滤镜
+                            </button>
+                        </div>
+
+                        <div class="space-y-6">
+                            <!-- 滤镜预览 -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-3">效果预览</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-gray-100 p-4 rounded-lg text-center">
+                                        <p class="text-sm text-gray-500 mb-2">原图</p>
+                                        <div class="aspect-square bg-gray-200 rounded overflow-hidden flex items-center justify-center">
+                                            <img id="original-image" src="https://picsum.photos/id/29/300/300" alt="原图预览" class="max-w-full max-h-full object-contain">
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-100 p-4 rounded-lg text-center">
+                                        <p class="text-sm text-gray-500 mb-2">滤镜效果</p>
+                                        <div class="aspect-square bg-gray-200 rounded overflow-hidden flex items-center justify-center">
+                                            <img id="filtered-image" src="https://picsum.photos/id/29/300/300" alt="滤镜效果预览" class="max-w-full max-h-full object-contain">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 滤镜预设 -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-3">滤镜预设</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button class="filter-preset p-2 border border-gray-200 rounded text-xs hover:border-accent transition-colors" data-preset="normal">
+                                        正常
+                                    </button>
+                                    <button class="filter-preset p-2 border border-gray-200 rounded text-xs hover:border-accent transition-colors" data-preset="vintage">
+                                        复古
+                                    </button>
+                                    <button class="filter-preset p-2 border border-gray-200 rounded text-xs hover:border-accent transition-colors" data-preset="black-white">
+                                        黑白
+                                    </button>
+                                    <button class="filter-preset p-2 border border-gray-200 rounded text-xs hover:border-accent transition-colors" data-preset="pop">
+                                        高对比
+                                    </button>
+                                    <button class="filter-preset p-2 border border-gray-200 rounded text-xs hover:border-accent transition-colors" data-preset="muted">
+                                        低饱和
+                                    </button>
+                                    <button class="filter-preset p-2 border border-gray-200 rounded text-xs hover:border-accent transition-colors" data-preset="blur">
+                                        模糊
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- CSS 代码 -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">CSS 滤镜代码</label>
+                                <div class="relative">
+                                    <pre class="bg-gray-100 p-4 rounded-lg text-sm overflow-x-auto"><code id="filter-css-code">filter: brightness(100%) contrast(100%) saturate(100%) grayscale(0%) sepia(0%) hue-rotate(0deg) invert(0%) opacity(100%) blur(0px);</code></pre>
+                                    <button class="copy-btn absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 p-1.5 rounded transition-colors" data-target="filter-css-code">
+                                        <i class="fa fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button id="apply-filter-to-color" class="btn-accent w-full">
+                                <i class="fa fa-magic mr-2"></i> 应用到颜色
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-10 mt-20">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-6 md:mb-0">
+                    <i class="fa fa-eyedropper text-primary text-2xl mr-2"></i>
+                    <span class="text-xl font-bold">颜色工具集</span>
+                </div>
+                <div class="text-gray-400 text-center md:text-right">
+                    <p>专业的颜色工具解决方案，为开发者和设计师打造</p>
+                    <p class="mt-1">© 2025 颜色工具集. </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 复制成功提示 -->
+    <div id="copy-toast" class="fixed bottom-6 right-6 bg-dark text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center">
+        <i class="fa fa-check-circle mr-2 text-green-400"></i>
+        <span>复制成功!</span>
+    </div>
+
+    <script>
+        // 等待DOM加载完成
+        document.addEventListener('DOMContentLoaded', function () {
+            // 移动端菜单切换
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            mobileMenuButton.addEventListener('click', function () {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // 导航栏滚动效果
+            const header = document.querySelector('header');
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 10) {
+                    header.classList.add('py-2');
+                    header.classList.remove('py-4');
+                } else {
+                    header.classList.add('py-4');
+                    header.classList.remove('py-2');
+                }
+            });
+
+            // 工具标签切换
+            const toolTabs = document.querySelectorAll('.tool-tab');
+            const toolContents = document.querySelectorAll('.tool-content');
+
+            toolTabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    const tabId = this.getAttribute('data-tab');
+
+                    // 更新标签状态
+                    toolTabs.forEach(t => t.classList.remove('tool-tab-active'));
+                    this.classList.add('tool-tab-active');
+
+                    // 更新内容显示
+                    toolContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById(`${tabId}-content`).classList.remove('hidden');
+                });
+            });
+
+            // 颜色取色器功能
+            const colorInput = document.getElementById('color-input');
+            const selectedColor = document.getElementById('selected-color');
+            const hexValue = document.getElementById('hex-value');
+            const rgbValue = document.getElementById('rgb-value');
+            const rgbaValue = document.getElementById('rgba-value');
+            const hslValue = document.getElementById('hsl-value');
+            const alphaControl = document.getElementById('alpha-control');
+            const alphaValue = document.getElementById('alpha-value');
+            const colorCssCode = document.getElementById('color-css-code');
+
+            // 初始化颜色值
+            updateColorValues(colorInput.value);
+
+            // 颜色输入变化时更新
+            colorInput.addEventListener('input', function () {
+                updateColorValues(this.value);
+            });
+
+            // 透明度控制
+            alphaControl.addEventListener('input', function () {
+                const alpha = this.value;
+                alphaValue.textContent = `${alpha}%`;
+                updateColorValues(colorInput.value);
+            });
+
+            // 颜色预设点击
+            document.querySelectorAll('#color-presets span').forEach(preset => {
+                preset.addEventListener('click', function () {
+                    const color = this.getAttribute('data-color');
+                    colorInput.value = color;
+                    updateColorValues(color);
+                });
+            });
+
+            // 相关颜色点击
+            document.querySelectorAll('#related-colors > div').forEach(item => {
+                item.addEventListener('click', function () {
+                    const color = this.getAttribute('data-color');
+                    if (color) {
+                        colorInput.value = color;
+                        updateColorValues(color);
+                    }
+                });
+            });
+
+            // 更新颜色值显示和相关颜色
+            function updateColorValues(hex) {
+                const alpha = alphaControl.value / 100;
+
+                // 转换HEX到RGB
+                const rgb = hexToRgb(hex);
+                if (!rgb) return;
+
+                // 更新颜色显示
+                selectedColor.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+
+                // 更新颜色值输入框
+                hexValue.value = hex.toUpperCase();
+                rgbValue.value = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                rgbaValue.value = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha.toFixed(2)})`;
+
+                // 转换RGB到HSL
+                const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+                hslValue.value = `hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%)`;
+
+                // 更新CSS代码
+                colorCssCode.textContent = alpha < 1
+                    ? `background-color: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha.toFixed(2)});`
+                    : `background-color: ${hex.toUpperCase()};`;
+
+                // 更新相关颜色
+                updateRelatedColors(rgb.r, rgb.g, rgb.b);
+            }
+
+            // 更新相关颜色（互补色、类似色等）
+            function updateRelatedColors(r, g, b) {
+                const hsl = rgbToHsl(r, g, b);
+
+                // 互补色 (色相相差180度)
+                const complementaryHue = (hsl.h + 180) % 360;
+                const complementaryRgb = hslToRgb(complementaryHue, hsl.s, hsl.l);
+                const complementaryHex = rgbToHex(complementaryRgb.r, complementaryRgb.g, complementaryRgb.b);
+                document.getElementById('complementary-color').style.backgroundColor = complementaryHex;
+                document.querySelector('#complementary-color').parentElement.setAttribute('data-color', complementaryHex);
+
+                // 类似色1 (色相相差30度)
+                const analogousHue1 = (hsl.h + 30) % 360;
+                const analogousRgb1 = hslToRgb(analogousHue1, hsl.s, hsl.l);
+                const analogousHex1 = rgbToHex(analogousRgb1.r, analogousRgb1.g, analogousRgb1.b);
+                document.getElementById('analogous-color-1').style.backgroundColor = analogousHex1;
+                document.querySelector('#analogous-color-1').parentElement.setAttribute('data-color', analogousHex1);
+
+                // 类似色2 (色相相差-30度)
+                const analogousHue2 = (hsl.h - 30 + 360) % 360;
+                const analogousRgb2 = hslToRgb(analogousHue2, hsl.s, hsl.l);
+                const analogousHex2 = rgbToHex(analogousRgb2.r, analogousRgb2.g, analogousRgb2.b);
+                document.getElementById('analogous-color-2').style.backgroundColor = analogousHex2;
+                document.querySelector('#analogous-color-2').parentElement.setAttribute('data-color', analogousHex2);
+
+                // 三角色 (色相相差120度)
+                const triadicHue = (hsl.h + 120) % 360;
+                const triadicRgb = hslToRgb(triadicHue, hsl.s, hsl.l);
+                const triadicHex = rgbToHex(triadicRgb.r, triadicRgb.g, triadicRgb.b);
+                document.getElementById('triadic-color').style.backgroundColor = triadicHex;
+                document.querySelector('#triadic-color').parentElement.setAttribute('data-color', triadicHex);
+            }
+
+            // 图片上传和取色功能
+            const imageUploadArea = document.getElementById('image-upload-area');
+            const imageUpload = document.getElementById('image-upload');
+            const imagePreviewContainer = document.getElementById('image-preview-container');
+            const imagePreview = document.getElementById('image-preview');
+            const imagePickerIndicator = document.getElementById('image-picker-indicator');
+
+            // 点击上传区域触发文件选择
+            imageUploadArea.addEventListener('click', function () {
+                imageUpload.click();
+            });
+
+            // 拖放功能
+            imageUploadArea.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                this.classList.add('border-primary');
+            });
+
+            imageUploadArea.addEventListener('dragleave', function () {
+                this.classList.remove('border-primary');
+            });
+
+            imageUploadArea.addEventListener('drop', function (e) {
+                e.preventDefault();
+                this.classList.remove('border-primary');
+
+                if (e.dataTransfer.files.length) {
+                    imageUpload.files = e.dataTransfer.files;
+                    handleImageUpload();
+                }
+            });
+
+            // 图片上传处理
+            imageUpload.addEventListener('change', handleImageUpload);
+
+            function handleImageUpload() {
+                const file = imageUpload.files[0];
+                if (!file) return;
+
+                // 检查文件类型
+                if (!file.type.match('image.*')) {
+                    alert('请上传图片文件');
+                    return;
+                }
+
+                // 预览图片
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // 图片上取色
+            imagePreview.addEventListener('click', function (e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // 显示指示器
+                imagePickerIndicator.style.left = `${x}px`;
+                imagePickerIndicator.style.top = `${y}px`;
+                imagePickerIndicator.classList.remove('hidden');
+
+                // 创建临时canvas获取像素颜色
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = this.width;
+                canvas.height = this.height;
+
+                ctx.drawImage(this, 0, 0);
+
+                // 获取像素数据
+                const pixel = ctx.getImageData(x, y, 1, 1).data;
+                const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+
+                // 更新颜色选择器
+                colorInput.value = hex;
+                updateColorValues(hex);
+            });
+
+            // 渐变生成器功能
+            const gradientColorsContainer = document.getElementById('gradient-colors');
+            const addColorButton = document.getElementById('add-color');
+            const gradientPreview = document.getElementById('gradient-preview');
+            const gradientCssCode = document.getElementById('gradient-css-code');
+            const fullCssExample = document.getElementById('full-css-example');
+            const gradientAngle = document.getElementById('gradient-angle');
+            const angleValue = document.getElementById('angle-value');
+            const linearOptions = document.getElementById('linear-options');
+            const radialOptions = document.getElementById('radial-options');
+            const previewText = document.getElementById('preview-text');
+            const previewButton = document.getElementById('preview-button');
+            const previewCard = document.getElementById('preview-card');
+
+            // 渐变预设点击
+            document.querySelectorAll('#gradient-presets > div').forEach(preset => {
+                preset.addEventListener('click', function () {
+                    const gradient = this.getAttribute('data-gradient');
+                    // 简单解析预设渐变并更新控件
+                    if (gradient.startsWith('linear-gradient')) {
+                        document.querySelector('input[name="gradient-type"][value="linear"]').checked = true;
+                        linearOptions.classList.remove('hidden');
+                        radialOptions.classList.add('hidden');
+
+                        // 提取角度
+                        const angleMatch = gradient.match(/linear-gradient\((\d+)deg/);
+                        if (angleMatch && angleMatch[1]) {
+                            gradientAngle.value = angleMatch[1];
+                            angleValue.textContent = `${angleMatch[1]}deg`;
+                        }
+                    } else if (gradient.startsWith('radial-gradient')) {
+                        document.querySelector('input[name="gradient-type"][value="radial"]').checked = true;
+                        linearOptions.classList.add('hidden');
+                        radialOptions.classList.remove('hidden');
+
+                        // 提取形状
+                        if (gradient.includes('circle')) {
+                            document.querySelector('input[name="gradient-shape"][value="circle"]').checked = true;
+                        } else {
+                            document.querySelector('input[name="gradient-shape"][value="ellipse"]').checked = true;
+                        }
+                    }
+
+                    // 清空现有颜色并添加新颜色
+                    const colorItems = document.querySelectorAll('.gradient-color-item');
+                    // 保留第一个，删除其他
+                    for (let i = colorItems.length - 1; i > 0; i--) {
+                        colorItems[i].remove();
+                    }
+
+                    // 提取颜色和位置
+                    const colorStops = gradient.match(/#[0-9A-Fa-f]{6}\s*\d*%?/g);
+                    if (colorStops && colorStops.length > 0) {
+                        // 更新第一个颜色
+                        const firstColor = colorStops[0].match(/#[0-9A-Fa-f]{6}/)[0];
+                        const firstPosition = colorStops[0].match(/\d+/) ? colorStops[0].match(/\d+/)[0] : 0;
+                        colorItems[0].querySelector('.gradient-color').value = firstColor;
+                        colorItems[0].querySelector('.gradient-position').value = firstPosition;
+                        colorItems[0].querySelector('.gradient-position-input').value = firstPosition;
+
+                        // 添加剩余颜色
+                        for (let i = 1; i < colorStops.length; i++) {
+                            const color = colorStops[i].match(/#[0-9A-Fa-f]{6}/)[0];
+                            const position = colorStops[i].match(/\d+/) ? colorStops[i].match(/\d+/)[0] : 100;
+
+                            addColorWithValues(color, position);
+                        }
+                    }
+
+                    updateRemoveButtons();
+                    updateGradient();
+                });
+            });
+
+            // 添加带有指定值的颜色
+            function addColorWithValues(color, position) {
+                const newColorItem = document.createElement('div');
+                newColorItem.className = 'gradient-color-item flex items-center space-x-3';
+                newColorItem.innerHTML = `
+                  <input type="color" class="gradient-color w-10 h-10 rounded cursor-pointer border border-gray-200" value="${color}">
+                  <input type="range" class="gradient-position flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-400" min="0" max="100" value="${position}">
+                  <input type="number" class="gradient-position-input w-12 px-2 py-1 border border-gray-300 rounded text-center text-sm input-focus" min="0" max="100" value="${position}">
+                  <span class="text-gray-400">%</span>
+                  <button class="remove-color text-gray-400 hover:text-red-500 transition-colors">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                `;
+
+                gradientColorsContainer.appendChild(newColorItem);
+
+                // 添加事件监听器
+                setupColorItemEvents(newColorItem);
+            }
+
+            // 角度预设
+            document.querySelectorAll('.angle-preset').forEach(preset => {
+                preset.addEventListener('click', function () {
+                    const angle = this.getAttribute('data-angle');
+                    gradientAngle.value = angle;
+                    angleValue.textContent = `${angle}deg`;
+                    updateGradient();
+                });
+            });
+
+            // 渐变类型切换
+            document.querySelectorAll('input[name="gradient-type"]').forEach(radio => {
+                radio.addEventListener('change', function () {
+                    if (this.value === 'linear') {
+                        linearOptions.classList.remove('hidden');
+                        radialOptions.classList.add('hidden');
+                    } else {
+                        linearOptions.classList.add('hidden');
+                        radialOptions.classList.remove('hidden');
+                    }
+                    updateGradient();
+                });
+            });
+
+            // 径向渐变位置切换
+            document.querySelectorAll('input[name="gradient-position"]').forEach(radio => {
+                radio.addEventListener('change', updateGradient);
+            });
+
+            // 展示形状切换
+            document.querySelectorAll('input[name="display-shape"]').forEach(radio => {
+                radio.addEventListener('change', function () {
+                    if (this.value === 'circle') {
+                        gradientPreview.style.borderRadius = '50%';
+                    } else {
+                        gradientPreview.style.borderRadius = '0.75rem';
+                    }
+                    updateGradient();
+                });
+            });
+
+            // 径向渐变形状切换
+            document.querySelectorAll('input[name="gradient-shape"]').forEach(radio => {
+                radio.addEventListener('change', updateGradient);
+            });
+
+            // 角度控制
+            gradientAngle.addEventListener('input', function () {
+                const angle = this.value;
+                angleValue.textContent = `${angle}deg`;
+                updateGradient();
+            });
+
+            // 添加颜色
+            addColorButton.addEventListener('click', function () {
+                const colorItems = document.querySelectorAll('.gradient-color-item');
+                const lastPosition = parseInt(colorItems[colorItems.length - 1].querySelector('.gradient-position').value);
+                const newPosition = Math.min(100, lastPosition + 10);
+
+                // 生成随机颜色
+                const randomColor = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+
+                addColorWithValues(randomColor, newPosition);
+                updateRemoveButtons();
+                updateGradient();
+            });
+
+            // 设置颜色项事件
+            function setupColorItemEvents(item) {
+                const colorInput = item.querySelector('.gradient-color');
+                const positionSlider = item.querySelector('.gradient-position');
+                const positionInput = item.querySelector('.gradient-position-input');
+                const removeButton = item.querySelector('.remove-color');
+
+                // 颜色变化
+                colorInput.addEventListener('input', updateGradient);
+
+                // 滑块变化
+                positionSlider.addEventListener('input', function () {
+                    positionInput.value = this.value;
+                    updateGradient();
+                });
+
+                // 输入框变化
+                positionInput.addEventListener('input', function () {
+                    // 限制范围
+                    let value = parseInt(this.value) || 0;
+                    value = Math.max(0, Math.min(100, value));
+
+                    this.value = value;
+                    positionSlider.value = value;
+                    updateGradient();
+                });
+
+                // 移除颜色
+                removeButton.addEventListener('click', function () {
+                    item.remove();
+                    updateRemoveButtons();
+                    updateGradient();
+                });
+            }
+
+            // 更新删除按钮状态
+            function updateRemoveButtons() {
+                const colorItems = document.querySelectorAll('.gradient-color-item');
+                const removeButtons = document.querySelectorAll('.remove-color');
+
+                // 至少保留2个颜色
+                if (colorItems.length <= 2) {
+                    removeButtons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-50');
+                    });
+                } else {
+                    removeButtons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-50');
+                    });
+                }
+            }
+
+            // 初始化已有的颜色项事件
+            document.querySelectorAll('.gradient-color-item').forEach(setupColorItemEvents);
+            updateRemoveButtons();
+
+            // 更新渐变预览和代码
+            function updateGradient() {
+                const colorItems = document.querySelectorAll('.gradient-color-item');
+                const gradientType = document.querySelector('input[name="gradient-type"]:checked').value;
+                const displayShape = document.querySelector('input[name="display-shape"]:checked').value;
+
+                // 收集颜色和位置
+                const colorStops = Array.from(colorItems).map(item => {
+                    const color = item.querySelector('.gradient-color').value;
+                    const position = item.querySelector('.gradient-position').value;
+                    return `${color} ${position}%`;
+                }).join(', ');
+
+                // 构建渐变CSS
+                let gradientCss;
+                if (gradientType === 'linear') {
+                    const angle = gradientAngle.value;
+                    gradientCss = `linear-gradient(${angle}deg, ${colorStops})`;
+                } else {
+                    const shape = document.querySelector('input[name="gradient-shape"]:checked').value;
+                    const position = document.querySelector('input[name="gradient-position"]:checked').value;
+
+                    let positionStr = '';
+                    if (position !== 'center') {
+                        positionStr = `at ${position}`;
+                    }
+
+                    gradientCss = `radial-gradient(${shape} ${positionStr}, ${colorStops})`;
+                }
+
+                // 更新预览
+                gradientPreview.style.background = gradientCss;
+                previewText.style.background = gradientCss;
+                previewButton.style.background = gradientCss;
+                previewCard.style.background = gradientCss;
+
+                // 更新CSS代码
+                gradientCssCode.textContent = `background: ${gradientCss};`;
+
+                // 更新完整示例代码
+                const borderRadius = displayShape === 'circle' ? '50%' : '6px';
+                fullCssExample.textContent = `<div style="width: 100px; height: 100px; background: ${gradientCss}; border-radius: ${borderRadius};"></div>`;
+            }
+
+            // 颜色转换工具
+            const convertHex = document.getElementById('convert-hex');
+            const convertRgb = document.getElementById('convert-rgb');
+            const convertRgba = document.getElementById('convert-rgba');
+            const convertHsl = document.getElementById('convert-hsl');
+            const convertHsla = document.getElementById('convert-hsla');
+            const convertName = document.getElementById('convert-name');
+            const converterPreview = document.getElementById('converter-preview');
+
+            // 初始化转换工具
+            convertHex.value = '#3B82F6';
+            updateColorConverters('hex', '#3B82F6');
+
+            // 转换输入事件
+            convertHex.addEventListener('input', function () {
+                updateColorConverters('hex', this.value);
+            });
+
+            convertRgb.addEventListener('input', function () {
+                updateColorConverters('rgb', this.value);
+            });
+
+            convertRgba.addEventListener('input', function () {
+                updateColorConverters('rgba', this.value);
+            });
+
+            convertHsl.addEventListener('input', function () {
+                updateColorConverters('hsl', this.value);
+            });
+
+            convertHsla.addEventListener('input', function () {
+                updateColorConverters('hsla', this.value);
+            });
+
+            // 复制所有格式
+            document.getElementById('copy-all-formats').addEventListener('click', function () {
+                const text = `HEX: ${convertHex.value || 'N/A'}\n` +
+                    `RGB: ${convertRgb.value || 'N/A'}\n` +
+                    `RGBA: ${convertRgba.value || 'N/A'}\n` +
+                    `HSL: ${convertHsl.value || 'N/A'}\n` +
+                    `HSLA: ${convertHsla.value || 'N/A'}`;
+
+                navigator.clipboard.writeText(text).then(showCopyToast);
+            });
+
+            // 更新颜色转换
+            function updateColorConverters(type, value) {
+                let rgb, alpha = 1;
+
+                try {
+                    switch (type) {
+                        case 'hex':
+                            // 清除其他输入的错误状态
+                            clearInputErrors();
+
+                            if (!value) {
+                                clearAllConverters();
+                                return;
+                            }
+
+                            // 验证HEX格式
+                            if (!/^#([0-9A-Fa-f]{3}){1,2}$/.test(value)) {
+                                setInputError(convertHex);
+                                return;
+                            }
+
+                            rgb = hexToRgb(value);
+                            break;
+
+                        case 'rgb':
+                            clearInputErrors();
+
+                            if (!value) {
+                                clearAllConverters();
+                                return;
+                            }
+
+                            // 解析RGB
+                            const rgbMatch = value.match(/rgb\s∗(\d+)\s∗,\s∗(\d+)\s∗,\s∗(\d+)\s∗
+/i);
+                            if (!rgbMatch) {
+                                setInputError(convertRgb);
+                                return;
+                            }
+
+                            rgb = {
+                                r: parseInt(rgbMatch[1]),
+                                g: parseInt(rgbMatch[2]),
+                                b: parseInt(rgbMatch[3])
+                            };
+
+                            // 验证范围
+                            if (rgb.r < 0 || rgb.r > 255 || rgb.g < 0 || rgb.g > 255 || rgb.b < 0 || rgb.b > 255) {
+                                setInputError(convertRgb);
+                                return;
+                            }
+
+                            break;
+
+                        case 'rgba':
+                            clearInputErrors();
+
+                            if (!value) {
+                                clearAllConverters();
+                                return;
+                            }
+
+                            // 解析RGBA
+                            const rgbaMatch = value.match(/rgba\s∗(\d+)\s∗,\s∗(\d+)\s∗,\s∗(\d+)\s∗,\s∗([\d.]+)\s∗
+/i);
+                            if (!rgbaMatch) {
+                                setInputError(convertRgba);
+                                return;
+                            }
+
+                            rgb = {
+                                r: parseInt(rgbaMatch[1]),
+                                g: parseInt(rgbaMatch[2]),
+                                b: parseInt(rgbaMatch[3])
+                            };
+
+                            alpha = parseFloat(rgbaMatch[4]);
+
+                            // 验证范围
+                            if (rgb.r < 0 || rgb.r > 255 || rgb.g < 0 || rgb.g > 255 || rgb.b < 0 || rgb.b > 255 || alpha < 0 || alpha > 1) {
+                                setInputError(convertRgba);
+                                return;
+                            }
+
+                            break;
+
+                        case 'hsl':
+                            clearInputErrors();
+
+                            if (!value) {
+                                clearAllConverters();
+                                return;
+                            }
+
+                            // 解析HSL
+                            const hslMatch = value.match(/hsl\s∗(\d+)\s∗,\s∗(\d+)
+/i);
+                            if (!hslMatch) {
+                                setInputError(convertHsl);
+                                return;
+                            }
+
+                            const h = parseInt(hslMatch[1]);
+                            const s = parseInt(hslMatch[2]);
+                            const l = parseInt(hslMatch[3]);
+
+                            // 验证范围
+                            if (h < 0 || h > 360 || s < 0 || s > 100 || l < 0 || l > 100) {
+                                setInputError(convertHsl);
+                                return;
+                            }
+
+                            rgb = hslToRgb(h, s, l);
+                            break;
+
+                        case 'hsla':
+                            clearInputErrors();
+
+                            if (!value) {
+                                clearAllConverters();
+                                return;
+                            }
+
+                            // 解析HSLA
+                            const hslaMatch = value.match(/hsla\s∗(\d+)\s∗,\s∗(\d+)
+/i);
+                            if (!hslaMatch) {
+                                setInputError(convertHsla);
+                                return;
+                            }
+
+                            const h2 = parseInt(hslaMatch[1]);
+                            const s2 = parseInt(hslaMatch[2]);
+                            const l2 = parseInt(hslaMatch[3]);
+                            alpha = parseFloat(hslaMatch[4]);
+
+                            // 验证范围
+                            if (h2 < 0 || h2 > 360 || s2 < 0 || s2 > 100 || l2 < 0 || l2 > 100 || alpha < 0 || alpha > 1) {
+                                setInputError(convertHsla);
+                                return;
+                            }
+
+                            rgb = hslToRgb(h2, s2, l2);
+                            break;
+                    }
+
+                    // 如果获取了有效的RGB值，更新所有格式
+                    if (rgb) {
+                        const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+                        const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+                        // 防止循环更新
+                        if (type !== 'hex') convertHex.value = hex.toUpperCase();
+                        if (type !== 'rgb') convertRgb.value = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                        if (type !== 'rgba') convertRgba.value = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha.toFixed(2)})`;
+                        if (type !== 'hsl') convertHsl.value = `hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%)`;
+                        if (type !== 'hsla') convertHsla.value = `hsla(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%, ${alpha.toFixed(2)})`;
+
+                        // 更新预览
+                        converterPreview.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+
+                        // 尝试获取颜色名称（简化版）
+                        const colorName = getColorName(hex);
+                        convertName.value = colorName || '未知颜色';
+                    }
+                } catch (e) {
+                    console.error('颜色转换错误:', e);
+                    setInputError(document.getElementById(`convert-${type}`));
+                }
+            }
+
+            // 清除所有转换输入
+            function clearAllConverters() {
+                convertHex.value = '';
+                convertRgb.value = '';
+                convertRgba.value = '';
+                convertHsl.value = '';
+                convertHsla.value = '';
+                convertName.value = '';
+                converterPreview.style.backgroundColor = 'transparent';
+            }
+
+            // 设置输入错误状态
+            function setInputError(input) {
+                input.classList.add('border-red-500');
+                input.classList.add('focus:ring-red-200');
+                input.classList.add('focus:border-red-500');
+            }
+
+            // 清除输入错误状态
+            function clearInputErrors() {
+                [convertHex, convertRgb, convertRgba, convertHsl, convertHsla].forEach(input => {
+                    input.classList.remove('border-red-500');
+                    input.classList.remove('focus:ring-red-200');
+                    input.classList.remove('focus:border-red-500');
+                });
+            }
+
+            // 获取常见颜色名称（简化版）
+            function getColorName(hex) {
+                const colorNames = {
+                    '#000000': 'black',
+                    '#FFFFFF': 'white',
+                    '#FF0000': 'red',
+                    '#00FF00': 'lime',
+                    '#0000FF': 'blue',
+                    '#FFFF00': 'yellow',
+                    '#00FFFF': 'aqua',
+                    '#FF00FF': 'fuchsia',
+                    '#C0C0C0': 'silver',
+                    '#808080': 'gray',
+                    '#800000': 'maroon',
+                    '#808000': 'olive',
+                    '#008000': 'green',
+                    '#800080': 'purple',
+                    '#008080': 'teal',
+                    '#000080': 'navy',
+                    '#FFA500': 'orange',
+                    '#3B82F6': 'blue-500',
+                    '#10B981': 'emerald-500',
+                    '#8B5CF6': 'violet-500'
+                };
+
+                return colorNames[hex.toUpperCase()] || null;
+            }
+
+            // 对比度检查工具
+            const bgColorInput = document.getElementById('bg-color');
+            const bgColorValue = document.getElementById('bg-color-value');
+            const textColorInput = document.getElementById('text-color');
+            const textColorValue = document.getElementById('text-color-value');
+            const textSizeSelect = document.getElementById('text-size');
+            const contrastPreview = document.getElementById('contrast-preview');
+            const contrastRatio = document.getElementById('contrast-ratio').querySelector('p:last-child');
+            const aaStandard = document.getElementById('aa-standard').querySelector('div');
+            const aaaStandard = document.getElementById('aaa-standard').querySelector('div');
+            const contrastSuggestions = document.getElementById('contrast-suggestions');
+
+            // 初始化对比度检查器
+            updateContrastChecker();
+
+            // 背景色变化
+            bgColorInput.addEventListener('input', function () {
+                bgColorValue.value = this.value;
+                updateContrastChecker();
+            });
+
+            bgColorValue.addEventListener('input', function () {
+                if (/^#([0-9A-Fa-f]{3}){1,2}$/.test(this.value)) {
+                    bgColorInput.value = this.value;
+                    updateContrastChecker();
+                }
+            });
+
+            // 文本色变化
+            textColorInput.addEventListener('input', function () {
+                textColorValue.value = this.value;
+                updateContrastChecker();
+            });
+
+            textColorValue.addEventListener('input', function () {
+                if (/^#([0-9A-Fa-f]{3}){1,2}$/.test(this.value)) {
+                    textColorInput.value = this.value;
+                    updateContrastChecker();
+                }
+            });
+
+            // 文本大小变化
+            textSizeSelect.addEventListener('change', updateContrastChecker);
+
+            // 更新对比度检查
+            function updateContrastChecker() {
+                const bgColor = bgColorInput.value;
+                const textColor = textColorInput.value;
+                const isLargeText = textSizeSelect.value === 'large';
+
+                // 更新预览
+                contrastPreview.style.backgroundColor = bgColor;
+                contrastPreview.querySelectorAll('p').forEach(p => {
+                    p.style.color = textColor;
+                });
+
+                // 计算对比度
+                const bgRgb = hexToRgb(bgColor);
+                const textRgb = hexToRgb(textColor);
+
+                const bgLuminance = getRelativeLuminance(bgRgb.r, bgRgb.g, bgRgb.b);
+                const textLuminance = getRelativeLuminance(textRgb.r, textRgb.g, textRgb.b);
+
+                // 计算对比度 ratio
+                const ratio = (Math.max(bgLuminance, textLuminance) + 0.05) / (Math.min(bgLuminance, textLuminance) + 0.05);
+                const ratioFormatted = ratio.toFixed(2) + ':1';
+                contrastRatio.textContent = ratioFormatted;
+
+                // 检查WCAG标准
+                const aaPass = isLargeText ? ratio >= 3 : ratio >= 4.5;
+                const aaaPass = isLargeText ? ratio >= 4.5 : ratio >= 7;
+
+                // 更新标准显示
+                aaStandard.className = aaPass
+                    ? 'mt-3 inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm'
+                    : 'mt-3 inline-block px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm';
+                aaStandard.textContent = aaPass ? '符合标准' : '不符合标准';
+
+                aaaStandard.className = aaaPass
+                    ? 'mt-3 inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm'
+                    : 'mt-3 inline-block px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm';
+                aaaStandard.textContent = aaaPass ? '符合标准' : '不符合标准';
+
+                // 更新建议
+                updateContrastSuggestions(ratio, isLargeText);
+            }
+
+            // 更新对比度建议
+            function updateContrastSuggestions(ratio, isLargeText) {
+                contrastSuggestions.innerHTML = '';
+
+                if (ratio >= 7) {
+                    addSuggestion('此颜色组合非常适合所有文本，包括长段落阅读。', true);
+                } else if (ratio >= 4.5) {
+                    addSuggestion('此颜色组合适合所有文本，包括正常大小的文本。', true);
+                    if (ratio < 7) {
+                        addSuggestion('对于需要达到AAA级标准的场景，建议提高对比度。', false);
+                    }
+                } else if (ratio >= 3 && isLargeText) {
+                    addSuggestion('此颜色组合适合大文本或粗体文本。', true);
+                    addSuggestion('不建议用于正常大小的文本或长段落。', false);
+                } else {
+                    addSuggestion('此颜色组合对比度不足，不适合任何文本使用。', false);
+                    addSuggestion('建议选择对比度更高的颜色组合。', false);
+                }
+            }
+
+            // 添加建议项
+            function addSuggestion(text, isGood) {
+                const li = document.createElement('li');
+                li.className = 'flex items-start';
+                li.innerHTML = `
+              <i class="fa ${isGood ? 'fa-check-circle text-green-500' : 'fa-exclamation-circle text-red-500'} mt-1 mr-2"></i>
+              <span>${text}</span>
+            `;
+                contrastSuggestions.appendChild(li);
+            }
+
+            // 调色板生成器
+            const primaryPaletteColor = document.getElementById('primary-palette-color');
+            const primaryPaletteValue = document.getElementById('primary-palette-value');
+            const paletteType = document.getElementById('palette-type');
+            const hueAdjust = document.getElementById('hue-adjust');
+            const generatePalette = document.getElementById('generate-palette');
+            const paletteCssCode = document.getElementById('palette-css-code');
+
+            // 初始化调色板
+            updatePalette();
+
+            // 主色调变化
+            primaryPaletteColor.addEventListener('input', function () {
+                primaryPaletteValue.value = this.value;
+                updatePalette();
+            });
+
+            primaryPaletteValue.addEventListener('input', function () {
+                if (/^#([0-9A-Fa-f]{3}){1,2}$/.test(this.value)) {
+                    primaryPaletteColor.value = this.value;
+                    updatePalette();
+                }
+            });
+
+            // 色调调整
+            hueAdjust.addEventListener('input', function () {
+                document.querySelector('#hue-adjust + div span:nth-child(2)').textContent = `${this.value}°`;
+                updatePalette();
+            });
+
+            // 调色板类型变化
+            paletteType.addEventListener('change', updatePalette);
+
+            // 生成调色板按钮
+            generatePalette.addEventListener('click', updatePalette);
+
+            // 复制调色板颜色
+            document.addEventListener('click', function (e) {
+                if (e.target.classList.contains('copy-palette-color') || e.target.parentElement.classList.contains('copy-palette-color')) {
+                    const color = e.target.closest('.palette-color').getAttribute('data-color');
+                    navigator.clipboard.writeText(color).then(showCopyToast);
+                }
+            });
+
+            // 更新调色板
+            function updatePalette() {
+                const primaryHex = primaryPaletteColor.value;
+                const primaryRgb = hexToRgb(primaryHex);
+                const primaryHsl = rgbToHsl(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+                const adjust = parseInt(hueAdjust.value);
+                const type = paletteType.value;
+
+                // 应用色调调整
+                let baseHue = (primaryHsl.h + adjust) % 360;
+                if (baseHue < 0) baseHue += 360;
+
+                let colors = [];
+                let colorNames = [];
+
+                switch (type) {
+                    case 'monochromatic':
+                        // 单色 - 相同色相，不同明度
+                        colors = [
+                            hslToHex(baseHue, primaryHsl.s, Math.max(10, primaryHsl.l - 30)),  // 极暗
+                            hslToHex(baseHue, primaryHsl.s, Math.max(20, primaryHsl.l - 15)),  // 暗
+                            hslToHex(baseHue, primaryHsl.s, primaryHsl.l),                     // 主色
+                            hslToHex(baseHue, primaryHsl.s, Math.min(90, primaryHsl.l + 15)),  // 亮
+                            hslToHex(baseHue, primaryHsl.s, Math.min(90, primaryHsl.l + 30))   // 极亮
+                        ];
+                        colorNames = ['极暗色', '暗色', '主色', '亮色', '极亮色'];
+                        break;
+
+                    case 'analogous':
+                        // 类似色 - 色相相近（30度左右）
+                        colors = [
+                            hslToHex((baseHue - 30 + 360) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue - 15 + 360) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex(baseHue, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 15) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 30) % 360, primaryHsl.s, primaryHsl.l)
+                        ];
+                        colorNames = ['类似色1', '类似色2', '主色', '类似色3', '类似色4'];
+                        break;
+
+                    case 'complementary':
+                        // 互补色 - 色相相差180度
+                        colors = [
+                            hslToHex((baseHue - 30 + 360) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex(baseHue, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 30) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 150) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 180) % 360, primaryHsl.s, primaryHsl.l)
+                        ];
+                        colorNames = ['辅助色1', '主色', '辅助色2', '辅助色3', '互补色'];
+                        break;
+
+                    case 'split-complementary':
+                        // 分裂互补 - 互补色附近的两个颜色
+                        colors = [
+                            hslToHex(baseHue, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 150) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 180) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 210) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 30) % 360, primaryHsl.s, primaryHsl.l)
+                        ];
+                        colorNames = ['主色', '互补色1', '互补色', '互补色2', '辅助色'];
+                        break;
+
+                    case 'triadic':
+                        // 三角色 - 色相相差120度
+                        colors = [
+                            hslToHex(baseHue, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 60) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 120) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 180) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 240) % 360, primaryHsl.s, primaryHsl.l)
+                        ];
+                        colorNames = ['主色', '辅助色1', '三角色1', '三角色2', '辅助色2'];
+                        break;
+
+                    case 'tetradic':
+                        // 四角色 - 两组互补色，相差60度
+                        colors = [
+                            hslToHex(baseHue, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 60) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 120) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 180) % 360, primaryHsl.s, primaryHsl.l),
+                            hslToHex((baseHue + 240) % 360, primaryHsl.s, primaryHsl.l)
+                        ];
+                        colorNames = ['主色', '辅助色1', '互补色1', '互补色', '辅助色2'];
+                        break;
+                }
+
+                // 更新调色板显示
+                const paletteContainer = document.getElementById('color-palette');
+                paletteContainer.innerHTML = '';
+
+                colors.forEach((color, index) => {
+                    const colorItem = document.createElement('div');
+                    colorItem.className = 'palette-color relative rounded-lg overflow-hidden h-40 cursor-pointer group';
+                    colorItem.setAttribute('data-color', color);
+                    colorItem.innerHTML = `
+                <div class="absolute inset-0" style="background-color: ${color};"></div>
+                <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm">
+                  <p class="font-medium">${colorNames[index]}</p>
+                  <p>${color}</p>
+                </div>
+                <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button class="copy-palette-color bg-white text-dark px-3 py-1 rounded text-sm font-medium">
+                    复制颜色
+                  </button>
+                </div>
+              `;
+                    paletteContainer.appendChild(colorItem);
+                });
+
+                // 更新CSS代码
+                let cssVariables = ':root {\n';
+                colors.forEach((color, index) => {
+                    cssVariables += `  --${colorNames[index].replace(/色/, '')}-color: ${color};\n`;
+                });
+                cssVariables += '}';
+                paletteCssCode.textContent = cssVariables;
+            }
+
+            // 滤镜生成器功能
+            const brightness = document.getElementById('brightness');
+            const contrast = document.getElementById('contrast');
+            const saturate = document.getElementById('saturate');
+            const grayscale = document.getElementById('grayscale');
+            const sepia = document.getElementById('sepia');
+            const hueRotate = document.getElementById('hue-rotate');
+            const invert = document.getElementById('invert');
+            const opacityFilter = document.getElementById('opacity-filter');
+            const blur = document.getElementById('blur');
+            const filteredImage = document.getElementById('filtered-image');
+            const filterCssCode = document.getElementById('filter-css-code');
+            const filterImages = document.querySelectorAll('#filter-images img');
+            const filterImageUploadArea = document.getElementById('filter-image-upload-area');
+            const filterImageUpload = document.getElementById('filter-image-upload');
+            const resetFilters = document.getElementById('reset-filters');
+
+            // 滤镜值显示元素
+            const brightnessValue = document.getElementById('brightness-value');
+            const contrastValue = document.getElementById('contrast-value');
+            const saturateValue = document.getElementById('saturate-value');
+            const grayscaleValue = document.getElementById('grayscale-value');
+            const sepiaValue = document.getElementById('sepia-value');
+            const hueRotateValue = document.getElementById('hue-rotate-value');
+            const invertValue = document.getElementById('invert-value');
+            const opacityFilterValue = document.getElementById('opacity-filter-value');
+            const blurValue = document.getElementById('blur-value');
+
+            // 初始化滤镜
+            updateFilters();
+
+            // 滤镜预设
+            document.querySelectorAll('.filter-preset').forEach(preset => {
+                preset.addEventListener('click', function () {
+                    const presetType = this.getAttribute('data-preset');
+
+                    switch (presetType) {
+                        case 'normal':
+                            brightness.value = 100;
+                            contrast.value = 100;
+                            saturate.value = 100;
+                            grayscale.value = 0;
+                            sepia.value = 0;
+                            hueRotate.value = 0;
+                            invert.value = 0;
+                            opacityFilter.value = 100;
+                            blur.value = 0;
+                            break;
+
+                        case 'vintage':
+                            brightness.value = 110;
+                            contrast.value = 90;
+                            saturate.value = 70;
+                            grayscale.value = 0;
+                            sepia.value = 30;
+                            hueRotate.value = 15;
+                            invert.value = 0;
+                            opacityFilter.value = 100;
+                            blur.value = 0;
+                            break;
+
+                        case 'black-white':
+                            brightness.value = 110;
+                            contrast.value = 120;
+                            saturate.value = 0;
+                            grayscale.value = 100;
+                            sepia.value = 0;
+                            hueRotate.value = 0;
+                            invert.value = 0;
+                            opacityFilter.value = 100;
+                            blur.value = 0;
+                            break;
+
+                        case 'pop':
+                            brightness.value = 105;
+                            contrast.value = 130;
+                            saturate.value = 150;
+                            grayscale.value = 0;
+                            sepia.value = 0;
+                            hueRotate.value = 0;
+                            invert.value = 0;
+                            opacityFilter.value = 100;
+                            blur.value = 0;
+                            break;
+
+                        case 'muted':
+                            brightness.value = 90;
+                            contrast.value = 80;
+                            saturate.value = 50;
+                            grayscale.value = 20;
+                            sepia.value = 10;
+                            hueRotate.value = 0;
+                            invert.value = 0;
+                            opacityFilter.value = 100;
+                            blur.value = 0;
+                            break;
+
+                        case 'blur':
+                            brightness.value = 100;
+                            contrast.value = 100;
+                            saturate.value = 100;
+                            grayscale.value = 0;
+                            sepia.value = 0;
+                            hueRotate.value = 0;
+                            invert.value = 0;
+                            opacityFilter.value = 100;
+                            blur.value = 5;
+                            break;
+                    }
+
+                    updateFilterValues();
+                    updateFilters();
+                });
+            });
+
+            // 滤镜图片选择
+            filterImages.forEach(img => {
+                img.addEventListener('click', function () {
+                    filterImages.forEach(i => {
+                        i.classList.remove('filter-image-selected', 'border-accent');
+                        i.classList.add('border-transparent');
+                    });
+
+                    this.classList.add('filter-image-selected', 'border-accent');
+                    this.classList.remove('border-transparent');
+
+                    const src = this.src;
+                    document.getElementById('original-image').src = src;
+                    filteredImage.src = src;
+                    updateFilters();
+                });
+            });
+
+            // 滤镜图片上传
+            filterImageUploadArea.addEventListener('click', function () {
+                filterImageUpload.click();
+            });
+
+            filterImageUpload.addEventListener('change', function () {
+                const file = this.files[0];
+                if (!file) return;
+
+                if (!file.type.match('image.*')) {
+                    alert('请上传图片文件');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('original-image').src = e.target.result;
+                    filteredImage.src = e.target.result;
+
+                    // 更新选中状态
+                    filterImages.forEach(i => {
+                        i.classList.remove('filter-image-selected', 'border-accent');
+                        i.classList.add('border-transparent');
+                    });
+
+                    updateFilters();
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // 滤镜控制事件
+            brightness.addEventListener('input', updateFilterValues);
+            contrast.addEventListener('input', updateFilterValues);
+            saturate.addEventListener('input', updateFilterValues);
+            grayscale.addEventListener('input', updateFilterValues);
+            sepia.addEventListener('input', updateFilterValues);
+            hueRotate.addEventListener('input', updateFilterValues);
+            invert.addEventListener('input', updateFilterValues);
+            opacityFilter.addEventListener('input', updateFilterValues);
+            blur.addEventListener('input', updateFilterValues);
+
+            // 重置滤镜
+            resetFilters.addEventListener('click', function () {
+                brightness.value = 100;
+                contrast.value = 100;
+                saturate.value = 100;
+                grayscale.value = 0;
+                sepia.value = 0;
+                hueRotate.value = 0;
+                invert.value = 0;
+                opacityFilter.value = 100;
+                blur.value = 0;
+
+                updateFilterValues();
+                updateFilters();
+            });
+
+            // 应用滤镜到颜色按钮
+            document.getElementById('apply-filter-to-color').addEventListener('click', function () {
+                // 这里可以添加将当前滤镜应用到颜色的逻辑
+                alert('滤镜效果已应用到颜色（示例功能）');
+            });
+
+            // 更新滤镜值显示
+            function updateFilterValues() {
+                brightnessValue.textContent = `${brightness.value}%`;
+                contrastValue.textContent = `${contrast.value}%`;
+                saturateValue.textContent = `${saturate.value}%`;
+                grayscaleValue.textContent = `${grayscale.value}%`;
+                sepiaValue.textContent = `${sepia.value}%`;
+                hueRotateValue.textContent = `${hueRotate.value}°`;
+                invertValue.textContent = `${invert.value}%`;
+                opacityFilterValue.textContent = `${opacityFilter.value}%`;
+                blurValue.textContent = `${blur.value}px`;
+
+                updateFilters();
+            }
+
+            // 更新滤镜效果
+            function updateFilters() {
+                const filterValue = `brightness(${brightness.value}%) contrast(${contrast.value}%) saturate(${saturate.value}%) grayscale(${grayscale.value}%) sepia(${sepia.value}%) hue-rotate(${hueRotate.value}deg) invert(${invert.value}%) opacity(${opacityFilter.value}%) blur(${blur.value}px)`;
+
+                filteredImage.style.filter = filterValue;
+                filterCssCode.textContent = `filter: ${filterValue};`;
+            }
+
+            // 复制按钮功能
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const targetId = this.getAttribute('data-target');
+                    const textToCopy = document.getElementById(targetId).textContent;
+
+                    navigator.clipboard.writeText(textToCopy).then(showCopyToast);
+                });
+            });
+
+            // 显示复制成功提示
+            function showCopyToast() {
+                const toast = document.getElementById('copy-toast');
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-0', 'opacity-100');
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 2000);
+            }
+
+            // 颜色转换工具函数
+            function hexToRgb(hex) {
+                // 去掉#号
+                hex = hex.replace(/^#/, '');
+
+                // 处理3位颜色代码
+                if (hex.length === 3) {
+                    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+                }
+
+                // 解析RGB值
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+
+                return { r, g, b };
+            }
+
+            function rgbToHex(r, g, b) {
+                return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+            }
+
+            function rgbToHsl(r, g, b) {
+                r /= 255;
+                g /= 255;
+                b /= 255;
+
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                let h, s, l = (max + min) / 2;
+
+                if (max === min) {
+                    h = s = 0; // 灰色
+                } else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+                    switch (max) {
+                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                        case g: h = (b - r) / d + 2; break;
+                        case b: h = (r - g) / d + 4; break;
+                    }
+
+                    h *= 60;
+                }
+
+                return { h, s: s * 100, l: l * 100 };
+            }
+
+            function hslToRgb(h, s, l) {
+                s /= 100;
+                l /= 100;
+
+                let r, g, b;
+
+                if (s === 0) {
+                    r = g = b = l; // 灰色
+                } else {
+                    const hue2rgb = (p, q, t) => {
+                        if (t < 0) t += 1;
+                        if (t > 1) t -= 1;
+                        if (t < 1 / 6) return p + (q - p) * 6 * t;
+                        if (t < 1 / 2) return q;
+                        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                        return p;
+                    };
+
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+
+                    h /= 360;
+                    r = hue2rgb(p, q, h + 1 / 3);
+                    g = hue2rgb(p, q, h);
+                    b = hue2rgb(p, q, h - 1 / 3);
+                }
+
+                return {
+                    r: Math.round(r * 255),
+                    g: Math.round(g * 255),
+                    b: Math.round(b * 255)
+                };
+            }
+
+            function hslToHex(h, s, l) {
+                const rgb = hslToRgb(h, s, l);
+                return rgbToHex(rgb.r, rgb.g, rgb.b);
+            }
+
+            // 计算相对亮度（用于对比度计算）
+            function getRelativeLuminance(r, g, b) {
+                const [r2, g2, b2] = [r, g, b].map(component => {
+                    const value = component / 255;
+                    return value <= 0.03928
+                        ? value / 12.92
+                        : Math.pow((value + 0.055) / 1.055, 2.4);
+                });
+
+                return 0.2126 * r2 + 0.7152 * g2 + 0.0722 * b2;
+            }
+
+            // 初始化所有工具
+            updateGradient();
+        });
+    </script>
+</body>
+</html>
