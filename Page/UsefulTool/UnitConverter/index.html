@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy全能单位转换器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        neutral: '#64748B',
+                        dark: '#1E293B',
+                        danger: '#EF4444',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .card-shadow {
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            }
+
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .input-error {
+                border-color: #EF4444 !important;
+                box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 transition-custom">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-exchange text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-primary">全能单位转换器</h1>
+            </div>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-neutral hover:text-primary transition-custom">
+                    <i class="fa fa-question-circle mr-1"></i>帮助
+                </a>
+                <a href="#" class="text-neutral hover:text-primary transition-custom">
+                    <i class="fa fa-info-circle mr-1"></i>关于
+                </a>
+            </div>
+            <button class="md:hidden text-neutral hover:text-primary text-xl">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- 转换器主体 -->
+        <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+            <!-- 单位类型选择器 -->
+            <div class="border-b border-gray-100 overflow-x-auto scrollbar-hide">
+                <div class="flex min-w-max">
+                    <button class="unit-type-btn active px-6 py-4 font-medium text-primary border-b-2 border-primary transition-custom" data-type="length">
+                        <i class="fa fa-arrows-h mr-2"></i>长度
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="weight">
+                        <i class="fa fa-balance-scale mr-2"></i>重量
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="area">
+                        <i class="fa fa-square-o mr-2"></i>面积
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="volume">
+                        <i class="fa fa-cube mr-2"></i>体积
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="temperature">
+                        <i class="fa fa-thermometer-half mr-2"></i>温度
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="time">
+                        <i class="fa fa-clock-o mr-2"></i>时间
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="speed">
+                        <i class="fa fa-tachometer mr-2"></i>速度
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="pressure">
+                        <i class="fa fa-dashboard mr-2"></i>压力
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="energy">
+                        <i class="fa fa-bolt mr-2"></i>能量
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="power">
+                        <i class="fa fa-plug mr-2"></i>功率
+                    </button>
+                    <button class="unit-type-btn px-6 py-4 font-medium text-neutral hover:text-primary transition-custom" data-type="data">
+                        <i class="fa fa-database mr-2"></i>数据存储
+                    </button>
+                </div>
+            </div>
+
+            <!-- 转换区域 -->
+            <div class="p-6 md:p-8">
+                <!-- 输入区域 -->
+                <div class="mb-8">
+                    <label class="block text-sm font-medium text-neutral mb-2">输入值</label>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-grow">
+                            <input type="number"
+                                   id="input-value"
+                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom"
+                                   placeholder="输入数值"
+                                   value="1">
+                            <p id="input-error" class="text-danger text-xs mt-1 hidden">请输入有效的数字</p>
+                        </div>
+                        <div class="w-full md:w-56">
+                            <select id="input-unit"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom appearance-none bg-white bg-[url('data:image/svg+xml;charset=US-ASCII,<svg width=\" 20\" height=\"20\" xmlns=\"http://www.w3.org/2000/svg\">
+                                <path d=\"M7 10l5 5 5-5z\" fill=\"%233B82F6\" /></svg>')] bg-no-repeat bg-right 0.75rem center bg-contain pr-10"
+                                >
+                                <!-- 选项将通过JavaScript动态填充 -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 转换按钮 -->
+                <div class="flex justify-center my-6">
+                    <button id="swap-units"
+                            class="p-3 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-custom"
+                            title="交换单位">
+                        <i class="fa fa-exchange text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- 输出区域 -->
+                <div>
+                    <label class="block text-sm font-medium text-neutral mb-2">转换结果</label>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-grow">
+                            <input type="text"
+                                   id="output-value"
+                                   class="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom"
+                                   placeholder="转换结果"
+                                   readonly>
+                        </div>
+                        <div class="w-full md:w-56">
+                            <select id="output-unit"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-custom appearance-none bg-white bg-[url('data:image/svg+xml;charset=US-ASCII,<svg width=\" 20\" height=\"20\" xmlns=\"http://www.w3.org/2000/svg\">
+                                <path d=\"M7 10l5 5 5-5z\" fill=\"%233B82F6\" /></svg>')] bg-no-repeat bg-right 0.75rem center bg-contain pr-10"
+                                >
+                                <!-- 选项将通过JavaScript动态填充 -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 转换公式和状态信息 -->
+                <div class="mt-6 pt-6 border-t border-gray-100">
+                    <p class="text-sm text-neutral" id="conversion-info">1 米 = 0.001 千米</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 常用转换快速参考 -->
+        <div class="mt-12 max-w-4xl mx-auto">
+            <h2 class="text-xl font-bold mb-6 text-center">常用转换参考</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 长度参考卡片 -->
+                <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-custom">
+                    <h3 class="font-semibold text-primary mb-4 flex items-center">
+                        <i class="fa fa-arrows-h mr-2"></i>长度常用换算
+                    </h3>
+                    <ul class="text-sm space-y-2 text-neutral">
+                        <li>1 千米 = 1000 米</li>
+                        <li>1 米 = 3.28 英尺</li>
+                        <li>1 英里 = 1.609 千米</li>
+                        <li>1 米 = 3 尺（市制）</li>
+                    </ul>
+                </div>
+
+                <!-- 重量参考卡片 -->
+                <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-custom">
+                    <h3 class="font-semibold text-secondary mb-4 flex items-center">
+                        <i class="fa fa-balance-scale mr-2"></i>重量常用换算
+                    </h3>
+                    <ul class="text-sm space-y-2 text-neutral">
+                        <li>1 吨 = 1000 千克</li>
+                        <li>1 千克 = 2 斤（市制）</li>
+                        <li>1 磅 = 0.454 千克</li>
+                        <li>1 盎司 = 28.35 克</li>
+                    </ul>
+                </div>
+
+                <!-- 温度参考卡片 -->
+                <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-custom">
+                    <h3 class="font-semibold text-accent mb-4 flex items-center">
+                        <i class="fa fa-thermometer-half mr-2"></i>温度常用换算
+                    </h3>
+                    <ul class="text-sm space-y-2 text-neutral">
+                        <li>0°C = 32°F</li>
+                        <li>100°C = 212°F</li>
+                        <li>°F = (°C × 1.8) + 32</li>
+                        <li>°C = (°F - 32) ÷ 1.8</li>
+                    </ul>
+                </div>
+
+                <!-- 压力参考卡片 -->
+                <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-custom">
+                    <h3 class="font-semibold text-primary mb-4 flex items-center">
+                        <i class="fa fa-dashboard mr-2"></i>压力常用换算
+                    </h3>
+                    <ul class="text-sm space-y-2 text-neutral">
+                        <li>1 兆帕 = 1000 千帕</li>
+                        <li>1 千帕 = 1000 帕</li>
+                        <li>1 标准大气压 ≈ 101.325 千帕</li>
+                        <li>1 巴 = 100 千帕</li>
+                    </ul>
+                </div>
+
+                <!-- 能量参考卡片 -->
+                <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-custom">
+                    <h3 class="font-semibold text-secondary mb-4 flex items-center">
+                        <i class="fa fa-bolt mr-2"></i>能量常用换算
+                    </h3>
+                    <ul class="text-sm space-y-2 text-neutral">
+                        <li>1 千瓦时 = 3.6 兆焦</li>
+                        <li>1 千卡 = 4.186 千焦</li>
+                        <li>1 电子伏 = 1.602×10⁻¹⁹ 焦</li>
+                        <li>1 英热单位 ≈ 1055 焦</li>
+                    </ul>
+                </div>
+
+                <!-- 数据存储参考卡片 -->
+                <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-custom">
+                    <h3 class="font-semibold text-accent mb-4 flex items-center">
+                        <i class="fa fa-database mr-2"></i>数据存储常用换算
+                    </h3>
+                    <ul class="text-sm space-y-2 text-neutral">
+                        <li>1GB = 1024MB</li>
+                        <li>1MB = 1024KB</li>
+                        <li>1KB = 1024字节</li>
+                        <li>1TB = 1024GB</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-exchange text-primary text-xl"></i>
+                        <span class="font-bold">全能单位转换器</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">便捷、准确的单位换算工具</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                        <i class="fa fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                        <i class="fa fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-custom">
+                        <i class="fa fa-envelope text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-6 pt-6 text-center text-gray-400 text-sm">
+                &copy; 2025 Candy全能单位转换器 | 所有数据仅供参考
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 单位转换数据 - 修正了转换因子和计算逻辑
+        const unitData = {
+            length: {
+                baseUnit: 'meter',
+                units: {
+                    meter: { name: '米', symbol: 'm', factor: 1 },
+                    kilometer: { name: '千米', symbol: 'km', factor: 1000 },  // 1千米 = 1000米
+                    centimeter: { name: '厘米', symbol: 'cm', factor: 0.01 }, // 1厘米 = 0.01米
+                    millimeter: { name: '毫米', symbol: 'mm', factor: 0.001 }, // 1毫米 = 0.001米
+                    micrometer: { name: '微米', symbol: 'μm', factor: 0.000001 },
+                    nanometer: { name: '纳米', symbol: 'nm', factor: 0.000000001 },
+                    foot: { name: '英尺', symbol: 'ft', factor: 0.3048 }, // 1英尺 = 0.3048米
+                    inch: { name: '英寸', symbol: 'in', factor: 0.0254 }, // 1英寸 = 0.0254米
+                    yard: { name: '码', symbol: 'yd', factor: 0.9144 }, // 1码 = 0.9144米
+                    mile: { name: '英里', symbol: 'mi', factor: 1609.34 }, // 1英里 = 1609.34米
+                    nautical_mile: { name: '海里', symbol: 'nmi', factor: 1852 }, // 1海里 = 1852米
+                    chinese_chi: { name: '尺', symbol: '尺', factor: 1 / 3 }, // 1尺 = 1/3米
+                    chinese_cun: { name: '寸', symbol: '寸', factor: 1 / 30 }, // 1寸 = 1/30米
+                    chinese_li: { name: '里', symbol: '里', factor: 500 } // 1里 = 500米
+                }
+            },
+            weight: {
+                baseUnit: 'kilogram',
+                units: {
+                    kilogram: { name: '千克', symbol: 'kg', factor: 1 },
+                    gram: { name: '克', symbol: 'g', factor: 0.001 }, // 1克 = 0.001千克
+                    milligram: { name: '毫克', symbol: 'mg', factor: 0.000001 }, // 1毫克 = 0.000001千克
+                    ton: { name: '吨', symbol: 't', factor: 1000 }, // 1吨 = 1000千克
+                    metric_ton: { name: '公吨', symbol: 'mt', factor: 1000 },
+                    pound: { name: '磅', symbol: 'lb', factor: 0.453592 }, // 1磅 = 0.453592千克
+                    ounce: { name: '盎司', symbol: 'oz', factor: 0.0283495 }, // 1盎司 = 0.0283495千克
+                    carat: { name: '克拉', symbol: 'ct', factor: 0.0002 }, // 1克拉 = 0.0002千克
+                    chinese_jin: { name: '斤', symbol: '斤', factor: 0.5 }, // 1斤 = 0.5千克
+                    chinese_liang: { name: '两', symbol: '两', factor: 0.05 }, // 1两 = 0.05千克
+                    chinese_qian: { name: '钱', symbol: '钱', factor: 0.005 } // 1钱 = 0.005千克
+                }
+            },
+            area: {
+                baseUnit: 'square_meter',
+                units: {
+                    square_meter: { name: '平方米', symbol: 'm²', factor: 1 },
+                    square_kilometer: { name: '平方千米', symbol: 'km²', factor: 1000000 }, // 1平方千米 = 1e6平方米
+                    square_centimeter: { name: '平方厘米', symbol: 'cm²', factor: 0.0001 }, // 1平方厘米 = 0.0001平方米
+                    square_millimeter: { name: '平方毫米', symbol: 'mm²', factor: 0.000001 }, // 1平方毫米 = 1e-6平方米
+                    square_foot: { name: '平方英尺', symbol: 'ft²', factor: 0.092903 },
+                    square_inch: { name: '平方英寸', symbol: 'in²', factor: 0.00064516 },
+                    square_yard: { name: '平方码', symbol: 'yd²', factor: 0.836127 },
+                    acre: { name: '英亩', symbol: 'ac', factor: 4046.86 },
+                    chinese_mu: { name: '亩', symbol: '亩', factor: 666.667 }, // 1亩 ≈ 666.667平方米
+                    chinese_qing: { name: '顷', symbol: '顷', factor: 66666.7 }, // 1顷 = 100亩 ≈ 66666.7平方米
+                    hectare: { name: '公顷', symbol: 'ha', factor: 10000 } // 1公顷 = 10000平方米
+                }
+            },
+            volume: {
+                baseUnit: 'cubic_meter',
+                units: {
+                    cubic_meter: { name: '立方米', symbol: 'm³', factor: 1 },
+                    cubic_decimeter: { name: '立方分米', symbol: 'dm³', factor: 0.001 }, // 1立方分米 = 0.001立方米
+                    cubic_centimeter: { name: '立方厘米', symbol: 'cm³', factor: 0.000001 }, // 1立方厘米 = 1e-6立方米
+                    cubic_millimeter: { name: '立方毫米', symbol: 'mm³', factor: 1e-9 },
+                    liter: { name: '升', symbol: 'L', factor: 0.001 }, // 1升 = 0.001立方米
+                    milliliter: { name: '毫升', symbol: 'mL', factor: 1e-6 }, // 1毫升 = 1e-6立方米
+                    cubic_foot: { name: '立方英尺', symbol: 'ft³', factor: 0.0283168 },
+                    cubic_inch: { name: '立方英寸', symbol: 'in³', factor: 0.0000163871 },
+                    gallon_us: { name: '美制加仑', symbol: 'gal(US)', factor: 0.00378541 },
+                    gallon_uk: { name: '英制加仑', symbol: 'gal(UK)', factor: 0.00454609 },
+                    fluid_ounce_us: { name: '美制液盎司', symbol: 'fl oz(US)', factor: 2.95735e-5 },
+                    fluid_ounce_uk: { name: '英制液盎司', symbol: 'fl oz(UK)', factor: 2.84131e-5 }
+                }
+            },
+            temperature: {
+                baseUnit: 'celsius',
+                units: {
+                    celsius: {
+                        name: '摄氏度',
+                        symbol: '°C',
+                        toBase: (value) => value,
+                        fromBase: (value) => value
+                    },
+                    fahrenheit: {
+                        name: '华氏度',
+                        symbol: '°F',
+                        toBase: (value) => (value - 32) * 5 / 9,
+                        fromBase: (value) => value * 9 / 5 + 32
+                    },
+                    kelvin: {
+                        name: '开尔文',
+                        symbol: 'K',
+                        toBase: (value) => value - 273.15,
+                        fromBase: (value) => value + 273.15
+                    },
+                    rankine: {
+                        name: '兰氏度',
+                        symbol: '°R',
+                        toBase: (value) => (value - 491.67) * 5 / 9,
+                        fromBase: (value) => value * 9 / 5 + 491.67
+                    }
+                }
+            },
+            time: {
+                baseUnit: 'second',
+                units: {
+                    second: { name: '秒', symbol: 's', factor: 1 },
+                    millisecond: { name: '毫秒', symbol: 'ms', factor: 0.001 }, // 1毫秒 = 0.001秒
+                    microsecond: { name: '微秒', symbol: 'μs', factor: 1e-6 },
+                    nanosecond: { name: '纳秒', symbol: 'ns', factor: 1e-9 },
+                    minute: { name: '分钟', symbol: 'min', factor: 60 }, // 1分钟 = 60秒
+                    hour: { name: '小时', symbol: 'h', factor: 3600 }, // 1小时 = 3600秒
+                    day: { name: '天', symbol: 'd', factor: 86400 }, // 1天 = 86400秒
+                    week: { name: '周', symbol: 'wk', factor: 604800 }, // 1周 = 604800秒
+                    month: { name: '月(30天)', symbol: 'mo', factor: 2592000 }, // 1月(30天) = 2592000秒
+                    year: { name: '年(365天)', symbol: 'yr', factor: 31536000 }, // 1年(365天) = 31536000秒
+                    leap_year: { name: '闰年(366天)', symbol: 'ly', factor: 31622400 } // 1闰年(366天) = 31622400秒
+                }
+            },
+            speed: {
+                baseUnit: 'meter_per_second',
+                units: {
+                    meter_per_second: { name: '米/秒', symbol: 'm/s', factor: 1 },
+                    kilometer_per_hour: { name: '千米/小时', symbol: 'km/h', factor: 0.277778 }, // 1千米/小时 ≈ 0.277778米/秒
+                    foot_per_second: { name: '英尺/秒', symbol: 'ft/s', factor: 0.3048 },
+                    mile_per_hour: { name: '英里/小时', symbol: 'mph', factor: 0.44704 },
+                    knot: { name: '节', symbol: 'kn', factor: 0.514444 },
+                    mach: { name: '马赫(标准大气压)', symbol: 'Ma', factor: 340.29 } // 1马赫 ≈ 340.29米/秒
+                }
+            },
+            pressure: {
+                baseUnit: 'pascal',
+                units: {
+                    pascal: { name: '帕斯卡', symbol: 'Pa', factor: 1 },
+                    kilopascal: { name: '千帕', symbol: 'kPa', factor: 1000 }, // 1千帕 = 1000帕
+                    megapascal: { name: '兆帕', symbol: 'MPa', factor: 1000000 }, // 1兆帕 = 1e6帕
+                    bar: { name: '巴', symbol: 'bar', factor: 100000 }, // 1巴 = 1e5帕
+                    standard_atmosphere: { name: '标准大气压', symbol: 'atm', factor: 101325 }, // 1标准大气压 ≈ 101325帕
+                    technical_atmosphere: { name: '工程大气压', symbol: 'at', factor: 98066.5 },
+                    millimeter_mercury: { name: '毫米汞柱', symbol: 'mmHg', factor: 133.322 },
+                    centimeter_water: { name: '厘米水柱', symbol: 'cmH₂O', factor: 98.0665 },
+                    pound_per_square_inch: { name: '磅/平方英寸', symbol: 'psi', factor: 6894.76 }
+                }
+            },
+            energy: {
+                baseUnit: 'joule',
+                units: {
+                    joule: { name: '焦耳', symbol: 'J', factor: 1 },
+                    kilojoule: { name: '千焦', symbol: 'kJ', factor: 1000 }, // 1千焦 = 1000焦
+                    megajoule: { name: '兆焦', symbol: 'MJ', factor: 1e6 }, // 1兆焦 = 1e6焦
+                    gigajoule: { name: '吉焦', symbol: 'GJ', factor: 1e9 }, // 1吉焦 = 1e9焦
+                    watt_hour: { name: '瓦时', symbol: 'Wh', factor: 3600 }, // 1瓦时 = 3600焦
+                    kilowatt_hour: { name: '千瓦时', symbol: 'kWh', factor: 3.6e6 }, // 1千瓦时 = 3.6e6焦
+                    calorie: { name: '卡路里', symbol: 'cal', factor: 4.1868 },
+                    kilocalorie: { name: '千卡', symbol: 'kcal', factor: 4186.8 }, // 1千卡 = 4186.8焦
+                    electron_volt: { name: '电子伏', symbol: 'eV', factor: 1.60218e-19 },
+                    british_thermal_unit: { name: '英热单位', symbol: 'BTU', factor: 1055.06 }
+                }
+            },
+            power: {
+                baseUnit: 'watt',
+                units: {
+                    watt: { name: '瓦特', symbol: 'W', factor: 1 },
+                    kilowatt: { name: '千瓦', symbol: 'kW', factor: 1000 }, // 1千瓦 = 1000瓦
+                    megawatt: { name: '兆瓦', symbol: 'MW', factor: 1e6 }, // 1兆瓦 = 1e6瓦
+                    gigawatt: { name: '吉瓦', symbol: 'GW', factor: 1e9 }, // 1吉瓦 = 1e9瓦
+                    horsepower: { name: '马力', symbol: 'hp', factor: 745.7 }, // 1马力 ≈ 745.7瓦
+                    calorie_per_second: { name: '卡路里/秒', symbol: 'cal/s', factor: 4.1868 },
+                    british_thermal_unit_per_hour: { name: '英热单位/小时', symbol: 'BTU/h', factor: 0.293071 }
+                }
+            },
+            data: {
+                baseUnit: 'byte',
+                units: {
+                    byte: { name: '字节', symbol: 'B', factor: 1 },
+                    kilobyte: { name: '千字节', symbol: 'KB', factor: 1024 }, // 1KB = 1024B
+                    megabyte: { name: '兆字节', symbol: 'MB', factor: 1024 * 1024 }, // 1MB = 1024KB
+                    gigabyte: { name: '吉字节', symbol: 'GB', factor: 1024 * 1024 * 1024 }, // 1GB = 1024MB
+                    terabyte: { name: '太字节', symbol: 'TB', factor: 1024 ** 4 }, // 1TB = 1024GB
+                    petabyte: { name: '拍字节', symbol: 'PB', factor: 1024 ** 5 }, // 1PB = 1024TB
+                    bit: { name: '比特', symbol: 'bit', factor: 1 / 8 }, // 1比特 = 1/8字节
+                    kilobit: { name: '千比特', symbol: 'Kbit', factor: 1024 / 8 },
+                    megabit: { name: '兆比特', symbol: 'Mbit', factor: (1024 * 1024) / 8 },
+                    gigabit: { name: '吉比特', symbol: 'Gbit', factor: (1024 ** 3) / 8 }
+                }
+            }
+        };
+
+        // DOM元素
+        const inputValue = document.getElementById('input-value');
+        const outputValue = document.getElementById('output-value');
+        const inputUnit = document.getElementById('input-unit');
+        const outputUnit = document.getElementById('output-unit');
+        const conversionInfo = document.getElementById('conversion-info');
+        const swapButton = document.getElementById('swap-units');
+        const unitTypeButtons = document.querySelectorAll('.unit-type-btn');
+        const inputError = document.getElementById('input-error');
+
+        // 当前选中的单位类型
+        let currentUnitType = 'length';
+
+        // 初始化单位选择器
+        function initUnitSelectors(type) {
+            const units = unitData[type].units;
+            const unitKeys = Object.keys(units);
+
+            // 清空现有选项
+            inputUnit.innerHTML = '';
+            outputUnit.innerHTML = '';
+
+            // 添加选项
+            unitKeys.forEach(key => {
+                const unit = units[key];
+                const option1 = document.createElement('option');
+                const option2 = document.createElement('option');
+
+                option1.value = key;
+                option1.textContent = `${unit.name} (${unit.symbol})`;
+
+                option2.value = key;
+                option2.textContent = `${unit.name} (${unit.symbol})`;
+
+                inputUnit.appendChild(option1);
+                outputUnit.appendChild(option2);
+            });
+
+            // 设置默认选项
+            inputUnit.selectedIndex = 0;
+            outputUnit.selectedIndex = 1;
+
+            // 执行一次转换
+            convertUnits();
+        }
+
+        // 转换单位 - 修正了核心转换逻辑
+        function convertUnits() {
+            // 重置错误状态
+            inputValue.classList.remove('input-error');
+            inputError.classList.add('hidden');
+
+            const type = currentUnitType;
+            const inputVal = parseFloat(inputValue.value);
+
+            // 检查输入是否有效
+            if (isNaN(inputVal) || inputValue.value.trim() === '') {
+                outputValue.value = '';
+                conversionInfo.textContent = '';
+                inputValue.classList.add('input-error');
+                inputError.classList.remove('hidden');
+                return;
+            }
+
+            const fromUnit = inputUnit.value;
+            const toUnit = outputUnit.value;
+
+            // 相同单位直接返回原值
+            if (fromUnit === toUnit) {
+                outputValue.value = inputVal.toString();
+                conversionInfo.textContent = `${inputVal} ${unitData[type].units[fromUnit].symbol} = ${inputVal} ${unitData[type].units[toUnit].symbol}`;
+                return;
+            }
+
+            let result;
+            let formulaText;
+
+            // 处理特殊类型转换（如温度）
+            if (type === 'temperature') {
+                try {
+                    // 先转换为基础单位（摄氏度）
+                    const baseValue = unitData[type].units[fromUnit].toBase(inputVal);
+                    // 再转换为目标单位
+                    result = unitData[type].units[toUnit].fromBase(baseValue);
+
+                    formulaText = `${inputVal} ${unitData[type].units[fromUnit].symbol} = ${result.toFixed(6)} ${unitData[type].units[toUnit].symbol}`;
+                } catch (error) {
+                    outputValue.value = '转换错误';
+                    conversionInfo.textContent = '无法完成温度转换，请检查输入值';
+                    return;
+                }
+            } else {
+                // 核心修正：正确的单位转换公式
+                // 公式：输入值 × (源单位相对于基础单位的系数 / 目标单位相对于基础单位的系数)
+                const fromFactor = unitData[type].units[fromUnit].factor;
+                const toFactor = unitData[type].units[toUnit].factor;
+
+                result = inputVal * (fromFactor / toFactor);
+
+                formulaText = `${inputVal} ${unitData[type].units[fromUnit].symbol} = ${result.toFixed(10)} ${unitData[type].units[toUnit].symbol}`;
+            }
+
+            // 根据数值大小自动调整小数位数
+            let displayValue;
+            if (Math.abs(result) >= 1000000) {
+                displayValue = result.toExponential(6);
+            } else if (Math.abs(result) >= 1000) {
+                displayValue = result.toFixed(2);
+            } else if (Math.abs(result) >= 1) {
+                // 移除末尾多余的0
+                displayValue = result.toFixed(6).replace(/\.?0+$/, "");
+            } else if (Math.abs(result) >= 0.000001) {
+                // 移除末尾多余的0
+                displayValue = result.toFixed(8).replace(/0+$/, "").replace(/\.$/, "");
+            } else {
+                displayValue = result.toExponential(6);
+            }
+
+            outputValue.value = displayValue;
+            conversionInfo.textContent = formulaText;
+        }
+
+        // 交换单位
+        function swapUnits() {
+            const tempUnit = inputUnit.value;
+            inputUnit.value = outputUnit.value;
+            outputUnit.value = tempUnit;
+
+            // 执行转换
+            convertUnits();
+        }
+
+        // 切换单位类型
+        function switchUnitType(type) {
+            currentUnitType = type;
+
+            // 更新按钮样式
+            unitTypeButtons.forEach(btn => {
+                if (btn.dataset.type === type) {
+                    btn.classList.add('active', 'text-primary', 'border-primary', 'border-b-2');
+                    btn.classList.remove('text-neutral');
+                } else {
+                    btn.classList.remove('active', 'text-primary', 'border-primary', 'border-b-2');
+                    btn.classList.add('text-neutral');
+                }
+            });
+
+            // 重新初始化单位选择器
+            initUnitSelectors(type);
+        }
+
+        // 事件监听
+        inputValue.addEventListener('input', convertUnits);
+        inputUnit.addEventListener('change', convertUnits);
+        outputUnit.addEventListener('change', convertUnits);
+        swapButton.addEventListener('click', swapUnits);
+
+        // 单位类型按钮事件
+        unitTypeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                switchUnitType(btn.dataset.type);
+            });
+        });
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initUnitSelectors(currentUnitType);
+
+            // 添加滚动时导航栏效果
+            window.addEventListener('scroll', () => {
+                const header = document.querySelector('header');
+                if (window.scrollY > 10) {
+                    header.classList.add('shadow');
+                } else {
+                    header.classList.remove('shadow');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy多风格计算器 -v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // 科技风
+                        'tech-dark': '#0F172A',
+                        'tech-darker': '#0A0F1C',
+                        'tech-accent': '#06B6D4',
+                        'tech-purple': '#8B5CF6',
+                        'tech-blue': '#3B82F6',
+                        'tech-green': '#10B981',
+                        'tech-red': '#EF4444',
+                        'glass': 'rgba(15, 23, 42, 0.7)',
+
+                        // 赛博朋克
+                        'cyber-black': '#0D0221',
+                        'cyber-pink': '#FF2A6D',
+                        'cyber-blue': '#05D9E8',
+                        'cyber-purple': '#D300C5',
+
+                        // 极简白
+                        'minimal-light': '#F8FAFC',
+                        'minimal-gray': '#E2E8F0',
+                        'minimal-dark': '#334155',
+                        'minimal-accent': '#3B82F6',
+
+                        // 深空灰
+                        'space-dark': '#1E293B',
+                        'space-darker': '#0F172A',
+                        'space-gray': '#334155',
+                        'space-accent': '#94A3B8',
+                        'space-blue': '#60A5FA'
+                    },
+                    fontFamily: {
+                        'tech': ['Space Grotesk', 'Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon': '0 0 5px theme("colors.tech-accent"), 0 0 20px theme("colors.tech-accent/30")',
+                        'neon-purple': '0 0 5px theme("colors.tech-purple"), 0 0 20px theme("colors.tech-purple/30")',
+                        'neon-blue': '0 0 5px theme("colors.tech-blue"), 0 0 20px theme("colors.tech-blue/30")',
+                        'neon-cyber-pink': '0 0 5px theme("colors.cyber-pink"), 0 0 20px theme("colors.cyber-pink/30")',
+                        'neon-cyber-blue': '0 0 5px theme("colors.cyber-blue"), 0 0 20px theme("colors.cyber-blue/30")',
+                        'neon-minimal': '0 0 5px theme("colors.minimal-accent"), 0 0 20px theme("colors.minimal-accent/30")',
+                        'neon-space': '0 0 5px theme("colors.space-blue"), 0 0 20px theme("colors.space-blue/30")',
+                        'glow': '0 0 15px rgba(6, 182, 212, 0.5)',
+                    }
+                },
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .calc-btn {
+                @apply flex items-center justify-center rounded-lg transition-all duration-200 active:scale-[0.96] font-medium;
+            }
+
+            .glass-effect {
+                @apply bg-glass backdrop-blur-md border border-white/10;
+            }
+
+            .display-text {
+                @apply text-right overflow-x-auto whitespace-nowrap;
+            }
+
+            .tab-indicator {
+                @apply absolute bottom-0 h-0.5 bg-tech-accent transition-all duration-300 shadow-neon;
+            }
+
+            .gradient-border {
+                position: relative;
+                border-radius: 0.75rem;
+                z-index: 0;
+            }
+
+                .gradient-border::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    border-radius: 0.75rem;
+                    padding: 1px;
+                    background: linear-gradient(90deg, #06B6D4, #8B5CF6);
+                    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                    -webkit-mask-composite: xor;
+                    mask-composite: exclude;
+                    z-index: -1;
+                }
+
+            .pulse {
+                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% {
+                    opacity: 1;
+                }
+
+                50% {
+                    opacity: 0.7;
+                }
+            }
+
+            .glow-effect {
+                animation: glow 2s ease-in-out infinite alternate;
+            }
+
+            @keyframes glow {
+                from {
+                    box-shadow: 0 0 5px rgba(6, 182, 212, 0.5), 0 0 10px rgba(6, 182, 212, 0.3);
+                }
+
+                to {
+                    box-shadow: 0 0 10px rgba(6, 182, 212, 0.7), 0 0 20px rgba(6, 182, 212, 0.5);
+                }
+            }
+
+            .glow-effect-cyber {
+                animation: glowCyber 2s ease-in-out infinite alternate;
+            }
+
+            @keyframes glowCyber {
+                from {
+                    box-shadow: 0 0 5px rgba(255, 42, 109, 0.5), 0 0 10px rgba(255, 42, 109, 0.3);
+                }
+
+                to {
+                    box-shadow: 0 0 10px rgba(255, 42, 109, 0.7), 0 0 20px rgba(255, 42, 109, 0.5);
+                }
+            }
+
+            .glow-effect-minimal {
+                animation: glowMinimal 2s ease-in-out infinite alternate;
+            }
+
+            @keyframes glowMinimal {
+                from {
+                    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3), 0 0 10px rgba(59, 130, 246, 0.1);
+                }
+
+                to {
+                    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
+                }
+            }
+
+            .glow-effect-space {
+                animation: glowSpace 2s ease-in-out infinite alternate;
+            }
+
+            @keyframes glowSpace {
+                from {
+                    box-shadow: 0 0 5px rgba(96, 165, 250, 0.3), 0 0 10px rgba(96, 165, 250, 0.1);
+                }
+
+                to {
+                    box-shadow: 0 0 10px rgba(96, 165, 250, 0.5), 0 0 20px rgba(96, 165, 250, 0.3);
+                }
+            }
+
+            /* 自定义滚动条样式 */
+            .custom-scrollbar::-webkit-scrollbar {
+                height: 4px;
+                width: 4px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background-color: rgba(6, 182, 212, 0.5);
+                border-radius: 2px;
+            }
+
+            /* 自定义下拉选择框样式 */
+            select {
+                /* 移除默认箭头 */
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 0.7rem center;
+                background-size: 1em;
+            }
+
+                select option {
+                    background-color: #0F172A;
+                    color: #e2e8f0;
+                    border: none;
+                    padding: 8px 12px;
+                }
+
+                    select option:hover {
+                        background-color: #1e293b;
+                    }
+
+                    select option:checked {
+                        background-color: #1e293b;
+                        color: #06B6D4;
+                    }
+        }
+    </style>
+
+    <!-- 导入科技感字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="theme-tech bg-gradient-to-br from-tech-darker to-tech-dark min-h-screen flex items-center justify-center p-4 font-tech text-gray-100 transition-colors duration-500">
+    <!-- 计算器容器 -->
+    <div class="calculator w-full max-w-md gradient-border overflow-hidden" id="calculator-container">
+        <div class="glass-effect rounded-lg p-1">
+            <!-- 标题栏 -->
+            <div class="flex justify-between items-center p-4 border-b border-white/10">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-tech-accent to-tech-purple flex items-center justify-center">
+                        <i class="fa fa-calculator"></i>
+                    </div>
+                    <h1 class="text-lg font-semibold tracking-wide">TECH CALC</h1>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="relative group">
+                        <button id="theme-toggle" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-tech-dark border border-white/10 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-10">
+                            <div class="py-1">
+                                <button class="theme-btn w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors" data-theme="tech">
+                                    <span class="inline-block w-3 h-3 rounded-full bg-tech-accent mr-2"></span>科技风
+                                </button>
+                                <button class="theme-btn w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors" data-theme="cyber">
+                                    <span class="inline-block w-3 h-3 rounded-full bg-cyber-pink mr-2"></span>赛博朋克
+                                </button>
+                                <button class="theme-btn w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors" data-theme="minimal">
+                                    <span class="inline-block w-3 h-3 rounded-full bg-minimal-accent mr-2"></span>极简白
+                                </button>
+                                <button class="theme-btn w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors" data-theme="space">
+                                    <span class="inline-block w-3 h-3 rounded-full bg-space-blue mr-2"></span>深空灰
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="settings-btn" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
+                        <i class="fa fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 模式选择标签 -->
+            <div class="relative border-b border-white/10">
+                <div class="flex">
+                    <button class="mode-tab flex-1 py-4 px-2 text-sm font-medium text-tech-accent" data-mode="standard">标准</button>
+                    <button class="mode-tab flex-1 py-4 px-2 text-sm font-medium text-gray-400 hover:text-gray-300" data-mode="scientific">科学</button>
+                    <button class="mode-tab flex-1 py-4 px-2 text-sm font-medium text-gray-400 hover:text-gray-300" data-mode="converter">转换</button>
+                </div>
+                <div class="tab-indicator w-[33.333%]"></div>
+            </div>
+
+            <!-- 标准计算器界面 -->
+            <div id="standard-panel" class="mode-panel">
+                <!-- 显示区域 -->
+                <div class="p-6">
+                    <div id="standard-expression" class="text-gray-400 mb-2 min-h-[24px] text-lg display-text custom-scrollbar"></div>
+                    <div id="standard-result" class="text-4xl font-light display-text custom-scrollbar tracking-tight glow-effect">0</div>
+                </div>
+
+                <!-- 按键区域 -->
+                <div class="p-4 grid grid-cols-4 gap-3">
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-14 text-gray-300" data-action="clear">C</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-14 text-gray-300" data-action="plus-minus">±</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-14 text-gray-300" data-action="percent">%</button>
+                    <button class="calc-btn bg-tech-purple/20 hover:bg-tech-purple/30 h-14 text-tech-purple shadow-neon-purple" data-action="divide">÷</button>
+
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="7">7</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="8">8</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="9">9</button>
+                    <button class="calc-btn bg-tech-purple/20 hover:bg-tech-purple/30 h-14 text-tech-purple shadow-neon-purple" data-action="multiply">×</button>
+
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="4">4</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="5">5</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="6">6</button>
+                    <button class="calc-btn bg-tech-purple/20 hover:bg-tech-purple/30 h-14 text-tech-purple shadow-neon-purple" data-action="subtract">−</button>
+
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="1">1</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="2">2</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="3">3</button>
+                    <button class="calc-btn bg-tech-purple/20 hover:bg-tech-purple/30 h-14 text-tech-purple shadow-neon-purple" data-action="add">+</button>
+
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-14 text-gray-300" data-action="backspace">
+                        <i class="fa fa-backspace"></i>
+                    </button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num="0">0</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-14 text-gray-100" data-num=".">.</button>
+                    <button class="calc-btn bg-tech-accent/20 hover:bg-tech-accent/30 h-14 text-tech-accent shadow-neon" data-action="equals">=</button>
+                </div>
+            </div>
+
+            <!-- 科学计算器界面 -->
+            <div id="scientific-panel" class="mode-panel hidden">
+                <!-- 显示区域 -->
+                <div class="p-6">
+                    <div class="flex justify-between mb-2">
+                        <div id="scientific-angle" class="text-gray-400 text-sm">DEG</div>
+                        <div id="scientific-memory" class="text-gray-400 text-sm"></div>
+                    </div>
+                    <div id="scientific-expression" class="text-gray-400 mb-2 min-h-[24px] text-lg display-text custom-scrollbar"></div>
+                    <div id="scientific-result" class="text-4xl font-light display-text custom-scrollbar tracking-tight glow-effect">0</div>
+                </div>
+
+                <!-- 功能键区域 - 第一行 -->
+                <div class="px-4 py-2 grid grid-cols-6 gap-2">
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="hyp">hyp</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="sin">sin</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="cos">cos</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="tan">tan</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="log">log</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="ln">ln</button>
+                </div>
+
+                <!-- 功能键区域 - 第二行 -->
+                <div class="px-4 py-2 grid grid-cols-6 gap-2">
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="inv">inv</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="asin">sin⁻¹</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="acos">cos⁻¹</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="atan">tan⁻¹</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="10x">10ˣ</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="ex">eˣ</button>
+                </div>
+
+                <!-- 功能键区域 - 第三行 -->
+                <div class="px-4 py-2 grid grid-cols-6 gap-2">
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="deg">DEG</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="sqrt">√</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="square">x²</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="cube">x³</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="power">xʸ</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="yrootx">ʸ√x</button>
+                </div>
+
+                <!-- 功能键区域 - 第四行 -->
+                <div class="px-4 py-2 grid grid-cols-6 gap-2">
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="rad">RAD</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="factorial">n!</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="1/x">1/x</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="pi">π</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="e">e</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="mod">mod</button>
+                </div>
+
+                <!-- 数字和运算符区域 - 第一行 -->
+                <div class="px-4 py-2 grid grid-cols-6 gap-2">
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="left-paren">(</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="right-paren">)</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="7">7</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="8">8</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="9">9</button>
+                    <button class="calc-btn bg-tech-purple/20 hover:bg-tech-purple/30 h-10 text-xs text-tech-purple shadow-neon-purple" data-action="divide">÷</button>
+                </div>
+
+                <!-- 数字和运算符区域 - 第二行 -->
+                <div class="px-4 py-2 grid grid-cols-6 gap-2">
+                    <button class="calc-btn bg-tech-red/20 hover:bg-tech-red/30 h-10 text-xs text-tech-red" data-action="clear">C</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="backspace">
+                        <i class="fa fa-backspace"></i>
+                    </button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="4">4</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="5">5</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="6">6</button>
+                    <button class="calc-btn bg-tech-purple/20 hover:bg-tech-purple/30 h-10 text-xs text-tech-purple shadow-neon-purple" data-action="multiply">×</button>
+                </div>
+
+                <!-- 数字和运算符区域 - 第三行 -->
+                <div class="px-4 py-2 grid grid-cols-6 gap-2">
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="mc">MC</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="mr">MR</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="1">1</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="2">2</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="3">3</button>
+                    <button class="calc-btn bg-tech-purple/20 hover:bg-tech-purple/30 h-10 text-xs text-tech-purple shadow-neon-purple" data-action="subtract">−</button>
+                </div>
+
+                <!-- 数字和运算符区域 - 第四行 -->
+                <div class="px-4 py-2 grid grid-cols-6 gap-2">
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="m-plus">M+</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="m-minus">M−</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num="0">0</button>
+                    <button class="calc-btn bg-white/10 hover:bg-white/20 h-10 text-sm text-gray-100" data-num=".">.</button>
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 h-10 text-xs text-gray-300" data-action="plus-minus">±</button>
+                    <button class="calc-btn bg-tech-purple/20 hover:bg-tech-purple/30 h-10 text-xs text-tech-purple shadow-neon-purple" data-action="add">+</button>
+                </div>
+
+                <!-- 数字和运算符区域 - 第五行 -->
+                <div class="px-4 py-3 grid grid-cols-6 gap-2">
+                    <button class="calc-btn bg-white/5 hover:bg-white/10 col-span-4 h-10 text-xs text-gray-300" data-action="percent">%</button>
+                    <button class="calc-btn bg-tech-accent/20 hover:bg-tech-accent/30 col-span-2 h-10 text-xs text-tech-accent shadow-neon" data-action="equals">=</button>
+                </div>
+            </div>
+
+            <!-- 转换界面 -->
+            <div id="converter-panel" class="mode-panel hidden">
+                <!-- 转换类型选择 -->
+                <div class="border-b border-white/10 overflow-x-auto">
+                    <div class="flex">
+                        <button class="convert-type-btn py-4 px-5 text-sm font-medium text-tech-accent border-b-2 border-tech-accent whitespace-nowrap" data-type="base">
+                            进制转换
+                        </button>
+                        <button class="convert-type-btn py-4 px-5 text-sm font-medium text-gray-400 hover:text-gray-300 whitespace-nowrap" data-type="length">
+                            长度转换
+                        </button>
+                        <button class="convert-type-btn py-4 px-5 text-sm font-medium text-gray-400 hover:text-gray-300 whitespace-nowrap" data-type="weight">
+                            重量转换
+                        </button>
+                        <button class="convert-type-btn py-4 px-5 text-sm font-medium text-gray-400 hover:text-gray-300 whitespace-nowrap" data-type="temperature">
+                            温度转换
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 进制转换面板 -->
+                <div id="base-converter" class="convert-panel p-6">
+                    <div class="mb-6">
+                        <label class="block text-sm text-gray-400 mb-2">输入数值:</label>
+                        <input type="text" id="base-input" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-100">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">从:</label>
+                            <select id="base-from" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-300">
+                                <option value="2">二进制</option>
+                                <option value="8">八进制</option>
+                                <option value="10" selected>十进制</option>
+                                <option value="16">十六进制</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">到:</label>
+                            <select id="base-to" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-300">
+                                <option value="2">二进制</option>
+                                <option value="8">八进制</option>
+                                <option value="10">十进制</option>
+                                <option value="16" selected>十六进制</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="base-convert-btn" class="w-full bg-gradient-to-r from-tech-accent to-tech-purple text-white py-3 rounded-lg hover:opacity-90 transition-opacity mb-6 flex items-center justify-center gap-2">
+                        <i class="fa fa-exchange"></i>
+                        <span>转换</span>
+                    </button>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">转换结果:</label>
+                        <div id="base-result" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg min-h-[48px] text-right font-medium text-tech-accent">
+                            0
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <button id="base-copy" class="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors">
+                            <i class="fa fa-copy text-sm text-gray-400"></i>
+                            <span class="text-sm text-gray-300">复制结果</span>
+                        </button>
+                        <button id="base-clear" class="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors">
+                            <i class="fa fa-eraser text-sm text-gray-400"></i>
+                            <span class="text-sm text-gray-300">清除</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 长度转换面板 -->
+                <div id="length-converter" class="convert-panel p-6 hidden">
+                    <div class="mb-6">
+                        <label class="block text-sm text-gray-400 mb-2">输入长度:</label>
+                        <input type="number" id="length-input" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-100" value="1">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">从:</label>
+                            <select id="length-from" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-300">
+                                <option value="m">米 (m)</option>
+                                <option value="km">千米 (km)</option>
+                                <option value="cm">厘米 (cm)</option>
+                                <option value="mm">毫米 (mm)</option>
+                                <option value="in">英寸 (in)</option>
+                                <option value="ft">英尺 (ft)</option>
+                                <option value="yd">码 (yd)</option>
+                                <option value="mi">英里 (mi)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">到:</label>
+                            <select id="length-to" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-300">
+                                <option value="m">米 (m)</option>
+                                <option value="km">千米 (km)</option>
+                                <option value="cm">厘米 (cm)</option>
+                                <option value="mm">毫米 (mm)</option>
+                                <option value="in" selected>英寸 (in)</option>
+                                <option value="ft">英尺 (ft)</option>
+                                <option value="yd">码 (yd)</option>
+                                <option value="mi">英里 (mi)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="length-convert-btn" class="w-full bg-gradient-to-r from-tech-accent to-tech-purple text-white py-3 rounded-lg hover:opacity-90 transition-opacity mb-6 flex items-center justify-center gap-2">
+                        <i class="fa fa-exchange"></i>
+                        <span>转换</span>
+                    </button>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">转换结果:</label>
+                        <div id="length-result" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg min-h-[48px] text-right font-medium text-tech-accent">
+                            39.3701 英寸
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 重量转换面板 -->
+                <div id="weight-converter" class="convert-panel p-6 hidden">
+                    <div class="mb-6">
+                        <label class="block text-sm text-gray-400 mb-2">输入重量:</label>
+                        <input type="number" id="weight-input" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-100" value="1">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">从:</label>
+                            <select id="weight-from" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-300">
+                                <option value="kg">千克 (kg)</option>
+                                <option value="g">克 (g)</option>
+                                <option value="mg">毫克 (mg)</option>
+                                <option value="lb">磅 (lb)</option>
+                                <option value="oz">盎司 (oz)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">到:</label>
+                            <select id="weight-to" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-300">
+                                <option value="kg">千克 (kg)</option>
+                                <option value="g">克 (g)</option>
+                                <option value="mg">毫克 (mg)</option>
+                                <option value="lb" selected>磅 (lb)</option>
+                                <option value="oz">盎司 (oz)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="weight-convert-btn" class="w-full bg-gradient-to-r from-tech-accent to-tech-purple text-white py-3 rounded-lg hover:opacity-90 transition-opacity mb-6 flex items-center justify-center gap-2">
+                        <i class="fa fa-exchange"></i>
+                        <span>转换</span>
+                    </button>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">转换结果:</label>
+                        <div id="weight-result" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg min-h-[48px] text-right font-medium text-tech-accent">
+                            2.2046 磅
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 温度转换面板 -->
+                <div id="temperature-converter" class="convert-panel p-6 hidden">
+                    <div class="mb-6">
+                        <label class="block text-sm text-gray-400 mb-2">输入温度:</label>
+                        <input type="number" id="temperature-input" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-100" value="0">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">从:</label>
+                            <select id="temperature-from" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-300">
+                                <option value="c">摄氏度 (°C)</option>
+                                <option value="f">华氏度 (°F)</option>
+                                <option value="k">开氏度 (K)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">到:</label>
+                            <select id="temperature-to" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-tech-accent/50 focus:border-tech-accent text-gray-300">
+                                <option value="c">摄氏度 (°C)</option>
+                                <option value="f" selected>华氏度 (°F)</option>
+                                <option value="k">开氏度 (K)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="temperature-convert-btn" class="w-full bg-gradient-to-r from-tech-accent to-tech-purple text-white py-3 rounded-lg hover:opacity-90 transition-opacity mb-6 flex items-center justify-center gap-2">
+                        <i class="fa fa-exchange"></i>
+                        <span>转换</span>
+                    </button>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">转换结果:</label>
+                        <div id="temperature-result" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg min-h-[48px] text-right font-medium text-tech-accent">
+                            32.00 华氏度
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 计算器核心逻辑
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM元素 - 模式切换
+            const modeTabs = document.querySelectorAll('.mode-tab');
+            const modePanels = document.querySelectorAll('.mode-panel');
+            const tabIndicator = document.querySelector('.tab-indicator');
+            const themeToggle = document.getElementById('theme-toggle');
+            const settingsBtn = document.getElementById('settings-btn');
+            const themeBtns = document.querySelectorAll('.theme-btn');
+            const body = document.body;
+            const calculatorContainer = document.getElementById('calculator-container');
+
+            // 转换类型切换
+            const convertTypeBtns = document.querySelectorAll('.convert-type-btn');
+            const convertPanels = document.querySelectorAll('.convert-panel');
+
+            // 标准计算器元素
+            const standardExpressionEl = document.getElementById('standard-expression');
+            const standardResultEl = document.getElementById('standard-result');
+
+            // 科学计算器元素
+            const scientificExpressionEl = document.getElementById('scientific-expression');
+            const scientificResultEl = document.getElementById('scientific-result');
+            const scientificAngleEl = document.getElementById('scientific-angle');
+            const scientificMemoryEl = document.getElementById('scientific-memory');
+
+            // 转换功能元素
+            // 进制转换
+            const baseInput = document.getElementById('base-input');
+            const baseFrom = document.getElementById('base-from');
+            const baseTo = document.getElementById('base-to');
+            const baseConvertBtn = document.getElementById('base-convert-btn');
+            const baseResult = document.getElementById('base-result');
+            const baseCopyBtn = document.getElementById('base-copy');
+            const baseClearBtn = document.getElementById('base-clear');
+
+            // 长度转换
+            const lengthInput = document.getElementById('length-input');
+            const lengthFrom = document.getElementById('length-from');
+            const lengthTo = document.getElementById('length-to');
+            const lengthConvertBtn = document.getElementById('length-convert-btn');
+            const lengthResult = document.getElementById('length-result');
+
+            // 重量转换
+            const weightInput = document.getElementById('weight-input');
+            const weightFrom = document.getElementById('weight-from');
+            const weightTo = document.getElementById('weight-to');
+            const weightConvertBtn = document.getElementById('weight-convert-btn');
+            const weightResult = document.getElementById('weight-result');
+
+            // 温度转换
+            const temperatureInput = document.getElementById('temperature-input');
+            const temperatureFrom = document.getElementById('temperature-from');
+            const temperatureTo = document.getElementById('temperature-to');
+            const temperatureConvertBtn = document.getElementById('temperature-convert-btn');
+            const temperatureResult = document.getElementById('temperature-result');
+
+            // 计算器状态
+            let precision = 10; // 计算精度，保留10位小数
+
+            // 标准计算器状态
+            const standardState = {
+                currentValue: '0',
+                expression: '',
+                lastAction: null
+            };
+
+            // 科学计算器状态
+            const scientificState = {
+                currentValue: '0',
+                expression: '',
+                lastAction: null,
+                angleMode: 'deg', // 角度模式: deg 或 rad
+                invMode: false,   // 反函数模式
+                hypMode: false,   // 双曲函数模式
+                memory: null      // 存储器
+            };
+
+            // 初始化显示
+            updateStandardDisplay();
+            updateScientificDisplay();
+
+            // 模式切换
+            modeTabs.forEach((tab, index) => {
+                tab.addEventListener('click', () => {
+                    // 更新标签样式
+                    modeTabs.forEach(t => {
+                        t.classList.remove('text-tech-accent', 'text-cyber-pink', 'text-minimal-accent', 'text-space-blue');
+                        t.classList.add('text-gray-400', 'hover:text-gray-300');
+                    });
+
+                    // 根据当前主题设置激活标签颜色
+                    const currentTheme = body.classList[0].replace('theme-', '');
+                    tab.classList.remove('text-gray-400', 'hover:text-gray-300');
+                    tab.classList.add(`text-${currentTheme}-accent` || 'text-tech-accent');
+
+                    // 移动指示器
+                    tabIndicator.style.width = 'calc(100% / 3)';
+                    tabIndicator.style.transform = `translateX(${index * 100}%)`;
+
+                    // 更新指示器样式
+                    updateIndicatorStyle(currentTheme);
+
+                    // 显示对应面板
+                    modePanels.forEach(panel => panel.classList.add('hidden'));
+                    document.getElementById(`${tab.dataset.mode}-panel`).classList.remove('hidden');
+                });
+            });
+
+            // 转换类型切换
+            convertTypeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 更新按钮样式
+                    convertTypeBtns.forEach(b => {
+                        b.classList.remove('text-tech-accent', 'text-cyber-pink', 'text-minimal-accent', 'text-space-blue', 'border-tech-accent', 'border-cyber-pink', 'border-minimal-accent', 'border-space-blue', 'border-b-2');
+                        b.classList.add('text-gray-400', 'hover:text-gray-300');
+                    });
+
+                    // 根据当前主题设置激活按钮颜色
+                    const currentTheme = body.classList[0].replace('theme-', '');
+                    btn.classList.remove('text-gray-400', 'hover:text-gray-300');
+                    btn.classList.add(`text-${currentTheme}-accent`, `border-${currentTheme}-accent`, 'border-b-2');
+
+                    // 显示对应转换面板
+                    convertPanels.forEach(panel => panel.classList.add('hidden'));
+                    document.getElementById(`${btn.dataset.type}-converter`).classList.remove('hidden');
+                });
+            });
+
+            // 标准计算器数字按钮事件
+            document.querySelectorAll('#standard-panel [data-num]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const num = btn.getAttribute('data-num');
+                    handleStandardNumberInput(num);
+                });
+            });
+
+            // 标准计算器操作按钮事件
+            document.querySelectorAll('#standard-panel [data-action]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const action = btn.getAttribute('data-action');
+                    handleStandardAction(action);
+                });
+            });
+
+            // 科学计算器数字按钮事件
+            document.querySelectorAll('#scientific-panel [data-num]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const num = btn.getAttribute('data-num');
+                    handleScientificNumberInput(num);
+                });
+            });
+
+            // 科学计算器操作按钮事件
+            document.querySelectorAll('#scientific-panel [data-action]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const action = btn.getAttribute('data-action');
+                    handleScientificAction(action);
+                });
+            });
+
+            // 处理标准计算器数字输入
+            function handleStandardNumberInput(num) {
+                // 清除错误状态
+                standardResultEl.classList.remove('text-tech-red', 'text-cyber-pink', 'text-minimal-dark', 'text-space-accent', 'pulse');
+
+                // 如果当前是错误状态，重置
+                if (standardState.currentValue === '错误') {
+                    standardState.currentValue = '0';
+                }
+
+                // 如果当前值是0，直接替换
+                if (standardState.currentValue === '0' && num !== '.') {
+                    standardState.currentValue = num;
+                }
+                // 防止多个小数点
+                else if (num === '.' && standardState.currentValue.includes('.')) {
+                    return;
+                }
+                // 处理小数点前没有数字的情况
+                else if (num === '.' && standardState.currentValue === '0') {
+                    standardState.currentValue += num;
+                }
+                // 正常追加
+                else {
+                    standardState.currentValue += num;
+                }
+
+                standardState.lastAction = 'number';
+                updateStandardDisplay();
+            }
+
+            // 处理标准计算器操作
+            function handleStandardAction(action) {
+                // 清除错误状态
+                standardResultEl.classList.remove('text-tech-red', 'text-cyber-pink', 'text-minimal-dark', 'text-space-accent', 'pulse');
+
+                // 如果当前是错误状态，重置后再执行操作
+                if (standardState.currentValue === '错误' && action !== 'clear') {
+                    standardState.currentValue = '0';
+                }
+
+                switch (action) {
+                    case 'clear':
+                        standardState.currentValue = '0';
+                        standardState.expression = '';
+                        break;
+
+                    case 'backspace':
+                        if (standardState.currentValue.length > 1) {
+                            standardState.currentValue = standardState.currentValue.slice(0, -1);
+                        } else {
+                            standardState.currentValue = '0';
+                        }
+                        break;
+
+                    case 'plus-minus':
+                        standardState.currentValue = standardState.currentValue.startsWith('-')
+                            ? standardState.currentValue.slice(1)
+                            : '-' + standardState.currentValue;
+                        break;
+
+                    case 'percent':
+                        standardState.currentValue = (parseFloat(standardState.currentValue) / 100).toString();
+                        break;
+
+                    case 'add':
+                    case 'subtract':
+                    case 'multiply':
+                    case 'divide':
+                        handleStandardOperator(action);
+                        break;
+
+                    case 'equals':
+                        calculateStandardResult();
+                        break;
+                }
+
+                // 更新最后操作类型
+                if (['add', 'subtract', 'multiply', 'divide'].includes(action)) {
+                    standardState.lastAction = 'operator';
+                } else if (action === 'equals') {
+                    standardState.lastAction = 'equals';
+                }
+
+                updateStandardDisplay();
+            }
+
+            // 处理标准计算器运算符
+            function handleStandardOperator(operator) {
+                // 映射运算符到显示文本
+                const operatorMap = {
+                    'add': '+',
+                    'subtract': '−',
+                    'multiply': '×',
+                    'divide': '÷'
+                };
+
+                // 如果当前是错误状态，不执行操作
+                if (standardState.currentValue === '错误') {
+                    return;
+                }
+
+                // 处理表达式为空且当前值为负数的情况
+                if (standardState.expression === '' && standardState.currentValue.startsWith('-') && !isNaN(parseFloat(standardState.currentValue))) {
+                    standardState.expression = standardState.currentValue;
+                }
+                // 如果最后一个操作是运算符，替换它
+                else if (standardState.lastAction === 'operator') {
+                    standardState.expression = standardState.expression.slice(0, -1);
+                    standardState.expression += operatorMap[operator];
+                    return;
+                }
+                // 否则正常添加
+                else if (['number', 'equals'].includes(standardState.lastAction)) {
+                    standardState.expression += standardState.currentValue;
+                }
+
+                // 只有在有效情况下才添加运算符
+                if (standardState.expression !== '' || operator === 'subtract') {
+                    standardState.expression += operatorMap[operator];
+                    standardState.currentValue = '0';
+                }
+            }
+
+            // 计算标准计算器结果
+            function calculateStandardResult() {
+                if (standardState.expression === '' && standardState.lastAction !== 'equals') return;
+
+                // 构建完整表达式
+                let fullExpression = standardState.expression;
+                if (['number', 'equals'].includes(standardState.lastAction)) {
+                    fullExpression += standardState.currentValue;
+                }
+
+                // 替换运算符为JavaScript可识别的
+                let jsExpression = fullExpression
+                    .replace('×', '*')
+                    .replace('÷', '/')
+                    .replace('−', '-');
+
+                try {
+                    // 使用安全的计算方式
+                    const result = new Function('return ' + jsExpression)();
+
+                    if (isNaN(result) || !isFinite(result)) {
+                        throw new Error('计算结果无效');
+                    }
+
+                    // 格式化结果
+                    let formattedResult = formatNumber(result);
+
+                    standardState.currentValue = formattedResult;
+                    standardState.expression = '';
+                } catch (error) {
+                    standardState.currentValue = '错误';
+                    const currentTheme = body.classList[0].replace('theme-', '');
+                    const errorColors = {
+                        'tech': 'text-tech-red',
+                        'cyber': 'text-cyber-pink',
+                        'minimal': 'text-minimal-dark',
+                        'space': 'text-space-accent'
+                    };
+                    standardResultEl.classList.add(errorColors[currentTheme] || 'text-tech-red', 'pulse');
+                }
+            }
+
+            // 更新标准计算器显示
+            function updateStandardDisplay() {
+                standardResultEl.textContent = standardState.currentValue;
+                standardExpressionEl.textContent = standardState.expression;
+
+                // 调整字体大小以适应长数字
+                if (standardState.currentValue.length > 10) {
+                    standardResultEl.classList.remove('text-4xl');
+                    standardResultEl.classList.add('text-2xl');
+                } else {
+                    standardResultEl.classList.remove('text-2xl');
+                    standardResultEl.classList.add('text-4xl');
+                }
+            }
+
+            // 处理科学计算器数字输入
+            function handleScientificNumberInput(num) {
+                // 清除错误状态
+                scientificResultEl.classList.remove('text-tech-red', 'text-cyber-pink', 'text-minimal-dark', 'text-space-accent', 'pulse');
+
+                // 如果当前是错误状态，重置
+                if (scientificState.currentValue === '错误') {
+                    scientificState.currentValue = '0';
+                }
+
+                // 如果当前值是0，直接替换
+                if (scientificState.currentValue === '0' && num !== '.') {
+                    scientificState.currentValue = num;
+                }
+                // 防止多个小数点
+                else if (num === '.' && scientificState.currentValue.includes('.')) {
+                    return;
+                }
+                // 处理小数点前没有数字的情况
+                else if (num === '.' && scientificState.currentValue === '0') {
+                    scientificState.currentValue += num;
+                }
+                // 正常追加
+                else {
+                    scientificState.currentValue += num;
+                }
+
+                scientificState.lastAction = 'number';
+                updateScientificDisplay();
+            }
+
+            // 处理科学计算器操作
+            function handleScientificAction(action) {
+                // 清除错误状态
+                scientificResultEl.classList.remove('text-tech-red', 'text-cyber-pink', 'text-minimal-dark', 'text-space-accent', 'pulse');
+
+                // 如果当前是错误状态，重置后再执行操作
+                if (scientificState.currentValue === '错误' && action !== 'clear') {
+                    scientificState.currentValue = '0';
+                }
+
+                // 先记录当前值，以便后续处理
+                const currentVal = parseFloat(scientificState.currentValue);
+
+                switch (action) {
+                    case 'clear':
+                        scientificState.currentValue = '0';
+                        scientificState.expression = '';
+                        break;
+
+                    case 'backspace':
+                        if (scientificState.currentValue.length > 1) {
+                            scientificState.currentValue = scientificState.currentValue.slice(0, -1);
+                        } else {
+                            scientificState.currentValue = '0';
+                        }
+                        break;
+
+                    case 'plus-minus':
+                        scientificState.currentValue = scientificState.currentValue.startsWith('-')
+                            ? scientificState.currentValue.slice(1)
+                            : '-' + scientificState.currentValue;
+                        break;
+
+                    case 'percent':
+                        scientificState.currentValue = (parseFloat(scientificState.currentValue) / 100).toString();
+                        break;
+
+                    case 'add':
+                    case 'subtract':
+                    case 'multiply':
+                    case 'divide':
+                    case 'power':
+                    case 'mod':
+                        handleScientificOperator(action);
+                        break;
+
+                    case 'equals':
+                        calculateScientificResult();
+                        break;
+
+                    // 角度模式切换
+                    case 'deg':
+                        scientificState.angleMode = 'deg';
+                        scientificAngleEl.textContent = 'DEG';
+                        break;
+
+                    case 'rad':
+                        scientificState.angleMode = 'rad';
+                        scientificAngleEl.textContent = 'RAD';
+                        break;
+
+                    // 模式切换
+                    case 'inv':
+                        scientificState.invMode = !scientificState.invMode;
+                        document.querySelector('[data-action="inv"]').classList.toggle('bg-white/10');
+                        break;
+
+                    case 'hyp':
+                        scientificState.hypMode = !scientificState.hypMode;
+                        document.querySelector('[data-action="hyp"]').classList.toggle('bg-white/10');
+                        break;
+
+                    // 三角函数
+                    case 'sin':
+                    case 'cos':
+                    case 'tan':
+                        handleTrigFunction(action);
+                        break;
+
+                    case 'asin':
+                    case 'acos':
+                    case 'atan':
+                        handleInverseTrigFunction(action);
+                        break;
+
+                    // 对数函数
+                    case 'log':
+                        if (currentVal <= 0) {
+                            showScientificError('定义域错误');
+                            return;
+                        }
+                        scientificState.currentValue = roundNumber(Math.log10(currentVal)).toString();
+                        break;
+
+                    case 'ln':
+                        if (currentVal <= 0) {
+                            showScientificError('定义域错误');
+                            return;
+                        }
+                        scientificState.currentValue = roundNumber(Math.log(currentVal)).toString();
+                        break;
+
+                    case '10x':
+                        scientificState.currentValue = roundNumber(Math.pow(10, currentVal)).toString();
+                        break;
+
+                    case 'ex':
+                        scientificState.currentValue = roundNumber(Math.exp(currentVal)).toString();
+                        break;
+
+                    // 幂函数
+                    case 'sqrt':
+                        if (currentVal < 0) {
+                            showScientificError('定义域错误');
+                            return;
+                        }
+                        scientificState.currentValue = roundNumber(Math.sqrt(currentVal)).toString();
+                        break;
+
+                    case 'square':
+                        scientificState.currentValue = roundNumber(Math.pow(currentVal, 2)).toString();
+                        break;
+
+                    case 'cube':
+                        scientificState.currentValue = roundNumber(Math.pow(currentVal, 3)).toString();
+                        break;
+
+                    case 'yrootx':
+                        const root = currentVal;
+                        if (root === 0) {
+                            showScientificError('错误');
+                            return;
+                        }
+                        // 将当前值作为根，等待输入被开方数
+                        scientificState.expression += `Math.pow(${currentVal}, 1/`;
+                        scientificState.currentValue = '0';
+                        scientificState.lastAction = 'operator';
+                        break;
+
+                    // 其他函数
+                    case '1/x':
+                        if (currentVal === 0) {
+                            showScientificError('除以零');
+                            return;
+                        }
+                        scientificState.currentValue = roundNumber(1 / currentVal).toString();
+                        break;
+
+                    case 'factorial':
+                        if (currentVal < 0 || !Number.isInteger(currentVal)) {
+                            showScientificError('定义域错误');
+                            return;
+                        }
+                        scientificState.currentValue = factorial(currentVal).toString();
+                        break;
+
+                    case 'pi':
+                        scientificState.currentValue = roundNumber(Math.PI).toString();
+                        break;
+
+                    case 'e':
+                        scientificState.currentValue = roundNumber(Math.E).toString();
+                        break;
+
+                    // 括号
+                    case 'left-paren':
+                        if (scientificState.expression === '' ||
+                            ['add', 'subtract', 'multiply', 'divide', 'power', 'mod', 'left-paren'].includes(scientificState.lastAction)) {
+                            scientificState.expression += '(';
+                            scientificState.lastAction = 'left-paren';
+                        }
+                        break;
+
+                    case 'right-paren':
+                        if (scientificState.expression.includes('(') &&
+                            ['number', 'right-paren', 'function', 'pi', 'e'].includes(scientificState.lastAction) &&
+                            countOccurrences(scientificState.expression, '(') > countOccurrences(scientificState.expression, ')')) {
+                            scientificState.expression += ')';
+                            scientificState.lastAction = 'right-paren';
+                        }
+                        break;
+
+                    // 存储器操作
+                    case 'mc':
+                        scientificState.memory = null;
+                        scientificMemoryEl.textContent = '';
+                        break;
+
+                    case 'mr':
+                        if (scientificState.memory !== null) {
+                            scientificState.currentValue = scientificState.memory.toString();
+                        }
+                        break;
+
+                    case 'm-plus':
+                        scientificState.memory = (scientificState.memory || 0) + currentVal || 0;
+                        scientificMemoryEl.textContent = 'M';
+                        break;
+
+                    case 'm-minus':
+                        scientificState.memory = (scientificState.memory || 0) - currentVal || 0;
+                        scientificMemoryEl.textContent = 'M';
+                        break;
+                }
+
+                // 更新最后操作类型
+                if (['add', 'subtract', 'multiply', 'divide', 'power', 'mod'].includes(action)) {
+                    scientificState.lastAction = 'operator';
+                } else if (action === 'equals') {
+                    scientificState.lastAction = 'equals';
+                } else if (['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'log', 'ln', '10x', 'ex',
+                    'sqrt', 'square', 'cube', '1/x', 'factorial', 'yrootx'].includes(action)) {
+                    scientificState.lastAction = 'function';
+                } else if (action === 'pi' || action === 'e') {
+                    scientificState.lastAction = action;
+                } else if (action === 'left-paren') {
+                    scientificState.lastAction = 'left-paren';
+                } else if (action === 'right-paren') {
+                    scientificState.lastAction = 'right-paren';
+                }
+
+                updateScientificDisplay();
+            }
+
+            // 处理科学计算器运算符
+            function handleScientificOperator(operator) {
+                // 映射运算符到显示文本
+                const operatorMap = {
+                    'add': '+',
+                    'subtract': '−',
+                    'multiply': '×',
+                    'divide': '÷',
+                    'power': '^',
+                    'mod': 'mod'
+                };
+
+                // 如果当前是错误状态，不执行操作
+                if (scientificState.currentValue === '错误') {
+                    return;
+                }
+
+                // 处理表达式为空且当前值为负数的情况
+                if (scientificState.expression === '' && scientificState.currentValue.startsWith('-') && !isNaN(parseFloat(scientificState.currentValue))) {
+                    scientificState.expression = scientificState.currentValue;
+                }
+                // 如果最后一个操作是运算符，替换它
+                else if (scientificState.lastAction === 'operator') {
+                    scientificState.expression = scientificState.expression.slice(0, -1);
+                    scientificState.expression += operatorMap[operator];
+                    return;
+                }
+                // 如果最后一个是左括号，可以直接添加负号
+                else if (scientificState.lastAction === 'left-paren' && operator === 'subtract') {
+                    scientificState.expression += operatorMap[operator];
+                    scientificState.lastAction = 'operator';
+                    return;
+                }
+                // 否则正常添加
+                else if (['number', 'right-paren', 'function', 'pi', 'e', 'equals'].includes(scientificState.lastAction)) {
+                    scientificState.expression += scientificState.currentValue;
+                }
+
+                // 处理mod运算符的特殊情况
+                if (operator === 'mod') {
+                    scientificState.expression += '%';
+                    scientificState.currentValue = '0';
+                    return;
+                }
+
+                // 只有在有效情况下才添加运算符
+                if (scientificState.expression !== '' || operator === 'subtract') {
+                    scientificState.expression += operatorMap[operator];
+                    scientificState.currentValue = '0';
+                }
+            }
+
+            // 处理三角函数
+            function handleTrigFunction(func) {
+                const value = parseFloat(scientificState.currentValue);
+                if (isNaN(value)) {
+                    showScientificError('输入错误');
+                    return;
+                }
+
+                let result;
+                // 根据角度模式转换
+                const angle = scientificState.angleMode === 'deg' ? value * Math.PI / 180 : value;
+
+                try {
+                    // 检查是否启用双曲函数模式
+                    if (scientificState.hypMode) {
+                        switch (func) {
+                            case 'sin':
+                                result = Math.sinh(angle);
+                                break;
+                            case 'cos':
+                                result = Math.cosh(angle);
+                                break;
+                            case 'tan':
+                                result = Math.tanh(angle);
+                                break;
+                        }
+                    } else {
+                        switch (func) {
+                            case 'sin':
+                                result = Math.sin(angle);
+                                break;
+                            case 'cos':
+                                result = Math.cos(angle);
+                                break;
+                            case 'tan':
+                                // 处理正切函数在某些角度的异常值
+                                if (scientificState.angleMode === 'deg' && (value % 180 === 90)) {
+                                    showScientificError('无穷大');
+                                    return;
+                                }
+                                result = Math.tan(angle);
+                                break;
+                        }
+                    }
+
+                    // 确保结果被正确设置和显示
+                    scientificState.currentValue = roundNumber(result).toString();
+                    updateScientificDisplay();
+                } catch (error) {
+                    showScientificError('计算错误');
+                }
+            }
+
+            // 处理反三角函数
+            function handleInverseTrigFunction(func) {
+                const value = parseFloat(scientificState.currentValue);
+                if (isNaN(value)) {
+                    showScientificError('输入错误');
+                    return;
+                }
+
+                // 检查定义域
+                if (!scientificState.hypMode && (func === 'asin' || func === 'acos') && (value < -1 || value > 1)) {
+                    showScientificError('定义域错误');
+                    return;
+                }
+
+                let result;
+                try {
+                    // 检查是否启用双曲函数模式
+                    if (scientificState.hypMode) {
+                        switch (func) {
+                            case 'asin':
+                                result = Math.asinh(value);
+                                break;
+                            case 'acos':
+                                result = Math.acosh(value);
+                                break;
+                            case 'atan':
+                                result = Math.atanh(value);
+                                break;
+                        }
+                    } else {
+                        switch (func) {
+                            case 'asin':
+                                result = Math.asin(value);
+                                break;
+                            case 'acos':
+                                result = Math.acos(value);
+                                break;
+                            case 'atan':
+                                result = Math.atan(value);
+                                break;
+                        }
+                    }
+
+                    // 根据角度模式转换
+                    if (scientificState.angleMode === 'deg' && !scientificState.hypMode) {
+                        result = result * 180 / Math.PI;
+                    }
+
+                    // 确保结果被正确设置和显示
+                    scientificState.currentValue = roundNumber(result).toString();
+                    updateScientificDisplay();
+                } catch (error) {
+                    showScientificError('计算错误');
+                }
+            }
+
+            // 计算科学计算器结果
+            function calculateScientificResult() {
+                if (scientificState.expression === '' && scientificState.lastAction !== 'function' && scientificState.lastAction !== 'equals') return;
+
+                // 构建完整表达式
+                let fullExpression = scientificState.expression;
+                if (['number', 'right-paren', 'function', 'pi', 'e', 'equals'].includes(scientificState.lastAction)) {
+                    fullExpression += scientificState.currentValue;
+                }
+
+                // 修复括号不匹配问题
+                const openParen = countOccurrences(fullExpression, '(');
+                const closeParen = countOccurrences(fullExpression, ')');
+                if (openParen > closeParen) {
+                    fullExpression += ')'.repeat(openParen - closeParen);
+                }
+
+                // 替换运算符为JavaScript可识别的
+                let jsExpression = fullExpression
+                    .replace('×', '*')
+                    .replace('÷', '/')
+                    .replace('−', '-')
+                    .replace('^', '**')
+                    .replace('mod', '%')
+                    .replace('π', Math.PI.toString())
+                    .replace('e', Math.E.toString());
+
+                try {
+                    // 使用安全的计算方式
+                    const result = new Function('return ' + jsExpression)();
+
+                    if (isNaN(result) || !isFinite(result)) {
+                        throw new Error('计算结果无效');
+                    }
+
+                    // 格式化结果
+                    let formattedResult = formatNumber(result);
+
+                    scientificState.currentValue = formattedResult;
+                    scientificState.expression = '';
+                } catch (error) {
+                    showScientificError('表达式错误');
+                    console.error('计算错误:', error);
+                }
+            }
+
+            // 显示科学计算器错误信息
+            function showScientificError(message) {
+                scientificState.currentValue = message;
+                const currentTheme = body.classList[0].replace('theme-', '');
+                const errorColors = {
+                    'tech': 'text-tech-red',
+                    'cyber': 'text-cyber-pink',
+                    'minimal': 'text-minimal-dark',
+                    'space': 'text-space-accent'
+                };
+                scientificResultEl.classList.add(errorColors[currentTheme] || 'text-tech-red', 'pulse');
+            }
+
+            // 更新科学计算器显示
+            function updateScientificDisplay() {
+                scientificResultEl.textContent = scientificState.currentValue;
+                scientificExpressionEl.textContent = scientificState.expression;
+
+                // 调整字体大小以适应长数字
+                if (scientificState.currentValue.length > 10) {
+                    scientificResultEl.classList.remove('text-4xl');
+                    scientificResultEl.classList.add('text-2xl');
+                } else {
+                    scientificResultEl.classList.remove('text-2xl');
+                    scientificResultEl.classList.add('text-4xl');
+                }
+            }
+
+            // 转换功能 - 进制转换
+            baseConvertBtn.addEventListener('click', () => {
+                const input = baseInput.value.trim();
+                if (!input) {
+                    baseResult.textContent = '请输入数值';
+                    const currentTheme = body.classList[0].replace('theme-', '');
+                    const errorColors = {
+                        'tech': 'text-tech-red',
+                        'cyber': 'text-cyber-pink',
+                        'minimal': 'text-minimal-dark',
+                        'space': 'text-space-accent'
+                    };
+                    baseResult.classList.add(errorColors[currentTheme] || 'text-tech-red', 'pulse');
+                    return;
+                }
+
+                const from = parseInt(baseFrom.value);
+                const to = parseInt(baseTo.value);
+
+                try {
+                    // 处理不同进制的特殊前缀
+                    let cleanInput = input;
+                    if (from === 2 && input.startsWith('0b')) {
+                        cleanInput = input.slice(2);
+                    } else if (from === 8 && input.startsWith('0o')) {
+                        cleanInput = input.slice(2);
+                    } else if (from === 16 && input.startsWith('0x')) {
+                        cleanInput = input.slice(2);
+                    }
+
+                    // 先转换为十进制，再转换为目标进制
+                    const decimal = parseInt(cleanInput, from);
+                    if (isNaN(decimal)) {
+                        baseResult.textContent = '无效输入';
+                        const currentTheme = body.classList[0].replace('theme-', '');
+                        const errorColors = {
+                            'tech': 'text-tech-red',
+                            'cyber': 'text-cyber-pink',
+                            'minimal': 'text-minimal-dark',
+                            'space': 'text-space-accent'
+                        };
+                        baseResult.classList.add(errorColors[currentTheme] || 'text-tech-red', 'pulse');
+                        return;
+                    }
+
+                    let result;
+                    if (to === 16) {
+                        result = '0x' + decimal.toString(16).toUpperCase();
+                    } else if (to === 8) {
+                        result = '0o' + decimal.toString(8);
+                    } else if (to === 2) {
+                        result = '0b' + decimal.toString(2);
+                    } else {
+                        result = decimal.toString();
+                    }
+
+                    baseResult.textContent = result;
+                    const currentTheme = body.classList[0].replace('theme-', '');
+                    baseResult.className = `w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg min-h-[48px] text-right font-medium text-${currentTheme}-accent`;
+                } catch (error) {
+                    baseResult.textContent = '转换错误';
+                    const currentTheme = body.classList[0].replace('theme-', '');
+                    const errorColors = {
+                        'tech': 'text-tech-red',
+                        'cyber': 'text-cyber-pink',
+                        'minimal': 'text-minimal-dark',
+                        'space': 'text-space-accent'
+                    };
+                    baseResult.classList.add(errorColors[currentTheme] || 'text-tech-red', 'pulse');
+                }
+            });
+
+            // 复制进制转换结果
+            baseCopyBtn.addEventListener('click', () => {
+                const text = baseResult.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalText = baseCopyBtn.innerHTML;
+                    baseCopyBtn.innerHTML = '<i class="fa fa-check text-sm text-tech-green"></i><span class="text-sm text-gray-300">已复制</span>';
+                    setTimeout(() => {
+                        baseCopyBtn.innerHTML = originalText;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('复制失败:', err);
+                });
+            });
+
+            // 清除进制转换输入
+            baseClearBtn.addEventListener('click', () => {
+                baseInput.value = '';
+                baseResult.textContent = '0';
+                const currentTheme = body.classList[0].replace('theme-', '');
+                baseResult.className = `w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg min-h-[48px] text-right font-medium text-${currentTheme}-accent`;
+            });
+
+            // 转换功能 - 长度转换
+            lengthConvertBtn.addEventListener('click', () => {
+                const input = parseFloat(lengthInput.value);
+                if (isNaN(input)) {
+                    lengthResult.textContent = '请输入有效数值';
+                    const currentTheme = body.classList[0].replace('theme-', '');
+                    const errorColors = {
+                        'tech': 'text-tech-red',
+                        'cyber': 'text-cyber-pink',
+                        'minimal': 'text-minimal-dark',
+                        'space': 'text-space-accent'
+                    };
+                    lengthResult.classList.add(errorColors[currentTheme] || 'text-tech-red', 'pulse');
+                    return;
+                }
+
+                const from = lengthFrom.value;
+                const to = lengthTo.value;
+
+                // 转换为米作为中间单位
+                let meters;
+                switch (from) {
+                    case 'm': meters = input; break;
+                    case 'km': meters = input * 1000; break;
+                    case 'cm': meters = input / 100; break;
+                    case 'mm': meters = input / 1000; break;
+                    case 'in': meters = input * 0.0254; break;
+                    case 'ft': meters = input * 0.3048; break;
+                    case 'yd': meters = input * 0.9144; break;
+                    case 'mi': meters = input * 1609.344; break;
+                }
+
+                // 从米转换为目标单位
+                let result, unit;
+                switch (to) {
+                    case 'm':
+                        result = meters;
+                        unit = '米 (m)';
+                        break;
+                    case 'km':
+                        result = meters / 1000;
+                        unit = '千米 (km)';
+                        break;
+                    case 'cm':
+                        result = meters * 100;
+                        unit = '厘米 (cm)';
+                        break;
+                    case 'mm':
+                        result = meters * 1000;
+                        unit = '毫米 (mm)';
+                        break;
+                    case 'in':
+                        result = meters / 0.0254;
+                        unit = '英寸 (in)';
+                        break;
+                    case 'ft':
+                        result = meters / 0.3048;
+                        unit = '英尺 (ft)';
+                        break;
+                    case 'yd':
+                        result = meters / 0.9144;
+                        unit = '码 (yd)';
+                        break;
+                    case 'mi':
+                        result = meters / 1609.344;
+                        unit = '英里 (mi)';
+                        break;
+                }
+
+                lengthResult.textContent = `${roundNumber(result, 4)} ${unit}`;
+                const currentTheme = body.classList[0].replace('theme-', '');
+                lengthResult.className = `w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg min-h-[48px] text-right font-medium text-${currentTheme}-accent`;
+            });
+
+            // 转换功能 - 重量转换
+            weightConvertBtn.addEventListener('click', () => {
+                const input = parseFloat(weightInput.value);
+                if (isNaN(input)) {
+                    weightResult.textContent = '请输入有效数值';
+                    const currentTheme = body.classList[0].replace('theme-', '');
+                    const errorColors = {
+                        'tech': 'text-tech-red',
+                        'cyber': 'text-cyber-pink',
+                        'minimal': 'text-minimal-dark',
+                        'space': 'text-space-accent'
+                    };
+                    weightResult.classList.add(errorColors[currentTheme] || 'text-tech-red', 'pulse');
+                    return;
+                }
+
+                const from = weightFrom.value;
+                const to = weightTo.value;
+
+                // 转换为克作为中间单位
+                let grams;
+                switch (from) {
+                    case 'kg': grams = input * 1000; break;
+                    case 'g': grams = input; break;
+                    case 'mg': grams = input / 1000; break;
+                    case 'lb': grams = input * 453.59237; break;
+                    case 'oz': grams = input * 28.3495231; break;
+                }
+
+                // 从克转换为目标单位
+                let result, unit;
+                switch (to) {
+                    case 'kg':
+                        result = grams / 1000;
+                        unit = '千克 (kg)';
+                        break;
+                    case 'g':
+                        result = grams;
+                        unit = '克 (g)';
+                        break;
+                    case 'mg':
+                        result = grams * 1000;
+                        unit = '毫克 (mg)';
+                        break;
+                    case 'lb':
+                        result = grams / 453.59237;
+                        unit = '磅 (lb)';
+                        break;
+                    case 'oz':
+                        result = grams / 28.3495231;
+                        unit = '盎司 (oz)';
+                        break;
+                }
+
+                weightResult.textContent = `${roundNumber(result, 4)} ${unit}`;
+                const currentTheme = body.classList[0].replace('theme-', '');
+                weightResult.className = `w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg min-h-[48px] text-right font-medium text-${currentTheme}-accent`;
+            });
+
+            // 转换功能 - 温度转换
+            temperatureConvertBtn.addEventListener('click', () => {
+                const input = parseFloat(temperatureInput.value);
+                if (isNaN(input)) {
+                    temperatureResult.textContent = '请输入有效数值';
+                    const currentTheme = body.classList[0].replace('theme-', '');
+                    const errorColors = {
+                        'tech': 'text-tech-red',
+                        'cyber': 'text-cyber-pink',
+                        'minimal': 'text-minimal-dark',
+                        'space': 'text-space-accent'
+                    };
+                    temperatureResult.classList.add(errorColors[currentTheme] || 'text-tech-red', 'pulse');
+                    return;
+                }
+
+                const from = temperatureFrom.value;
+                const to = temperatureTo.value;
+
+                // 转换为摄氏度作为中间单位
+                let celsius;
+                switch (from) {
+                    case 'c': celsius = input; break;
+                    case 'f': celsius = (input - 32) * 5 / 9; break;
+                    case 'k': celsius = input - 273.15; break;
+                }
+
+                // 从摄氏度转换为目标单位
+                let result, unit;
+                switch (to) {
+                    case 'c':
+                        result = celsius;
+                        unit = '摄氏度 (°C)';
+                        break;
+                    case 'f':
+                        result = celsius * 9 / 5 + 32;
+                        unit = '华氏度 (°F)';
+                        break;
+                    case 'k':
+                        result = celsius + 273.15;
+                        unit = '开氏度 (K)';
+                        break;
+                }
+
+                temperatureResult.textContent = `${roundNumber(result, 2)} ${unit}`;
+                const currentTheme = body.classList[0].replace('theme-', '');
+                temperatureResult.className = `w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg min-h-[48px] text-right font-medium text-${currentTheme}-accent`;
+            });
+
+            // 风格切换功能
+            themeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const theme = btn.dataset.theme;
+                    applyTheme(theme);
+                });
+            });
+
+            // 应用主题
+            function applyTheme(theme) {
+                // 移除所有主题类
+                body.classList.remove('theme-tech', 'theme-cyber', 'theme-minimal', 'theme-space');
+                body.classList.add(`theme-${theme}`);
+
+                // 更新标题
+                const titles = {
+                    'tech': 'TECH CALC',
+                    'cyber': 'CYBER CALC',
+                    'minimal': 'MINIMAL CALC',
+                    'space': 'SPACE CALC'
+                };
+                document.querySelector('h1').textContent = titles[theme] || 'TECH CALC';
+
+                // 更新渐变边框 - 修复错误点：增加null检查
+                const gradients = {
+                    'tech': 'linear-gradient(90deg, #06B6D4, #8B5CF6)',
+                    'cyber': 'linear-gradient(90deg, #FF2A6D, #05D9E8)',
+                    'minimal': 'linear-gradient(90deg, #3B82F6, #94A3B8)',
+                    'space': 'linear-gradient(90deg, #60A5FA, #94A3B8)'
+                };
+
+                // 获取渐变边框元素并检查是否存在
+                const gradientBorder = calculatorContainer;
+                if (gradientBorder) {
+                    const style = window.getComputedStyle(gradientBorder, '::before');
+                    if (style) {
+                        // 创建新的样式规则来更新伪元素
+                        let styleSheet = document.getElementById('gradient-style');
+                        if (!styleSheet) {
+                            styleSheet = document.createElement('style');
+                            styleSheet.id = 'gradient-style';
+                            document.head.appendChild(styleSheet);
+                        }
+                        styleSheet.textContent = `
+                                        #calculator-container::before {
+                                            background: ${gradients[theme] || gradients['tech']} !important;
+                                        }
+                                    `;
+                    }
+                }
+
+                // 更新指示器样式
+                updateIndicatorStyle(theme);
+
+                // 更新按钮样式
+                updateButtonStyles(theme);
+
+                // 更新结果显示样式
+                updateResultStyles(theme);
+
+                // 更新转换按钮样式
+                updateConvertButtonStyles(theme);
+
+                // 更新滚动条样式
+                updateScrollbarStyle(theme);
+            }
+
+            // 更新指示器样式
+            function updateIndicatorStyle(theme) {
+                const indicatorColors = {
+                    'tech': 'bg-tech-accent shadow-neon',
+                    'cyber': 'bg-cyber-pink shadow-neon-cyber-pink',
+                    'minimal': 'bg-minimal-accent shadow-neon-minimal',
+                    'space': 'bg-space-blue shadow-neon-space'
+                };
+
+                tabIndicator.className = 'tab-indicator';
+                tabIndicator.classList.add(...indicatorColors[theme].split(' '));
+
+                // 更新激活的模式标签
+                const activeTab = document.querySelector('.mode-tab.text-tech-accent, .mode-tab.text-cyber-pink, .mode-tab.text-minimal-accent, .mode-tab.text-space-blue');
+                if (activeTab) {
+                    activeTab.className = 'mode-tab flex-1 py-4 px-2 text-sm font-medium';
+                    activeTab.classList.add(`text-${theme}-accent`);
+                }
+
+                // 更新激活的转换标签
+                const activeConvertTab = document.querySelector('.convert-type-btn.text-tech-accent, .convert-type-btn.text-cyber-pink, .convert-type-btn.text-minimal-accent, .convert-type-btn.text-space-blue');
+                if (activeConvertTab) {
+                    activeConvertTab.className = 'convert-type-btn py-4 px-5 text-sm font-medium whitespace-nowrap';
+                    activeConvertTab.classList.add(`text-${theme}-accent`, `border-${theme}-accent`, 'border-b-2');
+                }
+            }
+
+            // 更新按钮样式
+            function updateButtonStyles(theme) {
+                // 清除所有主题相关的按钮样式
+                document.querySelectorAll('.calc-btn').forEach(btn => {
+                    btn.classList.remove(
+                        'bg-tech-purple/20', 'hover:bg-tech-purple/30', 'text-tech-purple', 'shadow-neon-purple',
+                        'bg-tech-accent/20', 'hover:bg-tech-accent/30', 'text-tech-accent', 'shadow-neon',
+                        'bg-cyber-pink/20', 'hover:bg-cyber-pink/30', 'text-cyber-pink', 'shadow-neon-cyber-pink',
+                        'bg-cyber-blue/20', 'hover:bg-cyber-blue/30', 'text-cyber-blue', 'shadow-neon-cyber-blue',
+                        'bg-minimal-accent/20', 'hover:bg-minimal-accent/30', 'text-minimal-accent', 'shadow-neon-minimal',
+                        'bg-space-blue/20', 'hover:bg-space-blue/30', 'text-space-blue', 'shadow-neon-space'
+                    );
+                });
+
+                // 定义不同主题的按钮样式
+                const buttonStyles = {
+                    'tech': {
+                        operator: 'bg-tech-purple/20 hover:bg-tech-purple/30 text-tech-purple shadow-neon-purple',
+                        equals: 'bg-tech-accent/20 hover:bg-tech-accent/30 text-tech-accent shadow-neon'
+                    },
+                    'cyber': {
+                        operator: 'bg-cyber-blue/20 hover:bg-cyber-blue/30 text-cyber-blue shadow-neon-cyber-blue',
+                        equals: 'bg-cyber-pink/20 hover:bg-cyber-pink/30 text-cyber-pink shadow-neon-cyber-pink'
+                    },
+                    'minimal': {
+                        operator: 'bg-minimal-accent/20 hover:bg-minimal-accent/30 text-minimal-accent shadow-neon-minimal',
+                        equals: 'bg-minimal-accent/20 hover:bg-minimal-accent/30 text-minimal-accent shadow-neon-minimal'
+                    },
+                    'space': {
+                        operator: 'bg-space-blue/20 hover:bg-space-blue/30 text-space-blue shadow-neon-space',
+                        equals: 'bg-space-blue/20 hover:bg-space-blue/30 text-space-blue shadow-neon-space'
+                    }
+                };
+
+                // 应用运算符按钮样式
+                document.querySelectorAll('[data-action="divide"], [data-action="multiply"], [data-action="subtract"], [data-action="add"]').forEach(btn => {
+                    btn.classList.add(...buttonStyles[theme].operator.split(' '));
+                });
+
+                // 应用等号按钮样式
+                document.querySelectorAll('[data-action="equals"]').forEach(btn => {
+                    btn.classList.add(...buttonStyles[theme].equals.split(' '));
+                });
+
+                // 更新背景和文本颜色
+                const themeColors = {
+                    'tech': {
+                        bg: 'bg-tech-dark',
+                        text: 'text-gray-100',
+                        textLight: 'text-gray-300',
+                        border: 'border-white/10'
+                    },
+                    'cyber': {
+                        bg: 'bg-cyber-black',
+                        text: 'text-gray-100',
+                        textLight: 'text-gray-300',
+                        border: 'border-gray-800'
+                    },
+                    'minimal': {
+                        bg: 'bg-minimal-light',
+                        text: 'text-minimal-dark',
+                        textLight: 'text-gray-500',
+                        border: 'border-minimal-gray'
+                    },
+                    'space': {
+                        bg: 'bg-space-dark',
+                        text: 'text-gray-100',
+                        textLight: 'text-space-accent',
+                        border: 'border-space-gray'
+                    }
+                };
+
+                // 更新计算器容器背景
+                document.querySelector('.calculator .glass-effect').classList.remove(
+                    'bg-tech-dark/70', 'bg-cyber-black/70', 'bg-minimal-light/70', 'bg-space-dark/70',
+                    'border-white/10', 'border-gray-800', 'border-minimal-gray', 'border-space-gray'
+                );
+                document.querySelector('.calculator .glass-effect').classList.add(
+                    `${themeColors[theme].bg}/70`, themeColors[theme].border
+                );
+
+                // 更新文本颜色
+                document.querySelectorAll('.text-gray-100, .text-gray-300, .text-gray-400').forEach(el => {
+                    el.classList.remove('text-gray-100', 'text-gray-300', 'text-gray-400',
+                        'text-minimal-dark', 'text-gray-500', 'text-space-accent');
+
+                    if (el.classList.contains('text-tech-accent') ||
+                        el.classList.contains('text-cyber-pink') ||
+                        el.classList.contains('text-minimal-accent') ||
+                        el.classList.contains('text-space-blue')) {
+                        return; // 保留强调色
+                    }
+
+                    if (el.classList.contains('text-sm') && !el.classList.contains('font-medium')) {
+                        el.classList.add(themeColors[theme].textLight);
+                    } else {
+                        el.classList.add(themeColors[theme].text);
+                    }
+                });
+
+                // 更新下拉框样式
+                document.querySelectorAll('select').forEach(select => {
+                    select.classList.remove('text-gray-300', 'text-minimal-dark', 'text-space-accent',
+                        'border-white/10', 'border-minimal-gray', 'border-space-gray',
+                        'bg-white/5', 'bg-minimal-light/50');
+                    select.classList.add(
+                        theme === 'minimal' ? 'bg-minimal-light/50' : 'bg-white/5',
+                        themeColors[theme].border,
+                        themeColors[theme].textLight
+                    );
+                });
+
+                // 更新输入框样式
+                document.querySelectorAll('input').forEach(input => {
+                    input.classList.remove('text-gray-100', 'text-minimal-dark', 'text-space-accent',
+                        'border-white/10', 'border-minimal-gray', 'border-space-gray',
+                        'bg-white/5', 'bg-minimal-light/50');
+                    input.classList.add(
+                        theme === 'minimal' ? 'bg-minimal-light/50' : 'bg-white/5',
+                        themeColors[theme].border,
+                        themeColors[theme].text
+                    );
+                });
+            }
+
+            // 更新结果显示样式
+            function updateResultStyles(theme) {
+                // 清除所有主题相关的结果样式
+                [standardResultEl, scientificResultEl].forEach(el => {
+                    el.classList.remove(
+                        'glow-effect', 'glow-effect-cyber', 'glow-effect-minimal', 'glow-effect-space',
+                        'text-tech-accent', 'text-cyber-pink', 'text-minimal-accent', 'text-space-blue'
+                    );
+                });
+
+                // 应用新主题的结果样式
+                const resultStyles = {
+                    'tech': 'glow-effect text-tech-accent',
+                    'cyber': 'glow-effect-cyber text-cyber-pink',
+                    'minimal': 'glow-effect-minimal text-minimal-accent',
+                    'space': 'glow-effect-space text-space-blue'
+                };
+
+                [standardResultEl, scientificResultEl].forEach(el => {
+                    el.classList.add(...resultStyles[theme].split(' '));
+                });
+
+                // 更新转换结果样式
+                [baseResult, lengthResult, weightResult, temperatureResult].forEach(el => {
+                    const currentTheme = theme;
+                    el.className = `w-full px-4 py-3 ${currentTheme === 'minimal' ? 'bg-minimal-light/50' : 'bg-white/5'} ${theme === 'tech' ? 'border-white/10' : theme === 'cyber' ? 'border-gray-800' : theme === 'minimal' ? 'border-minimal-gray' : 'border-space-gray'} rounded-lg min-h-[48px] text-right font-medium text-${currentTheme}-accent`;
+                });
+            }
+
+            // 更新转换按钮样式
+            function updateConvertButtonStyles(theme) {
+                // 清除所有主题相关的按钮样式
+                document.querySelectorAll('#base-convert-btn, #length-convert-btn, #weight-convert-btn, #temperature-convert-btn').forEach(btn => {
+                    btn.style.background = '';
+                });
+
+                // 应用新主题的按钮样式
+                const gradients = {
+                    'tech': 'linear-gradient(90deg, #06B6D4, #8B5CF6)',
+                    'cyber': 'linear-gradient(90deg, #FF2A6D, #05D9E8)',
+                    'minimal': 'linear-gradient(90deg, #3B82F6, #94A3B8)',
+                    'space': 'linear-gradient(90deg, #60A5FA, #94A3B8)'
+                };
+
+                document.querySelectorAll('#base-convert-btn, #length-convert-btn, #weight-convert-btn, #temperature-convert-btn').forEach(btn => {
+                    btn.style.background = gradients[theme];
+                });
+            }
+
+            // 更新滚动条样式
+            function updateScrollbarStyle(theme) {
+                const scrollbarColors = {
+                    'tech': 'rgba(6, 182, 212, 0.5)',
+                    'cyber': 'rgba(255, 42, 109, 0.5)',
+                    'minimal': 'rgba(59, 130, 246, 0.5)',
+                    'space': 'rgba(96, 165, 250, 0.5)'
+                };
+
+                // 创建样式元素
+                let styleEl = document.getElementById('custom-scrollbar-style');
+                if (!styleEl) {
+                    styleEl = document.createElement('style');
+                    styleEl.id = 'custom-scrollbar-style';
+                    document.head.appendChild(styleEl);
+                }
+
+                // 更新滚动条样式
+                styleEl.textContent = `
+                                .custom-scrollbar::-webkit-scrollbar-thumb {
+                                    background-color: ${scrollbarColors[theme]};
+                                    border-radius: 2px;
+                                }
+                            `;
+            }
+
+            // 设置按钮点击效果
+            settingsBtn.addEventListener('click', () => {
+                settingsBtn.classList.add('scale-90');
+                setTimeout(() => {
+                    settingsBtn.classList.remove('scale-90');
+                }, 200);
+                alert('设置功能即将推出');
+            });
+
+            // 工具函数 - 四舍五入数字，解决精度问题
+            function roundNumber(num, decimals = precision) {
+                return Number(num.toFixed(decimals));
+            }
+
+            // 工具函数 - 格式化数字显示
+            function formatNumber(num) {
+                // 处理整数
+                if (Number.isInteger(num)) {
+                    return num.toString();
+                }
+
+                // 处理小数
+                let str = num.toString();
+                if (str.includes('e')) {
+                    // 科学计数法
+                    return num.toPrecision(precision);
+                }
+
+                // 处理长小数
+                if (str.length > 15) {
+                    return roundNumber(num).toString();
+                }
+
+                return str;
+            }
+
+            // 工具函数 - 计算阶乘
+            function factorial(n) {
+                // 对于大数字使用近似公式
+                if (n > 1000) {
+                    // 使用斯特林公式近似
+                    const sqrt2pi = Math.sqrt(2 * Math.PI);
+                    const term1 = sqrt2pi * Math.pow(n, n + 0.5);
+                    const term2 = Math.exp(-n);
+                    return roundNumber(term1 * term2);
+                }
+
+                if (n < 0) return NaN;
+                if (n === 0 || n === 1) return 1;
+
+                let result = 1;
+                for (let i = 2; i <= n; i++) {
+                    result *= i;
+                    // 防止数值溢出
+                    if (result > Number.MAX_SAFE_INTEGER) {
+                        return roundNumber(result);
+                    }
+                }
+                return result;
+            }
+
+            // 工具函数 - 计算字符串中特定字符出现的次数
+            function countOccurrences(str, char) {
+                // 转义特殊字符
+                const escapedChar = char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(escapedChar, 'g');
+                return (str.match(regex) || []).length;
+            }
+
+            // 键盘支持
+            document.addEventListener('keydown', (e) => {
+                // 只在当前激活的面板处理键盘事件
+                const activePanel = document.querySelector('.mode-panel:not(.hidden)').id;
+
+                if (activePanel === 'standard-panel' || activePanel === 'scientific-panel') {
+                    const key = e.key;
+
+                    // 数字键
+                    if (/[0-9]/.test(key)) {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardNumberInput(key);
+                        } else {
+                            handleScientificNumberInput(key);
+                        }
+                    }
+                    // 小数点
+                    else if (key === '.') {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardNumberInput(key);
+                        } else {
+                            handleScientificNumberInput(key);
+                        }
+                    }
+                    // 运算符
+                    else if (key === '+') {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardAction('add');
+                        } else {
+                            handleScientificAction('add');
+                        }
+                    } else if (key === '-') {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardAction('subtract');
+                        } else {
+                            handleScientificAction('subtract');
+                        }
+                    } else if (key === '*') {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardAction('multiply');
+                        } else {
+                            handleScientificAction('multiply');
+                        }
+                    } else if (key === '/') {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardAction('divide');
+                        } else {
+                            handleScientificAction('divide');
+                        }
+                    }
+                    // 等于或回车
+                    else if (key === '=' || key === 'Enter') {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardAction('equals');
+                        } else {
+                            handleScientificAction('equals');
+                        }
+                    }
+                    // 退格
+                    else if (key === 'Backspace') {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardAction('backspace');
+                        } else {
+                            handleScientificAction('backspace');
+                        }
+                    }
+                    // 清除
+                    else if (key === 'Escape') {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardAction('clear');
+                        } else {
+                            handleScientificAction('clear');
+                        }
+                    }
+                    // 括号
+                    else if (key === '(' && activePanel === 'scientific-panel') {
+                        e.preventDefault();
+                        handleScientificAction('left-paren');
+                    } else if (key === ')' && activePanel === 'scientific-panel') {
+                        e.preventDefault();
+                        handleScientificAction('right-paren');
+                    }
+                    // 百分号
+                    else if (key === '%') {
+                        e.preventDefault();
+                        if (activePanel === 'standard-panel') {
+                            handleStandardAction('percent');
+                        } else {
+                            handleScientificAction('percent');
+                        }
+                    }
+                }
+            });
+
+            // 初始化主题
+            applyTheme('tech');
+        });
+    </script>
+</body>
+</html>
