@@ -1,0 +1,2498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库管理系统  --v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        danger: '#ef4444',
+                        success: '#10b981',
+                        dark: '#1e293b',
+                        'dark-2': '#64748b',
+                        light: '#f8fafc',
+                        'light-1': '#f1f5f9',
+                        'light-2': '#e2e8f0',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .scrollbar-thin {
+                scrollbar-width: thin;
+            }
+
+                .scrollbar-thin::-webkit-scrollbar {
+                    width: 4px;
+                    height: 4px;
+                }
+
+                .scrollbar-thin::-webkit-scrollbar-thumb {
+                    background-color: rgba(156, 163, 175, 0.5);
+                    border-radius: 2px;
+                }
+        }
+    </style>
+</head>
+<body class="bg-light text-dark font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- 左侧边栏 -->
+        <div class="w-64 bg-white border-r border-light-2 flex flex-col h-full">
+            <div class="p-4 border-b border-light-2 flex justify-between items-center">
+                <h1 class="text-lg font-semibold flex items-center">
+                    <i class="fa fa-database text-primary mr-2"></i>
+                    数据库管理
+                </h1>
+                <button id="helpBtn" class="p-1 hover:bg-light-1 rounded text-dark-2">
+                    <i class="fa fa-question-circle"></i>
+                </button>
+            </div>
+
+            <div class="p-3 border-b border-light-2">
+                <button id="createDbBtn" class="w-full py-2 px-3 bg-primary text-white rounded hover:bg-primary/90 transition-colors flex items-center justify-center">
+                    <i class="fa fa-plus mr-2"></i> 创建数据库
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto scrollbar-thin p-2" id="databaseList">
+                <!-- 数据库列表将通过JS动态生成 -->
+            </div>
+
+            <div class="p-3 border-t border-light-2">
+                <button id="resetBtn" class="w-full py-2 px-3 border border-danger text-danger rounded hover:bg-danger/5 transition-colors flex items-center justify-center text-sm">
+                    <i class="fa fa-refresh mr-2"></i> 重置应用
+                </button>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden">
+            <!-- 顶部工具栏 -->
+            <div id="dbToolbar" class="p-4 border-b border-light-2 bg-white hidden">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-medium flex items-center">
+                            <i class="fa fa-table text-primary mr-2"></i>
+                            <span id="currentDbName"></span>
+                        </h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select id="tableSelector" class="px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm">
+                            <option value="">选择表...</option>
+                        </select>
+                        <button id="createTableBtn" class="px-3 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors text-sm flex items-center">
+                            <i class="fa fa-plus mr-1"></i> 创建表
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 欢迎界面 -->
+            <div id="welcomeScreen" class="flex-1 flex flex-col items-center justify-center bg-light-1 hidden">
+                <div class="text-center p-8 max-w-md">
+                    <i class="fa fa-database text-6xl text-primary/30 mb-6"></i>
+                    <h2 class="text-2xl font-semibold mb-3">欢迎使用数据库管理系统</h2>
+                    <p class="text-dark-2 mb-6">这是一个简单的数据库管理工具，可以帮助你创建和管理数据库、数据表及数据记录。</p>
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button id="welcomeCreateDbBtn" class="px-6 py-3 bg-primary text-white rounded hover:bg-primary/90 transition-colors flex items-center justify-center">
+                            <i class="fa fa-plus mr-2"></i> 创建第一个数据库
+                        </button>
+                        <button id="welcomeTutorialBtn" class="px-6 py-3 border border-light-2 rounded hover:bg-light transition-colors flex items-center justify-center">
+                            <i class="fa fa-play-circle mr-2"></i> 查看教程
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表内容区 -->
+            <div id="tableContent" class="flex-1 overflow-hidden hidden flex flex-col">
+                <!-- 标签页 -->
+                <div class="border-b border-light-2 flex">
+                    <button class="tab-btn px-4 py-3 bg-primary text-white border-b-2 border-primary" data-tab="structure">
+                        表结构
+                    </button>
+                    <button class="tab-btn px-4 py-3 bg-light-1 text-dark" data-tab="data">
+                        数据管理
+                    </button>
+                    <button class="tab-btn px-4 py-3 bg-light-1 text-dark" data-tab="sql">
+                        SQL操作
+                    </button>
+                </div>
+
+                <!-- 表结构标签页 -->
+                <div class="tab-content flex-1 overflow-auto p-4" data-tab="structure">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium">表结构: <span id="structureTableName"></span></h3>
+                        <div class="flex gap-2">
+                            <button id="editTableBtn" class="px-3 py-1 border border-light-2 rounded hover:bg-light-1 transition-colors text-sm flex items-center">
+                                <i class="fa fa-pencil mr-1"></i> 编辑表名
+                            </button>
+                            <button id="addColumnBtn" class="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors text-sm flex items-center">
+                                <i class="fa fa-plus mr-1"></i> 添加字段
+                            </button>
+                            <button id="deleteTableBtn" class="px-3 py-1 border border-danger text-danger rounded hover:bg-danger/5 transition-colors text-sm flex items-center">
+                                <i class="fa fa-trash mr-1"></i> 删除表
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-light-2 overflow-hidden">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="bg-light-1 border-b border-light-2">
+                                    <th class="px-4 py-3 text-left font-semibold">字段名</th>
+                                    <th class="px-4 py-3 text-left font-semibold">数据类型</th>
+                                    <th class="px-4 py-3 text-left font-semibold">长度</th>
+                                    <th class="px-4 py-3 text-left font-semibold">主键</th>
+                                    <th class="px-4 py-3 text-left font-semibold">非空</th>
+                                    <th class="px-4 py-3 text-left font-semibold">默认值</th>
+                                    <th class="px-4 py-3 text-right font-semibold">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="columnsTableBody">
+                                <!-- 字段列表将通过JS动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 数据管理标签页 -->
+                <div class="tab-content flex-1 overflow-auto p-4 hidden" data-tab="data">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                        <h3 class="text-lg font-medium">数据管理: <span id="dataTableName"></span></h3>
+                        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <div class="relative flex-1 sm:flex-none min-w-[200px]">
+                                <input type="text" id="searchDataInput" placeholder="搜索数据..." class="w-full pl-9 pr-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm">
+                                <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-dark-2"></i>
+                            </div>
+                            <button id="addRowBtn" class="px-3 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors text-sm flex items-center">
+                                <i class="fa fa-plus mr-1"></i> 添加记录
+                            </button>
+                            <button id="exportExcelBtn" class="px-3 py-2 border border-light-2 rounded hover:bg-light-1 transition-colors text-sm flex items-center">
+                                <i class="fa fa-download mr-1"></i> 导出Excel
+                            </button>
+                            <button id="importExcelBtn" class="px-3 py-2 border border-light-2 rounded hover:bg-light-1 transition-colors text-sm flex items-center">
+                                <i class="fa fa-upload mr-1"></i> 导入Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-light-2 overflow-hidden">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr id="dataTableHeader" class="bg-light-1 border-b border-light-2">
+                                    <!-- 表头将通过JS动态生成 -->
+                                </tr>
+                            </thead>
+                            <tbody id="dataTableBody">
+                                <!-- 数据记录将通过JS动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-4 text-sm">
+                        <div id="totalRecords" class="text-dark-2"></div>
+                        <div class="flex items-center gap-2">
+                            <button id="prevPageBtn" class="px-3 py-1 border border-light-2 rounded hover:bg-light-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fa fa-chevron-left"></i>
+                            </button>
+                            <span id="pageInfo" class="text-dark-2"></span>
+                            <button id="nextPageBtn" class="px-3 py-1 border border-light-2 rounded hover:bg-light-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fa fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SQL操作标签页 -->
+                <div class="tab-content flex-1 overflow-auto p-4 hidden" data-tab="sql">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-medium mb-3">SQL操作</h3>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <button class="sql-helper px-2 py-1 bg-light-1 rounded text-sm hover:bg-light-2 transition-colors" data-sql="SELECT * FROM {table}">
+                                SELECT *
+                            </button>
+                            <button class="sql-helper px-2 py-1 bg-light-1 rounded text-sm hover:bg-light-2 transition-colors" data-sql="INSERT INTO {table} VALUES (...)">
+                                INSERT
+                            </button>
+                            <button class="sql-helper px-2 py-1 bg-light-1 rounded text-sm hover:bg-light-2 transition-colors" data-sql="UPDATE {table} SET ... WHERE ...">
+                                UPDATE
+                            </button>
+                            <button class="sql-helper px-2 py-1 bg-light-1 rounded text-sm hover:bg-light-2 transition-colors" data-sql="DELETE FROM {table} WHERE ...">
+                                DELETE
+                            </button>
+                        </div>
+                        <textarea id="sqlInput" rows="5" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-mono" placeholder="请输入SQL语句..."></textarea>
+                        <div class="flex justify-end gap-2 mt-2">
+                            <button id="clearResultBtn" class="px-3 py-1 border border-light-2 rounded hover:bg-light-1 transition-colors text-sm">
+                                清空结果
+                            </button>
+                            <button id="executeSqlBtn" class="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors text-sm">
+                                执行SQL
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-light-2 p-4" id="sqlResult">
+                        <!-- SQL执行结果将通过JS动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div id="modal" class="bg-white rounded-lg shadow-lg w-full max-w-md transform transition-all scale-95 opacity-0" id="modalContent">
+            <div class="p-5 border-b border-light-2 flex justify-between items-center">
+                <h3 id="modalTitle" class="text-lg font-semibold"></h3>
+                <button id="closeModalBtn" class="text-dark-2 hover:text-dark">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div id="modalBody" class="p-5">
+                <!-- 模态框内容将通过JS动态生成 -->
+            </div>
+            <div class="p-5 border-t border-light-2 flex justify-end gap-3">
+                <button id="modalCancelBtn" class="px-4 py-2 border border-light-2 rounded hover:bg-light-1 transition-colors">取消</button>
+                <button id="modalConfirmBtn" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 帮助模态框 -->
+    <div id="helpModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div class="p-5 border-b border-light-2 flex justify-between items-center">
+                <h3 class="text-lg font-semibold">使用帮助</h3>
+                <button id="closeHelpBtn" class="text-dark-2 hover:text-dark">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 scrollbar-thin">
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">创建数据库</h4>
+                        <p class="text-dark-2 text-sm">点击左侧"创建数据库"按钮，输入数据库名称即可创建一个新的数据库。数据库名称只能包含字母、数字和下划线。</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">创建数据表</h4>
+                        <p class="text-dark-2 text-sm">选择一个数据库后，点击"创建表"按钮，输入表名和字段信息。每个字段需要设置名称、数据类型、长度等属性，还可以设置主键和非空约束。</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">管理表结构</h4>
+                        <p class="text-dark-2 text-sm">在"表结构"标签页中，可以添加、编辑和删除字段。修改表结构后会自动保存。</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">数据管理</h4>
+                        <p class="text-dark-2 text-sm">在"数据管理"标签页中，可以添加、编辑和删除表中的记录。支持简单的数据搜索功能，以及Excel导入导出功能。</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">Excel导入导出</h4>
+                        <p class="text-dark-2 text-sm">在"数据管理"标签页中，点击"导出Excel"可将当前表数据导出为Excel文件。点击"导入Excel"可选择Excel文件导入数据，导入时请确保Excel表头与表结构一致。</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-primary mb-2">SQL操作</h4>
+                        <p class="text-dark-2 text-sm">在"SQL操作"标签页中，可以输入并执行SQL命令。目前支持的命令包括：SELECT、INSERT、UPDATE、DELETE和ALTER。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 border-t border-light-2 flex justify-end">
+                <button id="gotItHelpBtn" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">我知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 教程模态框 -->
+    <div id="tutorialModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div class="p-5 border-b border-light-2 flex justify-between items-center">
+                <h3 class="text-lg font-semibold">数据库入门教程</h3>
+                <button id="closeTutorialBtn" class="text-dark-2 hover:text-dark">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 scrollbar-thin">
+                <div class="tutorial-step active" data-step="1">
+                    <h4 class="font-semibold text-primary mb-3">步骤 1：创建数据库</h4>
+                    <p class="text-dark-2 mb-3">数据库是存储数据表的容器，首先我们需要创建一个数据库。</p>
+                    <ul class="text-dark-2 list-disc pl-5 mb-3">
+                        <li>点击左侧的"创建数据库"按钮</li>
+                        <li>在弹出的对话框中输入数据库名称（例如：school_db）</li>
+                        <li>点击"确认"按钮完成创建</li>
+                    </ul>
+                    <img src="https://picsum.photos/id/0/600/300" alt="创建数据库示例" class="w-full h-auto rounded my-3">
+                </div>
+                <div class="tutorial-step hidden" data-step="2">
+                    <h4 class="font-semibold text-primary mb-3">步骤 2：创建数据表</h4>
+                    <p class="text-dark-2 mb-3">数据表是存储数据的主要对象，由多个字段（列）组成。</p>
+                    <ul class="text-dark-2 list-disc pl-5 mb-3">
+                        <li>选择刚刚创建的数据库</li>
+                        <li>点击"创建表"按钮</li>
+                        <li>输入表名（例如：students）</li>
+                        <li>添加字段信息，如id、name、age等</li>
+                        <li>设置id为主键（Primary Key）</li>
+                        <li>点击"确认"按钮完成创建</li>
+                    </ul>
+                    <img src="https://picsum.photos/id/180/600/300" alt="创建数据表示例" class="w-full h-auto rounded my-3">
+                </div>
+                <div class="tutorial-step hidden" data-step="3">
+                    <h4 class="font-semibold text-primary mb-3">步骤 3：管理数据</h4>
+                    <p class="text-dark-2 mb-3">创建表后，我们可以添加和管理数据记录。</p>
+                    <ul class="text-dark-2 list-disc pl-5 mb-3">
+                        <li>在"数据管理"标签页中，点击"添加记录"按钮</li>
+                        <li>填写每条记录的字段值</li>
+                        <li>可以编辑或删除已有的记录</li>
+                        <li>使用搜索框可以快速查找数据</li>
+                        <li>可以通过Excel导入导出功能批量处理数据</li>
+                    </ul>
+                    <img src="https://picsum.photos/id/20/600/300" alt="管理数据示例" class="w-full h-auto rounded my-3">
+                </div>
+                <div class="tutorial-step hidden" data-step="4">
+                    <h4 class="font-semibold text-primary mb-3">步骤 4：使用SQL命令</h4>
+                    <p class="text-dark-2 mb-3">SQL是操作数据库的标准语言，可以通过SQL命令实现各种操作。</p>
+                    <ul class="text-dark-2 list-disc pl-5 mb-3">
+                        <li>切换到"SQL操作"标签页</li>
+                        <li>输入SQL命令，例如：SELECT * FROM students</li>
+                        <li>点击"执行SQL"按钮查看结果</li>
+                        <li>可以使用快捷按钮快速插入常用SQL命令</li>
+                    </ul>
+                    <img src="https://picsum.photos/id/160/600/300" alt="SQL操作示例" class="w-full h-auto rounded my-3">
+                </div>
+            </div>
+            <div class="p-5 border-t border-light-2 flex justify-between">
+                <button id="prevTutorialBtn" class="px-4 py-2 border border-light-2 rounded hover:bg-light-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>上一步</button>
+                <span id="tutorialProgress" class="text-sm text-dark-2">1/4</span>
+                <button id="nextTutorialBtn" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors">下一步</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 数据存储 - 使用localStorage模拟数据库存储
+        const DB_STORAGE_KEY = 'simulated_databases';
+
+        // 初始化数据
+        let databases = JSON.parse(localStorage.getItem(DB_STORAGE_KEY)) || {};
+        let currentDb = null;
+        let currentTable = null;
+        let currentPage = 1;
+        const recordsPerPage = 10;
+
+        // DOM元素
+        const elements = {
+            databaseList: document.getElementById('databaseList'),
+            createDbBtn: document.getElementById('createDbBtn'),
+            welcomeCreateDbBtn: document.getElementById('welcomeCreateDbBtn'),
+            welcomeTutorialBtn: document.getElementById('welcomeTutorialBtn'),
+            welcomeScreen: document.getElementById('welcomeScreen'),
+            dbToolbar: document.getElementById('dbToolbar'),
+            currentDbName: document.getElementById('currentDbName'),
+            createTableBtn: document.getElementById('createTableBtn'),
+            tableSelector: document.getElementById('tableSelector'),
+            tableContent: document.getElementById('tableContent'),
+            structureTableName: document.getElementById('structureTableName'),
+            dataTableName: document.getElementById('dataTableName'),
+            columnsTableBody: document.getElementById('columnsTableBody'),
+            dataTableHeader: document.getElementById('dataTableHeader'),
+            dataTableBody: document.getElementById('dataTableBody'),
+            totalRecords: document.getElementById('totalRecords'),
+            pageInfo: document.getElementById('pageInfo'),
+            prevPageBtn: document.getElementById('prevPageBtn'),
+            nextPageBtn: document.getElementById('nextPageBtn'),
+            addColumnBtn: document.getElementById('addColumnBtn'),
+            editTableBtn: document.getElementById('editTableBtn'),
+            deleteTableBtn: document.getElementById('deleteTableBtn'),
+            addRowBtn: document.getElementById('addRowBtn'),
+            searchDataInput: document.getElementById('searchDataInput'),
+            sqlInput: document.getElementById('sqlInput'),
+            executeSqlBtn: document.getElementById('executeSqlBtn'),
+            sqlResult: document.getElementById('sqlResult'),
+            clearResultBtn: document.getElementById('clearResultBtn'),
+            sqlHelpers: document.querySelectorAll('.sql-helper'),
+            helpBtn: document.getElementById('helpBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            helpModal: document.getElementById('helpModal'),
+            closeHelpBtn: document.getElementById('closeHelpBtn'),
+            gotItHelpBtn: document.getElementById('gotItHelpBtn'),
+            tutorialModal: document.getElementById('tutorialModal'),
+            closeTutorialBtn: document.getElementById('closeTutorialBtn'),
+            prevTutorialBtn: document.getElementById('prevTutorialBtn'),
+            nextTutorialBtn: document.getElementById('nextTutorialBtn'),
+            tutorialProgress: document.getElementById('tutorialProgress'),
+            modalOverlay: document.getElementById('modalOverlay'),
+            modal: document.getElementById('modal'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalBody: document.getElementById('modalBody'),
+            closeModalBtn: document.getElementById('closeModalBtn'),
+            modalCancelBtn: document.getElementById('modalCancelBtn'),
+            modalConfirmBtn: document.getElementById('modalConfirmBtn'),
+            tabBtns: document.querySelectorAll('.tab-btn'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            // Excel导入导出相关元素
+            exportExcelBtn: document.getElementById('exportExcelBtn'),
+            importExcelBtn: document.getElementById('importExcelBtn')
+        };
+
+        // 保存数据到localStorage
+        function saveDatabases() {
+            localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(databases));
+        }
+
+        // 渲染数据库列表
+        function renderDatabaseList() {
+            elements.databaseList.innerHTML = '';
+
+            if (Object.keys(databases).length === 0) {
+                elements.databaseList.innerHTML = `
+                                    <div class="text-center text-dark-2 py-10">
+                                        <i class="fa fa-folder-open-o text-4xl mb-3 text-light-2"></i>
+                                        <p>暂无数据库</p>
+                                        <p class="text-xs mt-1">点击上方按钮创建第一个数据库</p>
+                                    </div>
+                                `;
+                return;
+            }
+
+            Object.keys(databases).forEach(dbName => {
+                const dbItem = document.createElement('div');
+                dbItem.className = `mb-1 p-2 rounded cursor-pointer hover:bg-light-1 transition-colors ${currentDb === dbName ? 'bg-primary/10 text-primary' : ''}`;
+
+                const tableCount = databases[dbName].tables ? Object.keys(databases[dbName].tables).length : 0;
+
+                dbItem.innerHTML = `
+                                    <div class="flex justify-between items-center">
+                                        <div class="flex items-center">
+                                            <i class="fa fa-database mr-2"></i>
+                                            <span class="truncate">${dbName}</span>
+                                        </div>
+                                        <div class="flex space-x-1">
+                                            <button class="editDbBtn text-xs p-1 hover:text-primary" data-db="${dbName}">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                            <button class="deleteDbBtn text-xs p-1 hover:text-danger" data-db="${dbName}">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-dark-2 mt-1 ml-5">${tableCount} 个表</div>
+                                `;
+
+                dbItem.addEventListener('click', (e) => {
+                    // 避免点击按钮时触发数据库切换
+                    if (!e.target.closest('button')) {
+                        selectDatabase(dbName);
+                    }
+                });
+
+                elements.databaseList.appendChild(dbItem);
+            });
+
+            // 为编辑和删除按钮添加事件监听
+            document.querySelectorAll('.editDbBtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const dbName = btn.getAttribute('data-db');
+                    editDatabase(dbName);
+                });
+            });
+
+            document.querySelectorAll('.deleteDbBtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const dbName = btn.getAttribute('data-db');
+                    deleteDatabase(dbName);
+                });
+            });
+        }
+
+        // 选择数据库
+        function selectDatabase(dbName) {
+            if (!dbName || !databases[dbName]) return; // 添加空值检查
+
+            currentDb = dbName;
+            currentTable = null;
+            currentPage = 1;
+
+            elements.currentDbName.textContent = dbName;
+            elements.welcomeScreen.classList.add('hidden');
+            elements.dbToolbar.classList.remove('hidden');
+
+            renderTableSelector();
+            elements.tableContent.classList.add('hidden');
+        }
+
+        // 渲染表选择器
+        function renderTableSelector() {
+            elements.tableSelector.innerHTML = '<option value="">选择表...</option>';
+
+            if (!currentDb || !databases[currentDb].tables) return;
+
+            Object.keys(databases[currentDb].tables).forEach(tableName => {
+                const option = document.createElement('option');
+                option.value = tableName;
+                option.textContent = tableName;
+                elements.tableSelector.appendChild(option);
+            });
+        }
+
+        // 选择数据表
+        function selectTable(tableName) {
+            if (!currentDb || !databases[currentDb].tables || !databases[currentDb].tables[tableName]) {
+                return;
+            }
+
+            currentTable = tableName;
+            currentPage = 1;
+
+            elements.structureTableName.textContent = tableName;
+            elements.dataTableName.textContent = tableName;
+            elements.tableContent.classList.remove('hidden');
+
+            renderTableStructure();
+            renderTableData();
+
+            // 切换到第一个标签页
+            switchTab('structure');
+        }
+
+        // 渲染表结构
+        function renderTableStructure() {
+            elements.columnsTableBody.innerHTML = '';
+
+            if (!currentDb || !currentTable || !databases[currentDb].tables[currentTable].columns) {
+                return;
+            }
+
+            const columns = databases[currentDb].tables[currentTable].columns;
+            columns.forEach((column, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-light-2 hover:bg-light-1 transition-colors';
+
+                row.innerHTML = `
+                            <td class="p-3">${column.name}</td>
+                            <td class="p-3">${column.type}</td>
+                            <td class="p-3">${column.length || '-'}</td>
+                            <td class="p-3">${column.primaryKey ? '<i class="fa fa-check text-primary"></i>' : '-'}</td>
+                            <td class="p-3">${column.notNull ? '<i class="fa fa-check text-primary"></i>' : '-'}</td>
+                            <td class="p-3">${column.defaultValue !== undefined ? column.defaultValue : '-'}</td>
+                            <td class="p-3 text-right">
+                                <button class="editColumnBtn text-primary hover:text-primary/80 mr-3" data-index="${index}">
+                                    <i class="fa fa-pencil"></i>
+                                </button>
+                                <button class="deleteColumnBtn text-danger hover:text-danger/80" data-index="${index}" ${columns.length <= 1 ? 'disabled title="至少保留一个字段"' : ''}>
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+
+                elements.columnsTableBody.appendChild(row);
+            });
+
+            // 添加字段编辑和删除事件监听
+            document.querySelectorAll('.editColumnBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const index = parseInt(btn.getAttribute('data-index'));
+                    editColumn(index);
+                });
+            });
+
+            document.querySelectorAll('.deleteColumnBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const index = parseInt(btn.getAttribute('data-index'));
+                    deleteColumn(index);
+                });
+            });
+        }
+
+        // 渲染表数据
+        function renderTableData() {
+            if (!currentDb || !currentTable || !databases[currentDb].tables[currentTable]) {
+                return;
+            }
+
+            const table = databases[currentDb].tables[currentTable];
+            const columns = table.columns || [];
+            let records = table.records || [];
+            const searchTerm = elements.searchDataInput.value.toLowerCase();
+
+            // 搜索过滤
+            if (searchTerm) {
+                records = records.filter(record => {
+                    return Object.values(record).some(value => {
+                        return value.toString().toLowerCase().includes(searchTerm);
+                    });
+                });
+            }
+
+            // 分页处理
+            const totalRecords = records.length;
+            const totalPages = Math.ceil(totalRecords / recordsPerPage);
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const paginatedRecords = records.slice(startIndex, startIndex + recordsPerPage);
+
+            // 更新分页信息
+            elements.totalRecords.textContent = `共 ${totalRecords} 条记录`;
+            elements.pageInfo.textContent = `第 ${currentPage} / ${totalPages || 1} 页`;
+            elements.prevPageBtn.disabled = currentPage <= 1;
+            elements.nextPageBtn.disabled = currentPage >= totalPages || totalPages === 0;
+
+            // 渲染表头
+            elements.dataTableHeader.innerHTML = '';
+            columns.forEach(column => {
+                const th = document.createElement('th');
+                th.className = 'p-3 border-b border-light-2 bg-light-1 font-semibold';
+                th.textContent = column.name;
+                elements.dataTableHeader.appendChild(th);
+            });
+
+            // 添加操作列
+            const actionTh = document.createElement('th');
+            actionTh.className = 'p-3 border-b border-light-2 bg-light-1 font-semibold text-right';
+            actionTh.textContent = '操作';
+            elements.dataTableHeader.appendChild(actionTh);
+
+            // 渲染数据行
+            elements.dataTableBody.innerHTML = '';
+
+            if (paginatedRecords.length === 0) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = `
+                            <td colspan="${columns.length + 1}" class="p-8 text-center text-dark-2">
+                                <i class="fa fa-file-text-o text-3xl mb-2 text-light-2"></i>
+                                <p>暂无数据记录</p>
+                                <p class="text-xs mt-1">点击"添加记录"按钮创建第一条记录</p>
+                            </td>
+                        `;
+                elements.dataTableBody.appendChild(emptyRow);
+                return;
+            }
+
+            paginatedRecords.forEach((record, rowIndex) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-light-2 hover:bg-light-1 transition-colors';
+
+                // 计算原始索引（考虑分页和搜索）
+                const originalIndex = records.findIndex(r => r === record);
+
+                columns.forEach(column => {
+                    const td = document.createElement('td');
+                    td.className = 'p-3';
+                    td.textContent = record[column.name] !== undefined ? record[column.name] : '';
+                    tr.appendChild(td);
+                });
+
+                // 操作列
+                const actionTd = document.createElement('td');
+                actionTd.className = 'p-3 text-right';
+                actionTd.innerHTML = `
+                            <button class="editRowBtn text-primary hover:text-primary/80 mr-3" data-index="${originalIndex}">
+                                <i class="fa fa-pencil"></i>
+                            </button>
+                            <button class="deleteRowBtn text-danger hover:text-danger/80" data-index="${originalIndex}">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        `;
+                tr.appendChild(actionTd);
+
+                elements.dataTableBody.appendChild(tr);
+            });
+
+            // 添加行编辑和删除事件监听
+            document.querySelectorAll('.editRowBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const index = parseInt(btn.getAttribute('data-index'));
+                    editRow(index);
+                });
+            });
+
+            document.querySelectorAll('.deleteRowBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const index = parseInt(btn.getAttribute('data-index'));
+                    deleteRow(index);
+                });
+            });
+        }
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 更新按钮状态
+            elements.tabBtns.forEach(btn => {
+                if (btn.getAttribute('data-tab') === tabName) {
+                    btn.classList.add('bg-primary', 'text-white');
+                    btn.classList.remove('bg-light-1', 'text-dark');
+                } else {
+                    btn.classList.add('bg-light-1', 'text-dark');
+                    btn.classList.remove('bg-primary', 'text-white');
+                }
+            });
+
+            // 更新内容显示
+            elements.tabContents.forEach(content => {
+                if (content.getAttribute('data-tab') === tabName) {
+                    content.classList.remove('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+            });
+
+            // 如果切换到数据标签，重新渲染数据
+            if (tabName === 'data') {
+                renderTableData();
+            }
+        }
+
+        // 显示模态框
+        function showModal(title, content, confirmCallback, cancelCallback) {
+            elements.modalTitle.textContent = title;
+            elements.modalBody.innerHTML = content;
+
+            elements.modalOverlay.classList.remove('hidden');
+
+            // 动画效果
+            setTimeout(() => {
+                elements.modal.classList.remove('scale-95', 'opacity-0');
+                elements.modal.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            // 清除之前的事件监听
+            const clearListeners = () => {
+                elements.modalConfirmBtn.removeEventListener('click', confirmHandler);
+                elements.modalCancelBtn.removeEventListener('click', cancelHandler);
+                elements.closeModalBtn.removeEventListener('click', cancelHandler);
+            };
+
+            // 确认按钮事件
+            const confirmHandler = () => {
+                hideModal();
+                clearListeners();
+                if (typeof confirmCallback === 'function') {
+                    try {
+                        confirmCallback();
+                    } catch (error) {
+                        console.error('确认操作出错:', error);
+                        alert('操作出错: ' + error.message);
+                    }
+                }
+            };
+
+            // 取消按钮事件
+            const cancelHandler = () => {
+                hideModal();
+                clearListeners();
+                if (typeof cancelCallback === 'function') {
+                    cancelCallback();
+                }
+            };
+
+            elements.modalConfirmBtn.addEventListener('click', confirmHandler);
+            elements.modalCancelBtn.addEventListener('click', cancelHandler);
+            elements.closeModalBtn.addEventListener('click', cancelHandler);
+        }
+
+        // 隐藏模态框
+        function hideModal() {
+            elements.modal.classList.remove('scale-100', 'opacity-100');
+            elements.modal.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                elements.modalOverlay.classList.add('hidden');
+            }, 300);
+        }
+
+        // 创建数据库
+        function createDatabase() {
+            showModal(
+                '创建数据库',
+                `
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-dark mb-1">数据库名称</label>
+                                    <input type="text" id="dbNameInput" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入数据库名称">
+                                    <p class="text-xs text-dark-2 mt-1">只能包含字母、数字和下划线，且不能以数字开头</p>
+                                </div>
+                            </div>
+                        `,
+                () => {
+                    // 添加空值检查
+                    const inputElement = document.getElementById('dbNameInput');
+                    if (!inputElement) {
+                        alert('表单元素未找到');
+                        return;
+                    }
+
+                    const dbName = inputElement.value.trim();
+
+                    // 验证数据库名称
+                    if (!dbName) {
+                        alert('请输入数据库名称');
+                        return;
+                    }
+
+                    const dbNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+                    if (!dbNameRegex.test(dbName)) {
+                        alert('数据库名称只能包含字母、数字和下划线，且不能以数字开头');
+                        return;
+                    }
+
+                    if (databases[dbName]) {
+                        alert('该数据库名称已存在');
+                        return;
+                    }
+
+                    // 创建数据库
+                    databases[dbName] = {
+                        tables: {}
+                    };
+
+                    saveDatabases();
+                    renderDatabaseList();
+                    selectDatabase(dbName);
+                }
+            );
+        }
+
+        // 编辑数据库
+        function editDatabase(oldDbName) {
+            if (!oldDbName || !databases[oldDbName]) return; // 添加空值检查
+
+            showModal(
+                '修改数据库名称',
+                `
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-dark mb-1">数据库名称</label>
+                                    <input type="text" id="editDbNameInput" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" value="${oldDbName}">
+                                    <p class="text-xs text-dark-2 mt-1">只能包含字母、数字和下划线，且不能以数字开头</p>
+                                </div>
+                            </div>
+                        `,
+                () => {
+                    // 添加空值检查
+                    const inputElement = document.getElementById('editDbNameInput');
+                    if (!inputElement) {
+                        alert('表单元素未找到');
+                        return;
+                    }
+
+                    const newDbName = inputElement.value.trim();
+
+                    // 验证数据库名称
+                    if (!newDbName) {
+                        alert('请输入数据库名称');
+                        return;
+                    }
+
+                    const dbNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+                    if (!dbNameRegex.test(newDbName)) {
+                        alert('数据库名称只能包含字母、数字和下划线，且不能以数字开头');
+                        return;
+                    }
+
+                    if (newDbName !== oldDbName && databases[newDbName]) {
+                        alert('该数据库名称已存在');
+                        return;
+                    }
+
+                    // 修改数据库名称
+                    if (newDbName !== oldDbName) {
+                        databases[newDbName] = databases[oldDbName];
+                        delete databases[oldDbName];
+
+                        // 如果当前选中的是该数据库，更新当前数据库名称
+                        if (currentDb === oldDbName) {
+                            currentDb = newDbName;
+                            elements.currentDbName.textContent = newDbName;
+                        }
+
+                        saveDatabases();
+                        renderDatabaseList();
+                    }
+                }
+            );
+        }
+
+        // 删除数据库
+        function deleteDatabase(dbName) {
+            if (!dbName || !databases[dbName]) return; // 添加空值检查
+
+            showModal(
+                '删除数据库',
+                `<p>确定要删除数据库 <span class="font-semibold">${dbName}</span> 吗？</p>
+                         <p class="text-sm text-dark-2 mt-2">删除后，该数据库中的所有表和数据都将被永久删除，无法恢复。</p>`,
+                () => {
+                    delete databases[dbName];
+
+                    // 如果删除的是当前选中的数据库，重置状态
+                    if (currentDb === dbName) {
+                        currentDb = null;
+                        currentTable = null;
+                        elements.currentDbName.textContent = '';
+                        elements.dbToolbar.classList.add('hidden');
+                        elements.tableContent.classList.add('hidden');
+
+                        // 如果还有其他数据库，不显示欢迎界面
+                        if (Object.keys(databases).length === 0) {
+                            elements.welcomeScreen.classList.remove('hidden');
+                        }
+                    }
+
+                    saveDatabases();
+                    renderDatabaseList();
+                    renderTableSelector();
+                }
+            );
+        }
+
+        // 创建数据表
+        function createTable() {
+            if (!currentDb) return;
+
+            // 生成默认字段
+            const defaultColumns = [
+                {
+                    name: 'id',
+                    type: 'INT',
+                    length: '',
+                    primaryKey: true,
+                    notNull: true,
+                    defaultValue: ''
+                }
+            ];
+
+            showModal(
+                '创建数据表',
+                `
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-dark mb-1">表名称</label>
+                                    <input type="text" id="tableNameInput" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入表名称">
+                                    <p class="text-xs text-dark-2 mt-1">只能包含字母、数字和下划线，且不能以数字开头</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-dark mb-2">字段信息</label>
+                                    <div id="columnsContainer" class="space-y-3">
+                                        ${defaultColumns.map((col, index) => `
+                                            <div class="column-row p-3 border border-light-2 rounded bg-light-1">
+                                                <div class="flex justify-between items-center mb-2">
+                                                    <span class="text-sm font-medium">字段 ${index + 1}</span>
+                                                    <button type="button" class="deleteColumnRow text-danger text-xs hover:underline" ${index === 0 ? 'disabled title="至少保留一个字段"' : ''}>
+                                                        删除字段
+                                                    </button>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label class="block text-xs text-dark-2 mb-1">字段名称 <span class="text-danger">*</span></label>
+                                                        <input type="text" class="column-name w-full px-3 py-2 border border-light-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" value="${col.name}" placeholder="字段名">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs text-dark-2 mb-1">数据类型 <span class="text-danger">*</span></label>
+                                                        <select class="column-type w-full px-3 py-2 border border-light-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                                            <option value="INT" ${col.type === 'INT' ? 'selected' : ''}>整数 (INT)</option>
+                                                            <option value="VARCHAR" ${col.type === 'VARCHAR' ? 'selected' : ''}>字符串 (VARCHAR)</option>
+                                                            <option value="TEXT" ${col.type === 'TEXT' ? 'selected' : ''}>文本 (TEXT)</option>
+                                                            <option value="DATE" ${col.type === 'DATE' ? 'selected' : ''}>日期 (DATE)</option>
+                                                            <option value="DATETIME" ${col.type === 'DATETIME' ? 'selected' : ''}>日期时间 (DATETIME)</option>
+                                                            <option value="FLOAT" ${col.type === 'FLOAT' ? 'selected' : ''}>浮点数 (FLOAT)</option>
+                                                            <option value="BOOL" ${col.type === 'BOOL' ? 'selected' : ''}>布尔值 (BOOL)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="column-length-container ${['VARCHAR', 'INT'].includes(col.type) ? '' : 'hidden'}">
+                                                        <label class="block text-xs text-dark-2 mb-1">长度</label>
+                                                        <div class="flex items-center">
+                                                            <input type="number" class="column-length w-full px-3 py-2 border border-light-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" value="${col.length || (col.type === 'VARCHAR' ? '255' : '')}" placeholder="长度">
+                                                            ${col.type === 'VARCHAR' ? '<span class="ml-2 text-xs text-dark-2">字符</span>' : ''}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                                                    <div class="flex items-center">
+                                                        <input type="checkbox" class="column-primary-key mr-2" ${col.primaryKey ? 'checked' : ''}>
+                                                        <label class="text-xs text-dark-2">主键</label>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <input type="checkbox" class="column-not-null mr-2" ${col.notNull ? 'checked' : ''}>
+                                                        <label class="text-xs text-dark-2">非空</label>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs text-dark-2 mb-1">默认值</label>
+                                                        <input type="text" class="column-default w-full px-3 py-2 border border-light-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" value="${col.defaultValue || ''}" placeholder="默认值">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <button type="button" id="addColumnRowBtn" class="mt-2 px-3 py-1 border border-primary text-primary rounded text-sm hover:bg-primary/5 transition-colors">
+                                        <i class="fa fa-plus mr-1"></i> 添加字段
+                                    </button>
+                                </div>
+                            </div>
+                        `,
+                () => {
+                    // 添加空值检查
+                    const inputElement = document.getElementById('tableNameInput');
+                    if (!inputElement) {
+                        alert('表单元素未找到');
+                        return;
+                    }
+
+                    const tableName = inputElement.value.trim();
+                    const columnRows = document.querySelectorAll('.column-row');
+
+                    // 验证表名称
+                    if (!tableName) {
+                        alert('请输入表名称');
+                        return;
+                    }
+
+                    const tableNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+                    if (!tableNameRegex.test(tableName)) {
+                        alert('表名称只能包含字母、数字和下划线，且不能以数字开头');
+                        return;
+                    }
+
+                    if (databases[currentDb].tables[tableName]) {
+                        alert('该表名称已存在');
+                        return;
+                    }
+
+                    // 验证并收集字段信息
+                    const columns = [];
+                    let hasPrimaryKey = false;
+
+                    columnRows.forEach((row, index) => {
+                        const nameInput = row.querySelector('.column-name');
+                        const typeSelect = row.querySelector('.column-type');
+                        const lengthInput = row.querySelector('.column-length');
+                        const primaryKeyCheckbox = row.querySelector('.column-primary-key');
+                        const notNullCheckbox = row.querySelector('.column-not-null');
+                        const defaultValueInput = row.querySelector('.column-default');
+
+                        // 检查元素是否存在
+                        if (!nameInput || !typeSelect || !primaryKeyCheckbox || !notNullCheckbox || !defaultValueInput) {
+                            alert(`第 ${index + 1} 个字段的表单元素不完整`);
+                            throw new Error('表单元素不完整');
+                        }
+
+                        const name = nameInput.value.trim();
+                        const type = typeSelect.value;
+                        const length = lengthInput ? lengthInput.value.trim() : '';
+                        const primaryKey = primaryKeyCheckbox.checked;
+                        const notNull = notNullCheckbox.checked;
+                        const defaultValue = defaultValueInput.value.trim();
+
+                        // 验证字段名称
+                        if (!name) {
+                            alert(`请输入第 ${index + 1} 个字段的名称`);
+                            throw new Error('验证失败');
+                        }
+
+                        const columnNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+                        if (!columnNameRegex.test(name)) {
+                            alert(`第 ${index + 1} 个字段名称只能包含字母、数字和下划线，且不能以数字开头`);
+                            throw new Error('验证失败');
+                        }
+
+                        // 检查字段名是否重复
+                        if (columns.some(col => col.name === name)) {
+                            alert(`第 ${index + 1} 个字段名称与其他字段重复`);
+                            throw new Error('验证失败');
+                        }
+
+                        // 检查主键是否重复
+                        if (primaryKey) {
+                            if (hasPrimaryKey) {
+                                alert('一个表只能有一个主键字段');
+                                throw new Error('验证失败');
+                            }
+                            hasPrimaryKey = true;
+                        }
+
+                        // 验证长度（仅对需要长度的类型）
+                        if (['VARCHAR', 'INT'].includes(type) && length && isNaN(length)) {
+                            alert(`第 ${index + 1} 个字段的长度必须是数字`);
+                            throw new Error('验证失败');
+                        }
+
+                        columns.push({
+                            name,
+                            type,
+                            length: length ? parseInt(length) : '',
+                            primaryKey,
+                            notNull,
+                            defaultValue: defaultValue || ''
+                        });
+                    });
+
+                    // 至少需要一个主键
+                    if (!hasPrimaryKey) {
+                        alert('请指定一个主键字段');
+                        return;
+                    }
+
+                    // 创建表
+                    databases[currentDb].tables[tableName] = {
+                        columns,
+                        records: []
+                    };
+
+                    saveDatabases();
+                    renderTableSelector();
+                    selectTable(tableName);
+                }
+            );
+
+            // 添加动态添加字段行的功能
+            setTimeout(() => {
+                const columnsContainer = document.getElementById('columnsContainer');
+                const addColumnRowBtn = document.getElementById('addColumnRowBtn');
+
+                // 检查元素是否存在
+                if (!columnsContainer || !addColumnRowBtn) return;
+
+                addColumnRowBtn.addEventListener('click', () => {
+                    const rowCount = columnsContainer.querySelectorAll('.column-row').length;
+
+                    const newRow = document.createElement('div');
+                    newRow.className = 'column-row p-3 border border-light-2 rounded bg-light-1';
+                    newRow.innerHTML = `
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium">字段 ${rowCount + 1}</span>
+                                    <button type="button" class="deleteColumnRow text-danger text-xs hover:underline">
+                                        删除字段
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-xs text-dark-2 mb-1">字段名称 <span class="text-danger">*</span></label>
+                                        <input type="text" class="column-name w-full px-3 py-2 border border-light-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="字段名">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-dark-2 mb-1">数据类型 <span class="text-danger">*</span></label>
+                                        <select class="column-type w-full px-3 py-2 border border-light-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                            <option value="INT">整数 (INT)</option>
+                                            <option value="VARCHAR" selected>字符串 (VARCHAR)</option>
+                                            <option value="TEXT">文本 (TEXT)</option>
+                                            <option value="DATE">日期 (DATE)</option>
+                                            <option value="DATETIME">日期时间 (DATETIME)</option>
+                                            <option value="FLOAT">浮点数 (FLOAT)</option>
+                                            <option value="BOOL">布尔值 (BOOL)</option>
+                                        </select>
+                                    </div>
+                                    <div class="column-length-container">
+                                        <label class="block text-xs text-dark-2 mb-1">长度</label>
+                                        <div class="flex items-center">
+                                            <input type="number" class="column-length w-full px-3 py-2 border border-light-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" value="255" placeholder="长度">
+                                            <span class="ml-2 text-xs text-dark-2">字符</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="column-primary-key mr-2">
+                                        <label class="text-xs text-dark-2">主键</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="column-not-null mr-2">
+                                        <label class="text-xs text-dark-2">非空</label>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-dark-2 mb-1">默认值</label>
+                                        <input type="text" class="column-default w-full px-3 py-2 border border-light-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="默认值">
+                                    </div>
+                                </div>
+                            `;
+
+                    columnsContainer.appendChild(newRow);
+
+                    // 为新添加的行添加事件监听
+                    setupColumnRowEvents(newRow);
+
+                    // 更新删除按钮状态
+                    updateDeleteColumnButtons();
+                });
+
+                // 为现有行添加事件监听
+                document.querySelectorAll('.column-row').forEach(row => {
+                    setupColumnRowEvents(row);
+                });
+
+                // 更新删除按钮状态
+                updateDeleteColumnButtons();
+            }, 100);
+        }
+
+        // 设置字段行的事件监听
+        function setupColumnRowEvents(row) {
+            // 数据类型变化时显示/隐藏长度输入框
+            const typeSelect = row.querySelector('.column-type');
+            const lengthContainer = row.querySelector('.column-length-container');
+
+            if (!typeSelect || !lengthContainer) return; // 检查元素是否存在
+
+            typeSelect.addEventListener('change', () => {
+                if (['VARCHAR', 'INT'].includes(typeSelect.value)) {
+                    lengthContainer.classList.remove('hidden');
+
+                    // 设置默认长度
+                    const lengthInput = row.querySelector('.column-length');
+                    const lengthLabel = lengthContainer.querySelector('span');
+
+                    if (lengthInput) {
+                        if (typeSelect.value === 'VARCHAR') {
+                            lengthInput.value = lengthInput.value || '255';
+                            if (lengthLabel) {
+                                lengthLabel.textContent = '字符';
+                                lengthLabel.classList.remove('hidden');
+                            }
+                        } else if (typeSelect.value === 'INT' && lengthLabel) {
+                            lengthLabel.classList.add('hidden');
+                        }
+                    }
+                } else {
+                    lengthContainer.classList.add('hidden');
+                }
+            });
+
+            // 主键选择逻辑
+            const primaryKeyCheckbox = row.querySelector('.column-primary-key');
+            if (primaryKeyCheckbox) {
+                primaryKeyCheckbox.addEventListener('change', () => {
+                    if (primaryKeyCheckbox.checked) {
+                        // 取消其他字段的主键勾选
+                        document.querySelectorAll('.column-primary-key').forEach(checkbox => {
+                            if (checkbox !== primaryKeyCheckbox) {
+                                checkbox.checked = false;
+                            }
+                        });
+                    }
+                });
+            }
+
+            // 删除字段行
+            const deleteBtn = row.querySelector('.deleteColumnRow');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                    row.remove();
+
+                    // 更新字段序号
+                    document.querySelectorAll('.column-row').forEach((r, index) => {
+                        const label = r.querySelector('.text-sm.font-medium');
+                        if (label) {
+                            label.textContent = `字段 ${index + 1}`;
+                        }
+                    });
+
+                    // 更新删除按钮状态
+                    updateDeleteColumnButtons();
+                });
+            }
+        }
+
+        // 更新删除字段按钮状态
+        function updateDeleteColumnButtons() {
+            const rows = document.querySelectorAll('.column-row');
+            rows.forEach((row, index) => {
+                const deleteBtn = row.querySelector('.deleteColumnRow');
+                if (deleteBtn) {
+                    if (rows.length <= 1) {
+                        deleteBtn.disabled = true;
+                        deleteBtn.title = '至少保留一个字段';
+                    } else {
+                        deleteBtn.disabled = false;
+                        deleteBtn.title = '';
+                    }
+                }
+            });
+        }
+
+        // 添加字段
+        function addColumn() {
+            if (!currentDb || !currentTable) return;
+
+            showModal(
+                '添加字段',
+                `
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-dark mb-1">字段名称 <span class="text-danger">*</span></label>
+                                        <input type="text" id="newColumnName" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="字段名">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-dark mb-1">数据类型 <span class="text-danger">*</span></label>
+                                        <select id="newColumnType" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                            <option value="INT">整数 (INT)</option>
+                                            <option value="VARCHAR" selected>字符串 (VARCHAR)</option>
+                                            <option value="TEXT">文本 (TEXT)</option>
+                                            <option value="DATE">日期 (DATE)</option>
+                                            <option value="DATETIME">日期时间 (DATETIME)</option>
+                                            <option value="FLOAT">浮点数 (FLOAT)</option>
+                                            <option value="BOOL">布尔值 (BOOL)</option>
+                                        </select>
+                                    </div>
+                                    <div id="newColumnLengthContainer">
+                                        <label class="block text-sm font-medium text-dark mb-1">长度</label>
+                                        <div class="flex items-center">
+                                            <input type="number" id="newColumnLength" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" value="255" placeholder="长度">
+                                            <span id="newColumnLengthLabel" class="ml-2 text-sm text-dark-2">字符</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="newColumnPrimaryKey" class="mr-2">
+                                        <label class="text-sm text-dark-2">主键</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="newColumnNotNull" class="mr-2">
+                                        <label class="text-sm text-dark-2">非空</label>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-dark mb-1">默认值</label>
+                                        <input type="text" id="newColumnDefault" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="默认值">
+                                    </div>
+                                </div>
+                            </div>
+                        `,
+                () => {
+                    // 添加空值检查
+                    const nameInput = document.getElementById('newColumnName');
+                    const typeSelect = document.getElementById('newColumnType');
+                    const lengthInput = document.getElementById('newColumnLength');
+                    const primaryKeyCheckbox = document.getElementById('newColumnPrimaryKey');
+                    const notNullCheckbox = document.getElementById('newColumnNotNull');
+                    const defaultValueInput = document.getElementById('newColumnDefault');
+
+                    // 检查所有必要元素是否存在
+                    if (!nameInput || !typeSelect || !primaryKeyCheckbox || !notNullCheckbox || !defaultValueInput) {
+                        alert('表单元素不完整');
+                        return;
+                    }
+
+                    const name = nameInput.value.trim();
+                    const type = typeSelect.value;
+                    const length = lengthInput ? lengthInput.value.trim() : '';
+                    const primaryKey = primaryKeyCheckbox.checked;
+                    const notNull = notNullCheckbox.checked;
+                    const defaultValue = defaultValueInput.value.trim();
+
+                    // 验证字段名称
+                    if (!name) {
+                        alert('请输入字段名称');
+                        return;
+                    }
+
+                    const columnNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+                    if (!columnNameRegex.test(name)) {
+                        alert('字段名称只能包含字母、数字和下划线，且不能以数字开头');
+                        return;
+                    }
+
+                    // 检查字段名是否重复
+                    const columns = databases[currentDb].tables[currentTable].columns;
+                    if (columns.some(col => col.name === name)) {
+                        alert('该字段名称已存在');
+                        return;
+                    }
+
+                    // 检查主键是否已存在
+                    if (primaryKey && columns.some(col => col.primaryKey)) {
+                        alert('该表已存在主键字段，一个表只能有一个主键');
+                        return;
+                    }
+
+                    // 验证长度
+                    if (['VARCHAR', 'INT'].includes(type) && length && isNaN(length)) {
+                        alert('长度必须是数字');
+                        return;
+                    }
+
+                    // 添加新字段
+                    columns.push({
+                        name,
+                        type,
+                        length: length ? parseInt(length) : '',
+                        primaryKey,
+                        notNull,
+                        defaultValue
+                    });
+
+                    // 为现有记录添加新字段的默认值
+                    const records = databases[currentDb].tables[currentTable].records || [];
+                    records.forEach(record => {
+                        record[name] = defaultValue || '';
+                    });
+
+                    saveDatabases();
+                    renderTableStructure();
+                }
+            );
+
+            // 数据类型变化时显示/隐藏长度输入框
+            setTimeout(() => {
+                const typeSelect = document.getElementById('newColumnType');
+                const lengthContainer = document.getElementById('newColumnLengthContainer');
+                const lengthLabel = document.getElementById('newColumnLengthLabel');
+                const lengthInput = document.getElementById('newColumnLength');
+
+                // 检查元素是否存在
+                if (!typeSelect || !lengthContainer) return;
+
+                const updateLengthField = () => {
+                    if (['VARCHAR', 'INT'].includes(typeSelect.value)) {
+                        lengthContainer.classList.remove('hidden');
+
+                        if (lengthInput) {
+                            if (typeSelect.value === 'VARCHAR') {
+                                lengthInput.value = lengthInput.value || '255';
+                                if (lengthLabel) {
+                                    lengthLabel.classList.remove('hidden');
+                                }
+                            } else if (typeSelect.value === 'INT' && lengthLabel) {
+                                lengthLabel.classList.add('hidden');
+                            }
+                        }
+                    } else {
+                        lengthContainer.classList.add('hidden');
+                    }
+                };
+
+                typeSelect.addEventListener('change', updateLengthField);
+
+                // 主键选择逻辑
+                const primaryKeyCheckbox = document.getElementById('newColumnPrimaryKey');
+                if (primaryKeyCheckbox) {
+                    primaryKeyCheckbox.addEventListener('change', () => {
+                        if (primaryKeyCheckbox.checked) {
+                            const columns = databases[currentDb].tables[currentTable].columns;
+                            if (columns.some(col => col.primaryKey)) {
+                                alert('该表已存在主键字段，一个表只能有一个主键');
+                                primaryKeyCheckbox.checked = false;
+                            }
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        // 编辑字段
+        function editColumn(index) {
+            if (!currentDb || !currentTable) return;
+
+            const columns = databases[currentDb].tables[currentTable].columns;
+            if (index < 0 || index >= columns.length) return; // 检查索引是否有效
+
+            const column = columns[index];
+            const originalName = column.name;
+
+            showModal(
+                '编辑字段',
+                `
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-dark mb-1">字段名称 <span class="text-danger">*</span></label>
+                                        <input type="text" id="editColumnName" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" value="${column.name}" placeholder="字段名">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-dark mb-1">数据类型 <span class="text-danger">*</span></label>
+                                        <select id="editColumnType" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                            <option value="INT" ${column.type === 'INT' ? 'selected' : ''}>整数 (INT)</option>
+                                            <option value="VARCHAR" ${column.type === 'VARCHAR' ? 'selected' : ''}>字符串 (VARCHAR)</option>
+                                            <option value="TEXT" ${column.type === 'TEXT' ? 'selected' : ''}>文本 (TEXT)</option>
+                                            <option value="DATE" ${column.type === 'DATE' ? 'selected' : ''}>日期 (DATE)</option>
+                                            <option value="DATETIME" ${column.type === 'DATETIME' ? 'selected' : ''}>日期时间 (DATETIME)</option>
+                                            <option value="FLOAT" ${column.type === 'FLOAT' ? 'selected' : ''}>浮点数 (FLOAT)</option>
+                                            <option value="BOOL" ${column.type === 'BOOL' ? 'selected' : ''}>布尔值 (BOOL)</option>
+                                        </select>
+                                    </div>
+                                    <div id="editColumnLengthContainer" ${['VARCHAR', 'INT'].includes(column.type) ? '' : 'hidden'}>
+                                        <label class="block text-sm font-medium text-dark mb-1">长度</label>
+                                        <div class="flex items-center">
+                                            <input type="number" id="editColumnLength" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" value="${column.length || (column.type === 'VARCHAR' ? '255' : '')}" placeholder="长度">
+                                            <span id="editColumnLengthLabel" class="ml-2 text-sm text-dark-2 ${column.type === 'VARCHAR' ? '' : 'hidden'}">字符</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="editColumnPrimaryKey" class="mr-2" ${column.primaryKey ? 'checked' : ''}>
+                                        <label class="text-sm text-dark-2">主键</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="editColumnNotNull" class="mr-2" ${column.notNull ? 'checked' : ''}>
+                                        <label class="text-sm text-dark-2">非空</label>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-dark mb-1">默认值</label>
+                                        <input type="text" id="editColumnDefault" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" value="${column.defaultValue || ''}" placeholder="默认值">
+                                    </div>
+                                </div>
+                            </div>
+                        `,
+                () => {
+                    // 添加空值检查
+                    const nameInput = document.getElementById('editColumnName');
+                    const typeSelect = document.getElementById('editColumnType');
+                    const lengthInput = document.getElementById('editColumnLength');
+                    const primaryKeyCheckbox = document.getElementById('editColumnPrimaryKey');
+                    const notNullCheckbox = document.getElementById('editColumnNotNull');
+                    const defaultValueInput = document.getElementById('editColumnDefault');
+
+                    // 检查所有必要元素是否存在
+                    if (!nameInput || !typeSelect || !primaryKeyCheckbox || !notNullCheckbox || !defaultValueInput) {
+                        alert('表单元素不完整');
+                        return;
+                    }
+
+                    const name = nameInput.value.trim();
+                    const type = typeSelect.value;
+                    const length = lengthInput ? lengthInput.value.trim() : '';
+                    const primaryKey = primaryKeyCheckbox.checked;
+                    const notNull = notNullCheckbox.checked;
+                    const defaultValue = defaultValueInput.value.trim();
+
+                    // 验证字段名称
+                    if (!name) {
+                        alert('请输入字段名称');
+                        return;
+                    }
+
+                    const columnNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+                    if (!columnNameRegex.test(name)) {
+                        alert('字段名称只能包含字母、数字和下划线，且不能以数字开头');
+                        return;
+                    }
+
+
+                    // 检查字段名是否重复（排除当前字段）
+                    if (name !== originalName && columns.some((col, i) => i !== index && col.name === name)) {
+                        alert('该字段名称已存在');
+                        return;
+                    }
+
+                    // 检查主键是否已存在
+                    if (primaryKey && columns.some((col, i) => i !== index && col.primaryKey)) {
+                        alert('该表已存在主键字段，一个表只能有一个主键');
+                        return;
+                    }
+
+                    // 验证长度
+                    if (['VARCHAR', 'INT'].includes(type) && length && isNaN(length)) {
+                        alert('长度必须是数字');
+                        return;
+                    }
+
+                    // 如果字段名改变，更新记录中的字段名
+                    if (name !== originalName) {
+                        const records = databases[currentDb].tables[currentTable].records || [];
+                        records.forEach(record => {
+                            if (record.hasOwnProperty(originalName)) {
+                                record[name] = record[originalName];
+                                delete record[originalName];
+                            }
+                        });
+                    }
+
+                    // 更新字段信息
+                    columns[index] = {
+                        name,
+                        type,
+                        length: length ? parseInt(length) : '',
+                        primaryKey,
+                        notNull,
+                        defaultValue
+                    };
+
+                    saveDatabases();
+                    renderTableStructure();
+                    renderTableData();
+                }
+            );
+
+            // 数据类型变化时显示/隐藏长度输入框
+            setTimeout(() => {
+                const typeSelect = document.getElementById('editColumnType');
+                const lengthContainer = document.getElementById('editColumnLengthContainer');
+                const lengthLabel = document.getElementById('editColumnLengthLabel');
+                const lengthInput = document.getElementById('editColumnLength');
+
+                // 检查元素是否存在
+                if (!typeSelect || !lengthContainer) return;
+
+                const updateLengthField = () => {
+                    if (['VARCHAR', 'INT'].includes(typeSelect.value)) {
+                        lengthContainer.classList.remove('hidden');
+
+                        if (lengthInput) {
+                            if (typeSelect.value === 'VARCHAR') {
+                                lengthInput.value = lengthInput.value || '255';
+                                if (lengthLabel) {
+                                    lengthLabel.classList.remove('hidden');
+                                }
+                            } else if (typeSelect.value === 'INT' && lengthLabel) {
+                                lengthLabel.classList.add('hidden');
+                            }
+                        }
+                    } else {
+                        lengthContainer.classList.add('hidden');
+                    }
+                };
+
+                typeSelect.addEventListener('change', updateLengthField);
+
+                // 主键选择逻辑
+                const primaryKeyCheckbox = document.getElementById('editColumnPrimaryKey');
+                if (primaryKeyCheckbox) {
+                    primaryKeyCheckbox.addEventListener('change', () => {
+                        if (primaryKeyCheckbox.checked) {
+                            const columns = databases[currentDb].tables[currentTable].columns;
+                            if (columns.some((col, i) => i !== index && col.primaryKey)) {
+                                alert('该表已存在主键字段，一个表只能有一个主键');
+                                primaryKeyCheckbox.checked = false;
+                            }
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        // 删除字段
+        function deleteColumn(index) {
+            if (!currentDb || !currentTable) return;
+
+            const columns = databases[currentDb].tables[currentTable].columns;
+            if (index < 0 || index >= columns.length) return; // 检查索引是否有效
+
+            const columnName = columns[index].name;
+
+            // 如果是主键，不允许删除
+            if (columns[index].primaryKey) {
+                alert('不能删除主键字段，请先将其他字段设置为主键');
+                return;
+            }
+
+            showModal(
+                '删除字段',
+                `<p>确定要删除字段 <span class="font-semibold">${columnName}</span> 吗？</p>
+                         <p class="text-sm text-dark-2 mt-2">删除后，该字段的所有数据都将被永久删除，无法恢复。</p>`,
+                () => {
+                    // 从字段列表中删除
+                    columns.splice(index, 1);
+
+                    // 从记录中删除该字段
+                    const records = databases[currentDb].tables[currentTable].records || [];
+                    records.forEach(record => {
+                        if (record.hasOwnProperty(columnName)) {
+                            delete record[columnName];
+                        }
+                    });
+
+                    saveDatabases();
+                    renderTableStructure();
+                    renderTableData();
+                }
+            );
+        }
+
+        // 添加记录
+        function addRow() {
+            if (!currentDb || !currentTable) return;
+
+            const columns = databases[currentDb].tables[currentTable].columns;
+
+            // 生成表单内容
+            let formContent = '<div class="space-y-3">';
+
+            columns.forEach(column => {
+                // 生成默认值
+                let defaultValue = column.defaultValue || '';
+
+                // 主键如果是整数类型，自动生成一个新ID
+                if (column.primaryKey && column.type === 'INT') {
+                    const records = databases[currentDb].tables[currentTable].records || [];
+                    if (records.length === 0) {
+                        defaultValue = 1;
+                    } else {
+                        // 找到最大的ID并加1
+                        const maxId = Math.max(...records.map(record => parseInt(record[column.name]) || 0));
+                        defaultValue = maxId + 1;
+                    }
+                }
+
+                formContent += `
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-1">
+                                    ${column.name} ${column.notNull ? '<span class="text-danger">*</span>' : ''}
+                                    ${column.primaryKey ? '<span class="ml-1 text-xs bg-primary/10 text-primary px-1 rounded">主键</span>' : ''}
+                                    <span class="text-xs text-dark-2 ml-1">(${column.type})</span>
+                                </label>
+                                <input type="text" class="record-input w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                       data-column="${column.name}"
+                                       data-not-null="${column.notNull}"
+                                       value="${defaultValue}"
+                                       ${column.primaryKey ? 'readonly title="主键自动生成"' : ''}>
+                            </div>
+                        `;
+            });
+
+            formContent += '</div>';
+
+            showModal(
+                '添加记录',
+                formContent,
+                () => {
+                    const records = databases[currentDb].tables[currentTable].records || [];
+                    const newRecord = {};
+                    let isValid = true;
+
+                    // 收集表单数据
+                    document.querySelectorAll('.record-input').forEach(input => {
+                        if (!isValid) return;
+
+                        const columnName = input.getAttribute('data-column');
+                        const isNotNull = input.getAttribute('data-not-null') === 'true';
+                        const value = input.value.trim();
+
+                        // 验证非空
+                        if (isNotNull && !value) {
+                            alert(`字段 ${columnName} 为必填项`);
+                            isValid = false;
+                            return;
+                        }
+
+                        newRecord[columnName] = value;
+                    });
+
+                    if (!isValid) return;
+
+                    // 检查主键是否重复
+                    const primaryKeyColumn = columns.find(col => col.primaryKey);
+                    if (primaryKeyColumn) {
+                        const primaryKey = newRecord[primaryKeyColumn.name];
+                        const isDuplicate = records.some(record => record[primaryKeyColumn.name] == primaryKey);
+
+                        if (isDuplicate) {
+                            alert(`主键值 ${primaryKey} 已存在，请更换`);
+                            return;
+                        }
+                    }
+
+                    // 添加新记录
+                    records.push(newRecord);
+                    databases[currentDb].tables[currentTable].records = records;
+
+                    saveDatabases();
+                    renderTableData();
+                }
+            );
+        }
+
+        // 编辑记录
+        function editRow(index) {
+            if (!currentDb || !currentTable) return;
+
+            const table = databases[currentDb].tables[currentTable];
+            const columns = table.columns;
+            const records = table.records || [];
+
+            if (index < 0 || index >= records.length) return; // 检查索引是否有效
+
+            const record = records[index];
+
+            // 生成表单内容
+            let formContent = '<div class="space-y-3">';
+
+            columns.forEach(column => {
+                formContent += `
+                            <div>
+                                <label class="block text-sm font-medium text-dark mb-1">
+                                    ${column.name} ${column.notNull ? '<span class="text-danger">*</span>' : ''}
+                                    ${column.primaryKey ? '<span class="ml-1 text-xs bg-primary/10 text-primary px-1 rounded">主键</span>' : ''}
+                                    <span class="text-xs text-dark-2 ml-1">(${column.type})</span>
+                                </label>
+                                <input type="text" class="record-input w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                       data-column="${column.name}"
+                                       data-not-null="${column.notNull}"
+                                       data-original-value="${record[column.name] || ''}"
+                                       value="${record[column.name] || ''}"
+                                       ${column.primaryKey ? 'readonly title="主键不可修改"' : ''}>
+                            </div>
+                        `;
+            });
+
+            formContent += '</div>';
+
+            showModal(
+                '编辑记录',
+                formContent,
+                () => {
+                    const updatedRecord = { ...record };
+                    let isValid = true;
+
+                    // 收集表单数据
+                    document.querySelectorAll('.record-input').forEach(input => {
+                        if (!isValid) return;
+
+                        const columnName = input.getAttribute('data-column');
+                        const isNotNull = input.getAttribute('data-not-null') === 'true';
+                        const value = input.value.trim();
+
+                        // 验证非空
+                        if (isNotNull && !value) {
+                            alert(`字段 ${columnName} 为必填项`);
+                            isValid = false;
+                            return;
+                        }
+
+                        updatedRecord[columnName] = value;
+                    });
+
+                    if (!isValid) return;
+
+                    // 更新记录
+                    records[index] = updatedRecord;
+
+                    saveDatabases();
+                    renderTableData();
+                }
+            );
+        }
+
+        // 删除记录
+        function deleteRow(index) {
+            if (!currentDb || !currentTable) return;
+
+            const table = databases[currentDb].tables[currentTable];
+            const records = table.records || [];
+
+            if (index < 0 || index >= records.length) return; // 检查索引是否有效
+
+            const primaryKeyColumn = table.columns.find(col => col.primaryKey);
+            const recordId = primaryKeyColumn ? records[index][primaryKeyColumn.name] : index + 1;
+
+            showModal(
+                '删除记录',
+                `<p>确定要删除 ID 为 <span class="font-semibold">${recordId}</span> 的记录吗？</p>
+                         <p class="text-sm text-dark-2 mt-2">删除后，该记录将被永久删除，无法恢复。</p>`,
+                () => {
+                    // 从记录列表中删除
+                    records.splice(index, 1);
+
+                    saveDatabases();
+                    renderTableData();
+                }
+            );
+        }
+
+        // 编辑表名
+        function editTableName() {
+            if (!currentDb || !currentTable) return;
+
+            showModal(
+                '修改表名称',
+                `
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-dark mb-1">表名称</label>
+                                    <input type="text" id="editTableNameInput" class="w-full px-3 py-2 border border-light-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/50" value="${currentTable}">
+                                    <p class="text-xs text-dark-2 mt-1">只能包含字母、数字和下划线，且不能以数字开头</p>
+                                </div>
+                            </div>
+                        `,
+                () => {
+                    // 添加空值检查
+                    const inputElement = document.getElementById('editTableNameInput');
+                    if (!inputElement) {
+                        alert('表单元素未找到');
+                        return;
+                    }
+
+                    const newTableName = inputElement.value.trim();
+
+                    // 验证表名称
+                    if (!newTableName) {
+                        alert('请输入表名称');
+                        return;
+                    }
+
+                    const tableNameRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+                    if (!tableNameRegex.test(newTableName)) {
+                        alert('表名称只能包含字母、数字和下划线，且不能以数字开头');
+                        return;
+                    }
+
+                    if (newTableName !== currentTable && databases[currentDb].tables[newTableName]) {
+                        alert('该表名称已存在');
+                        return;
+                    }
+
+                    // 修改表名称
+                    if (newTableName !== currentTable) {
+                        databases[currentDb].tables[newTableName] = databases[currentDb].tables[currentTable];
+                        delete databases[currentDb].tables[currentTable];
+
+                        currentTable = newTableName;
+                        elements.structureTableName.textContent = newTableName;
+                        elements.dataTableName.textContent = newTableName;
+
+                        saveDatabases();
+                        renderTableSelector();
+                        // 更新下拉选择器
+                        elements.tableSelector.value = newTableName;
+                    }
+                }
+            );
+        }
+
+        // 删除表
+        function deleteTable() {
+            if (!currentDb || !currentTable) return;
+
+            showModal(
+                '删除表',
+                `<p>确定要删除表 <span class="font-semibold">${currentTable}</span> 吗？</p>
+                         <p class="text-sm text-dark-2 mt-2">删除后，该表的结构和所有数据都将被永久删除，无法恢复。</p>`,
+                () => {
+                    delete databases[currentDb].tables[currentTable];
+                    currentTable = null;
+
+                    elements.tableContent.classList.add('hidden');
+                    renderTableSelector();
+
+                    saveDatabases();
+                }
+            );
+        }
+
+        // 执行SQL
+        function executeSQL() {
+            if (!currentDb || !currentTable) {
+                alert('请先选择一个数据表');
+                return;
+            }
+
+            // 添加空值检查
+            if (!elements.sqlInput) {
+                alert('SQL输入框未找到');
+                return;
+            }
+
+            const sql = elements.sqlInput.value.trim();
+            if (!sql) {
+                alert('请输入SQL语句');
+                return;
+            }
+
+            try {
+                // 简单的SQL解析和执行（实际应用中需要更复杂的解析器）
+                let result = '';
+                const lowerSql = sql.toLowerCase();
+
+                if (lowerSql.startsWith('select')) {
+                    // 处理查询语句
+                    const records = databases[currentDb].tables[currentTable].records || [];
+                    result = `<div class="mb-2 font-medium">查询结果 (${records.length} 条记录)</div>`;
+
+                    if (records.length > 0) {
+                        result += '<table class="min-w-full border border-light-2"><thead><tr class="bg-light-1">';
+
+                        // 表头
+                        Object.keys(records[0]).forEach(key => {
+                            result += `<th class="p-2 border-b border-light-2 text-left">${key}</th>`;
+                        });
+
+                        result += '</tr></thead><tbody>';
+
+                        // 表数据
+                        records.forEach(record => {
+                            result += '<tr class="hover:bg-light-1">';
+                            Object.values(record).forEach(value => {
+                                result += `<td class="p-2 border-b border-light-2">${value}</td>`;
+                            });
+                            result += '</tr>';
+                        });
+
+                        result += '</tbody></table>';
+                    } else {
+                        result += '<div class="text-dark-2">没有找到匹配的记录</div>';
+                    }
+                } else if (lowerSql.startsWith('insert')) {
+                    // 处理插入语句（简化版）
+                    result = '<div class="text-success">插入成功</div>';
+                    addRow(); // 调用添加记录的方法
+                } else if (lowerSql.startsWith('update')) {
+                    // 处理更新语句（简化版）
+                    result = '<div class="text-success">更新操作请在数据管理页面进行</div>';
+                } else if (lowerSql.startsWith('delete')) {
+                    // 处理删除语句（简化版）
+                    result = '<div class="text-success">删除操作请在数据管理页面进行</div>';
+                } else if (lowerSql.startsWith('alter')) {
+                    // 处理修改表结构语句（简化版）
+                    result = '<div class="text-success">表结构修改请在表结构页面进行</div>';
+                } else {
+                    result = '<div class="text-danger">不支持的SQL语句</div>';
+                }
+
+                if (elements.sqlResult) {
+                    elements.sqlResult.innerHTML = result;
+                }
+            } catch (error) {
+                console.error('SQL执行错误:', error);
+                if (elements.sqlResult) {
+                    elements.sqlResult.innerHTML = `<div class="text-danger">执行错误: ${error.message}</div>`;
+                }
+            }
+        }
+
+        // 初始化事件监听
+        function initEventListeners() {
+            // 创建数据库按钮
+            if (elements.createDbBtn) {
+                elements.createDbBtn.addEventListener('click', createDatabase);
+            }
+            if (elements.welcomeCreateDbBtn) {
+                elements.welcomeCreateDbBtn.addEventListener('click', createDatabase);
+            }
+
+            // 表选择器变化
+            if (elements.tableSelector) {
+                elements.tableSelector.addEventListener('change', () => {
+                    const tableName = elements.tableSelector.value;
+                    if (tableName) {
+                        selectTable(tableName);
+                    } else {
+                        elements.tableContent.classList.add('hidden');
+                        currentTable = null;
+                    }
+                });
+            }
+
+            // 创建表按钮
+            if (elements.createTableBtn) {
+                elements.createTableBtn.addEventListener('click', createTable);
+            }
+
+            // 标签页切换
+            elements.tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+
+            // 添加字段按钮
+            if (elements.addColumnBtn) {
+                elements.addColumnBtn.addEventListener('click', addColumn);
+            }
+
+            // 编辑表名按钮
+            if (elements.editTableBtn) {
+                elements.editTableBtn.addEventListener('click', editTableName);
+            }
+
+            // 删除表按钮
+            if (elements.deleteTableBtn) {
+                elements.deleteTableBtn.addEventListener('click', deleteTable);
+            }
+
+            // 添加记录按钮
+            if (elements.addRowBtn) {
+                elements.addRowBtn.addEventListener('click', addRow);
+            }
+
+            // 搜索数据
+            if (elements.searchDataInput) {
+                elements.searchDataInput.addEventListener('input', () => {
+                    currentPage = 1; // 重置到第一页
+                    renderTableData();
+                });
+            }
+
+            // 分页按钮
+            if (elements.prevPageBtn) {
+                elements.prevPageBtn.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderTableData();
+                    }
+                });
+            }
+
+            if (elements.nextPageBtn) {
+                elements.nextPageBtn.addEventListener('click', () => {
+                    const table = databases[currentDb]?.tables[currentTable];
+                    const records = table?.records || [];
+                    const totalPages = Math.ceil(records.length / recordsPerPage);
+
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderTableData();
+                    }
+                });
+            }
+
+            // SQL操作
+            if (elements.executeSqlBtn) {
+                elements.executeSqlBtn.addEventListener('click', executeSQL);
+            }
+            if (elements.clearResultBtn) {
+                elements.clearResultBtn.addEventListener('click', () => {
+                    if (elements.sqlResult) {
+                        elements.sqlResult.innerHTML = '';
+                    }
+                });
+            }
+
+            // SQL辅助按钮
+            elements.sqlHelpers.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (elements.sqlInput) {
+                        const sqlTemplate = btn.getAttribute('data-sql');
+                        elements.sqlInput.value = sqlTemplate.replace('{table}', currentTable || 'table_name');
+                        elements.sqlInput.focus();
+                    }
+                });
+            });
+
+            // 帮助按钮
+            if (elements.helpBtn) {
+                elements.helpBtn.addEventListener('click', () => {
+                    if (elements.helpModal) {
+                        elements.helpModal.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // 关闭帮助模态框
+            if (elements.closeHelpBtn) {
+                elements.closeHelpBtn.addEventListener('click', () => {
+                    if (elements.helpModal) {
+                        elements.helpModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (elements.gotItHelpBtn) {
+                elements.gotItHelpBtn.addEventListener('click', () => {
+                    if (elements.helpModal) {
+                        elements.helpModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            // 教程按钮
+            if (elements.welcomeTutorialBtn) {
+                elements.welcomeTutorialBtn.addEventListener('click', () => {
+                    if (elements.tutorialModal) {
+                        elements.tutorialModal.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // 关闭教程模态框
+            if (elements.closeTutorialBtn) {
+                elements.closeTutorialBtn.addEventListener('click', () => {
+                    if (elements.tutorialModal) {
+                        elements.tutorialModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            // 教程导航
+            let currentTutorialStep = 1;
+            const totalTutorialSteps = document.querySelectorAll('.tutorial-step').length;
+
+            if (elements.prevTutorialBtn) {
+                elements.prevTutorialBtn.addEventListener('click', () => {
+                    if (currentTutorialStep > 1) {
+                        currentTutorialStep--;
+                        updateTutorialStep();
+                    }
+                });
+            }
+
+            if (elements.nextTutorialBtn) {
+                elements.nextTutorialBtn.addEventListener('click', () => {
+                    if (currentTutorialStep < totalTutorialSteps) {
+                        currentTutorialStep++;
+                        updateTutorialStep();
+                    } else {
+                        if (elements.tutorialModal) {
+                            elements.tutorialModal.classList.add('hidden');
+                        }
+                    }
+                });
+            }
+
+            function updateTutorialStep() {
+                // 更新步骤显示
+                document.querySelectorAll('.tutorial-step').forEach(step => {
+                    const stepNum = parseInt(step.getAttribute('data-step'));
+                    if (stepNum === currentTutorialStep) {
+                        step.classList.remove('hidden');
+                        step.classList.add('active');
+                    } else {
+                        step.classList.add('hidden');
+                        step.classList.remove('active');
+                    }
+                });
+
+                // 更新导航按钮状态
+                if (elements.prevTutorialBtn) {
+                    elements.prevTutorialBtn.disabled = currentTutorialStep <= 1;
+                }
+                if (elements.nextTutorialBtn) {
+                    elements.nextTutorialBtn.textContent = currentTutorialStep < totalTutorialSteps ? '下一步' : '完成';
+                }
+                if (elements.tutorialProgress) {
+                    elements.tutorialProgress.textContent = `${currentTutorialStep}/${totalTutorialSteps}`;
+                }
+            }
+
+            // 重置按钮
+            if (elements.resetBtn) {
+                elements.resetBtn.addEventListener('click', () => {
+                    showModal(
+                        '重置应用',
+                        `<p>确定要重置应用吗？</p>
+                                 <p class="text-sm text-dark-2 mt-2">此操作将删除所有数据库、表和数据，恢复到初始状态，且无法恢复。</p>`,
+                        () => {
+                            localStorage.removeItem(DB_STORAGE_KEY);
+                            databases = {};
+                            currentDb = null;
+                            currentTable = null;
+
+                            if (elements.currentDbName) {
+                                elements.currentDbName.textContent = '';
+                            }
+                            if (elements.dbToolbar) {
+                                elements.dbToolbar.classList.add('hidden');
+                            }
+                            if (elements.tableContent) {
+                                elements.tableContent.classList.add('hidden');
+                            }
+                            if (elements.welcomeScreen) {
+                                elements.welcomeScreen.classList.remove('hidden');
+                            }
+
+                            renderDatabaseList();
+                            renderTableSelector();
+                        }
+                    );
+                });
+            }
+
+            // Excel导出
+            if (elements.exportExcelBtn) {
+                elements.exportExcelBtn.addEventListener('click', () => {
+                    if (!currentDb || !currentTable) {
+                        alert('请先选择一个数据表');
+                        return;
+                    }
+
+                    const table = databases[currentDb].tables[currentTable];
+                    const columns = table.columns;
+                    const records = table.records || [];
+
+                    // 简单的CSV导出（实际应用中可以使用专业库导出Excel）
+                    let csvContent = columns.map(col => col.name).join(',') + '\n';
+
+                    records.forEach(record => {
+                        const row = columns.map(col => {
+                            const value = record[col.name] || '';
+                            // 处理包含逗号或引号的值
+                            if (value.includes(',') || value.includes('"')) {
+                                return `"${value.replace(/"/g, '""')}"`;
+                            }
+                            return value;
+                        });
+                        csvContent += row.join(',') + '\n';
+                    });
+
+                    // 创建下载链接
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `${currentTable}.csv`);
+                    link.style.visibility = 'hidden';
+
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            }
+
+            // Excel导入
+            if (elements.importExcelBtn) {
+                elements.importExcelBtn.addEventListener('click', () => {
+                    if (!currentDb || !currentTable) {
+                        alert('请先选择一个数据表');
+                        return;
+                    }
+
+                    showModal(
+                        '导入数据',
+                        `
+                                    <div class="space-y-4">
+                                        <p class="text-sm">请选择CSV文件进行导入，导入前请确保文件表头与表结构一致。</p>
+                                        <p class="text-sm text-danger">注意：导入将覆盖现有数据，请谨慎操作。</p>
+                                        <input type="file" id="excelFileInput" accept=".csv" class="w-full p-2 border border-light-2 rounded">
+                                    </div>
+                                `,
+                        () => {
+                            const fileInput = document.getElementById('excelFileInput');
+                            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                                alert('请选择一个CSV文件');
+                                return;
+                            }
+
+                            const file = fileInput.files[0];
+                            const reader = new FileReader();
+
+                            reader.onload = function (e) {
+                                try {
+                                    const content = e.target.result;
+                                    const lines = content.split('\n');
+                                    if (lines.length < 2) {
+                                        alert('CSV文件内容为空或格式不正确');
+                                        return;
+                                    }
+
+                                    // 获取表头
+                                    const headers = lines[0].split(',').map(header => header.trim());
+
+                                    // 获取表结构字段
+                                    const columns = databases[currentDb].tables[currentTable].columns;
+                                    const columnNames = columns.map(col => col.name);
+
+                                    // 验证表头是否匹配
+                                    if (!arraysEqual(headers, columnNames)) {
+                                        alert('CSV文件表头与表结构不匹配');
+                                        return;
+                                    }
+
+                                    // 解析数据
+                                    const newRecords = [];
+                                    const primaryKeyColumn = columns.find(col => col.primaryKey);
+
+                                    for (let i = 1; i < lines.length; i++) {
+                                        const line = lines[i].trim();
+                                        if (!line) continue;
+
+                                        const values = parseCSVLine(line);
+                                        const record = {};
+
+                                        headers.forEach((header, index) => {
+                                            record[header] = values[index] || '';
+                                        });
+
+                                        // 验证主键是否重复
+                                        if (primaryKeyColumn) {
+                                            const primaryKey = record[primaryKeyColumn.name];
+                                            if (newRecords.some(r => r[primaryKeyColumn.name] == primaryKey)) {
+                                                alert(`导入失败：第 ${i + 1} 行主键值 ${primaryKey} 重复`);
+                                                return;
+                                            }
+                                        }
+
+                                        newRecords.push(record);
+                                    }
+
+                                    // 替换现有数据
+                                    databases[currentDb].tables[currentTable].records = newRecords;
+                                    saveDatabases();
+                                    renderTableData();
+
+                                    alert(`导入成功，共导入 ${newRecords.length} 条记录`);
+                                } catch (error) {
+                                    alert(`导入失败：${error.message}`);
+                                }
+                            };
+
+                            reader.readAsText(file);
+                        }
+                    );
+                });
+            }
+        }
+
+        // 辅助函数：比较两个数组是否相等
+        function arraysEqual(arr1, arr2) {
+            if (arr1.length !== arr2.length) return false;
+            for (let i = 0; i < arr1.length; i++) {
+                if (arr1[i] !== arr2[i]) return false;
+            }
+            return true;
+        }
+
+        // 辅助函数：解析CSV行（处理包含逗号和引号的情况）
+        function parseCSVLine(line) {
+            const values = [];
+            let currentValue = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+
+                if (char === '"') {
+                    // 处理双引号转义
+                    if (i < line.length - 1 && line[i + 1] === '"') {
+                        currentValue += '"';
+                        i++; // 跳过下一个引号
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    // 遇到逗号且不在引号中，结束当前值
+                    values.push(currentValue);
+                    currentValue = '';
+                } else {
+                    currentValue += char;
+                }
+            }
+
+            // 添加最后一个值
+            values.push(currentValue);
+
+            return values;
+        }
+
+        // 初始化应用
+        function initApp() {
+            renderDatabaseList();
+
+            // 检查是否有数据库
+            if (Object.keys(databases).length === 0) {
+                elements.welcomeScreen.classList.remove('hidden');
+            } else {
+                elements.welcomeScreen.classList.add('hidden');
+                elements.dbToolbar.classList.remove('hidden');
+            }
+
+            initEventListeners();
+        }
+
+        // 启动应用
+        initApp();
+    </script>
+</body>
+</html>
