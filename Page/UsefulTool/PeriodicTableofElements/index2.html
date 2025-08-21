@@ -499,20 +499,15 @@
             let totalElectrons = 0;
 
             // 处理稀有气体核心简写（如[He] 2s²）
-            const nobleGasMatch = config.match(/
-([A−Za−z]+)
-/);
-            if (nobleGasMatch) {
-                // 映射稀有气体到电子数
-                const nobleGases = {
-                    'He': 2, 'Ne': 10, 'Ar': 18, 'Kr': 36,
-                    'Xe': 54, 'Rn': 86, 'Og': 118
-                };
-                totalElectrons = nobleGases[nobleGasMatch[1]] || 0;
-                config = config.replace(/
-([A−Za−z]+)
-/, '');
-            }
+            const nobleGasMatch = config.match(/\[([A-Za-z]+)\]/);
+ if (nobleGasMatch) {
+ const nobleGases = {
+ 'He': 2, 'Ne': 10, 'Ar': 18, 'Kr': 36,
+ 'Xe': 54, 'Rn': 86, 'Og': 118
+ };
+ totalElectrons = nobleGases[nobleGasMatch[1]] || 0;
+ config = config.replace(/\[([A-Za-z]+)\]/, '');
+ }
 
             // 解析剩余部分
             const electronMatches = config.match(/(\d+)[spdf](\d+)/g);
