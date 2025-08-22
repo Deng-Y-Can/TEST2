@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高级调色助手 | 专业颜色混合计算器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F46E5', // 深紫蓝色作为主色调
+            secondary: '#10B981', // 绿色作为辅助色
+            accent: '#F59E0B', // 橙色作为强调色
+            neutral: '#64748B',
+            dark: '#1E293B',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .shadow-soft {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      .transition-smooth {
+        transition: all 0.3s ease;
+      }
+      .input-focus {
+        @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none;
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      }
+      .color-item-hover {
+        @apply hover:shadow-md hover:border-primary/30 transition-smooth;
+      }
+    }
+  </style>
+</head>
+<body class="font-inter bg-gray-50 min-h-screen text-dark">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-eyedropper text-primary text-2xl"></i>
+        <h1 class="text-xl md:text-2xl font-bold text-dark">高级调色助手</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button id="savePresetBtn" class="hidden md:flex items-center text-sm text-primary hover:text-primary/80 transition-smooth">
+          <i class="fa fa-save mr-1"></i> 保存方案
+        </button>
+        <button id="loadPresetBtn" class="hidden md:flex items-center text-sm text-primary hover:text-primary/80 transition-smooth">
+          <i class="fa fa-folder-open mr-1"></i> 加载方案
+        </button>
+        <button id="helpBtn" class="flex items-center text-sm text-neutral hover:text-primary transition-smooth">
+          <i class="fa fa-question-circle"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- 介绍卡片 -->
+    <div class="bg-white rounded-xl shadow-soft p-6 mb-8">
+      <h2 class="text-xl font-semibold mb-2 flex items-center">
+        <i class="fa fa-info-circle text-primary mr-2"></i>调色功能
+      </h2>
+      <p class="text-neutral mb-4">通过添加不同颜色及其克重，精确计算混合后的颜色。支持修改已添加颜色的克重，实时查看混合结果。</p>
+      <div class="flex flex-wrap gap-4 text-sm">
+        <div class="flex items-center">
+          <i class="fa fa-check-circle text-secondary mr-1"></i>
+          <span>选择颜色并输入克重</span>
+        </div>
+        <div class="flex items-center">
+          <i class="fa fa-check-circle text-secondary mr-1"></i>
+          <span>添加后可随时修改克重</span>
+        </div>
+        <div class="flex items-center">
+          <i class="fa fa-check-circle text-secondary mr-1"></i>
+          <span>支持保存和加载调色方案</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- 左侧：添加颜色区域 -->
+      <div class="lg:col-span-1 space-y-6">
+        <!-- 添加颜色卡片 -->
+        <div class="bg-white rounded-xl shadow-soft p-6">
+          <h2 class="text-lg font-semibold mb-4 pb-2 border-b border-gray-100">添加颜色</h2>
+          
+          <div class="space-y-4">
+            <!-- 颜色选择器 -->
+            <div>
+              <label for="colorPicker" class="block text-sm font-medium text-neutral mb-1">选择颜色</label>
+              <div class="flex items-center space-x-3">
+                <input 
+                  type="color" 
+                  id="colorPicker" 
+                  class="w-12 h-12 rounded border-2 border-gray-200 cursor-pointer transition-smooth hover:border-primary"
+                  value="#ff0000"
+                >
+                <div id="currentColorCode" class="text-sm font-mono bg-gray-100 px-3 py-1.5 rounded">
+                  #FF0000
+                </div>
+              </div>
+            </div>
+            
+            <!-- 重量输入 -->
+            <div>
+              <label for="weightInput" class="block text-sm font-medium text-neutral mb-1">克重 (g)</label>
+              <div class="relative">
+                <input 
+                  type="number" 
+                  id="weightInput" 
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md input-focus transition-smooth"
+                  min="0.01" 
+                  step="0.01" 
+                  value="1.00"
+                >
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral">
+                  g
+                </div>
+              </div>
+            </div>
+            
+            <!-- 添加按钮 -->
+            <button 
+              id="addColorBtn" 
+              class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition-smooth flex items-center justify-center space-x-2 mt-2"
+            >
+              <i class="fa fa-plus"></i>
+              <span>添加到混合</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="flex space-x-3">
+          <button 
+            id="resetBtn" 
+            class="flex-1 bg-gray-200 hover:bg-gray-300 text-dark font-medium py-2 px-4 rounded-md transition-smooth flex items-center justify-center space-x-2"
+          >
+            <i class="fa fa-refresh"></i>
+            <span>重置</span>
+          </button>
+          <button 
+            id="removeLastBtn" 
+            class="flex-1 bg-gray-200 hover:bg-gray-300 text-dark font-medium py-2 px-4 rounded-md transition-smooth flex items-center justify-center space-x-2"
+            disabled
+          >
+            <i class="fa fa-trash"></i>
+            <span>移除最后一个</span>
+          </button>
+        </div>
+        
+        <!-- 最近使用的颜色 -->
+        <div class="bg-white rounded-xl shadow-soft p-6">
+          <h2 class="text-lg font-semibold mb-4 pb-2 border-b border-gray-100 flex items-center">
+            <i class="fa fa-history text-accent mr-2"></i>最近使用
+          </h2>
+          <div id="recentColors" class="flex flex-wrap gap-2">
+            <div class="text-center text-neutral text-sm py-4 w-full">
+              暂无使用记录
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 右侧：结果区域 -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- 混合结果 -->
+        <div class="bg-white rounded-xl shadow-soft p-6">
+          <h2 class="text-lg font-semibold mb-4 pb-2 border-b border-gray-100 flex items-center justify-between">
+            <span>混合结果</span>
+            <button id="randomMixBtn" class="text-sm text-accent hover:text-accent/80 transition-smooth flex items-center">
+              <i class="fa fa-random mr-1"></i> 随机混合
+            </button>
+          </h2>
+          
+          <!-- 混合颜色预览 -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-neutral mb-2">混合颜色</label>
+            <div 
+              id="mixedColorPreview" 
+              class="w-full h-40 md:h-56 rounded-lg border border-gray-200 transition-smooth shadow-inner"
+              style="background-color: #FFFFFF;"
+            ></div>
+          </div>
+          
+          <!-- 颜色代码 -->
+          <div>
+            <label class="block text-sm font-medium text-neutral mb-2">颜色代码</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <!-- RGB -->
+              <div class="flex items-center bg-gray-50 rounded-md p-2 border border-gray-200">
+                <span class="text-xs font-medium text-neutral w-16">RGB:</span>
+                <span id="rgbCode" class="flex-1 text-sm font-mono">rgb(255, 255, 255)</span>
+                <button class="copy-btn text-primary hover:text-primary/80 p-1.5 transition-smooth" data-target="rgbCode">
+                  <i class="fa fa-copy"></i>
+                </button>
+              </div>
+              
+              <!-- RGBA -->
+              <div class="flex items-center bg-gray-50 rounded-md p-2 border border-gray-200">
+                <span class="text-xs font-medium text-neutral w-16">RGBA:</span>
+                <span id="rgbaCode" class="flex-1 text-sm font-mono">rgba(255, 255, 255, 1)</span>
+                <button class="copy-btn text-primary hover:text-primary/80 p-1.5 transition-smooth" data-target="rgbaCode">
+                  <i class="fa fa-copy"></i>
+                </button>
+              </div>
+              
+              <!-- HEX -->
+              <div class="flex items-center bg-gray-50 rounded-md p-2 border border-gray-200">
+                <span class="text-xs font-medium text-neutral w-16">HEX:</span>
+                <span id="hexCode" class="flex-1 text-sm font-mono">#FFFFFF</span>
+                <button class="copy-btn text-primary hover:text-primary/80 p-1.5 transition-smooth" data-target="hexCode">
+                  <i class="fa fa-copy"></i>
+                </button>
+              </div>
+              
+              <!-- HSL -->
+              <div class="flex items-center bg-gray-50 rounded-md p-2 border border-gray-200">
+                <span class="text-xs font-medium text-neutral w-16">HSL:</span>
+                <span id="hslCode" class="flex-1 text-sm font-mono">hsl(0, 0%, 100%)</span>
+                <button class="copy-btn text-primary hover:text-primary/80 p-1.5 transition-smooth" data-target="hslCode">
+                  <i class="fa fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 已添加颜色列表 -->
+        <div class="bg-white rounded-xl shadow-soft p-6">
+          <h2 class="text-lg font-semibold mb-4 pb-2 border-b border-gray-100 flex items-center justify-between">
+            <span>已添加颜色</span>
+            <div class="flex items-center space-x-2">
+              <button id="sortColorsBtn" class="text-sm text-neutral hover:text-primary transition-smooth">
+                <i class="fa fa-sort"></i> 排序
+              </button>
+              <span id="totalCount" class="text-sm font-normal text-neutral">0 种颜色</span>
+            </div>
+          </h2>
+          
+          <div id="colorsList" class="space-y-3 max-h-64 overflow-y-auto pr-1">
+            <!-- 初始状态提示 -->
+            <div class="text-center text-neutral py-10">
+              <i class="fa fa-paint-brush text-3xl mb-2 opacity-30"></i>
+              <p>尚未添加任何颜色</p>
+            </div>
+          </div>
+          
+          <!-- 总计信息和占比图表 -->
+          <div id="totalInfoContainer" class="mt-4 pt-4 border-t border-gray-100 hidden">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+              <div>
+                <span class="font-medium">总重量:</span>
+                <span id="totalWeight" class="font-semibold ml-1">0.00 g</span>
+              </div>
+              <button id="showRatioBtn" class="text-sm text-primary hover:text-primary/80 transition-smooth flex items-center">
+                <i class="fa fa-pie-chart mr-1"></i> 查看占比
+              </button>
+            </div>
+            
+            <!-- 占比图表 -->
+            <div id="ratioChart" class="hidden bg-gray-50 p-4 rounded-lg border border-gray-200 mb-2">
+              <h3 class="text-sm font-medium mb-3">颜色占比</h3>
+              <div class="flex flex-wrap gap-3" id="ratioBars">
+                <!-- 占比条将在这里动态生成 -->
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 保存的调色方案 -->
+        <div class="bg-white rounded-xl shadow-soft p-6">
+          <h2 class="text-lg font-semibold mb-4 pb-2 border-b border-gray-100">
+            保存的调色方案
+          </h2>
+          
+          <div id="savedPresets" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+            <div class="text-center text-neutral text-sm py-4">
+              暂无保存的方案
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 底部信息 -->
+  <footer class="bg-white border-t border-gray-200 mt-12">
+    <div class="container mx-auto px-4 py-6 text-center text-neutral text-sm">
+      <p>高级调色助手 &copy; 2025 | 专业的颜色混合计算工具</p>
+    </div>
+  </footer>
+
+  <!-- 模态框：帮助 -->
+  <div id="helpModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[80vh] overflow-y-auto m-4">
+      <div class="p-6 border-b border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">使用帮助</h3>
+          <button id="closeHelpBtn" class="text-neutral hover:text-dark transition-smooth">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+        <div class="space-y-4 text-sm">
+          <div>
+            <h4 class="font-medium mb-1">基本操作</h4>
+            <p>选择颜色，输入克重，点击"添加到混合"按钮即可将颜色添加到混合列表中。</p>
+          </div>
+          <div>
+            <h4 class="font-medium mb-1">修改克重</h4>
+            <p>已添加的颜色可以直接点击克重数值进行修改，修改后自动更新混合结果。</p>
+          </div>
+          <div>
+            <h4 class="font-medium mb-1">颜色排序</h4>
+            <p>点击"排序"按钮可以按照克重从大到小或从小到大排序颜色列表。</p>
+          </div>
+          <div>
+            <h4 class="font-medium mb-1">保存方案</h4>
+            <p>可以将当前的调色方案保存起来，方便以后再次使用。</p>
+          </div>
+          <div>
+            <h4 class="font-medium mb-1">颜色占比</h4>
+            <p>点击"查看占比"可以查看每种颜色在混合中所占的比例。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框：保存方案 -->
+  <div id="savePresetModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-xl shadow-lg max-w-md w-full m-4">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">保存调色方案</h3>
+          <button id="closeSavePresetBtn" class="text-neutral hover:text-dark transition-smooth">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label for="presetName" class="block text-sm font-medium text-neutral mb-1">方案名称</label>
+            <input 
+              type="text" 
+              id="presetName" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md input-focus transition-smooth"
+              placeholder="例如：淡蓝色调配方案"
+            >
+          </div>
+          <div>
+            <label for="presetDescription" class="block text-sm font-medium text-neutral mb-1">描述（可选）</label>
+            <textarea 
+              id="presetDescription" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md input-focus transition-smooth"
+              rows="3"
+              placeholder="添加一些描述信息..."
+            ></textarea>
+          </div>
+          <button id="confirmSavePresetBtn" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition-smooth">
+            保存方案
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知提示 -->
+  <div id="notification" class="fixed bottom-4 right-4 bg-dark text-white px-4 py-3 rounded-md shadow-lg transform translate-y-20 opacity-0 transition-smooth flex items-center space-x-2 z-50">
+    <i class="fa fa-check-circle text-secondary"></i>
+    <span id="notificationText">操作成功</span>
+  </div>
+
+  <script>
+    // 存储颜色数据的数组
+    let colorData = [];
+    let sortAscending = true; // 排序方向：true为升序，false为降序
+    let recentColors = []; // 最近使用的颜色
+    let savedPresets = JSON.parse(localStorage.getItem('colorMixPresets')) || []; // 保存的调色方案
+    
+    // DOM 元素
+    const colorPicker = document.getElementById('colorPicker');
+    const currentColorCode = document.getElementById('currentColorCode');
+    const weightInput = document.getElementById('weightInput');
+    const addColorBtn = document.getElementById('addColorBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const removeLastBtn = document.getElementById('removeLastBtn');
+    const colorsList = document.getElementById('colorsList');
+    const totalCount = document.getElementById('totalCount');
+    const totalInfoContainer = document.getElementById('totalInfoContainer');
+    const totalWeight = document.getElementById('totalWeight');
+    const mixedColorPreview = document.getElementById('mixedColorPreview');
+    const rgbCode = document.getElementById('rgbCode');
+    const rgbaCode = document.getElementById('rgbaCode');
+    const hexCode = document.getElementById('hexCode');
+    const hslCode = document.getElementById('hslCode');
+    const copyButtons = document.querySelectorAll('.copy-btn');
+    const notification = document.getElementById('notification');
+    const notificationText = document.getElementById('notificationText');
+    const sortColorsBtn = document.getElementById('sortColorsBtn');
+    const showRatioBtn = document.getElementById('showRatioBtn');
+    const ratioChart = document.getElementById('ratioChart');
+    const ratioBars = document.getElementById('ratioBars');
+    const recentColorsContainer = document.getElementById('recentColors');
+    const randomMixBtn = document.getElementById('randomMixBtn');
+    const helpBtn = document.getElementById('helpBtn');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelpBtn = document.getElementById('closeHelpBtn');
+    const savePresetBtn = document.getElementById('savePresetBtn');
+    const loadPresetBtn = document.getElementById('loadPresetBtn');
+    const savePresetModal = document.getElementById('savePresetModal');
+    const closeSavePresetBtn = document.getElementById('closeSavePresetBtn');
+    const confirmSavePresetBtn = document.getElementById('confirmSavePresetBtn');
+    const presetNameInput = document.getElementById('presetName');
+    const presetDescriptionInput = document.getElementById('presetDescription');
+    const savedPresetsContainer = document.getElementById('savedPresets');
+    
+    // 初始化
+    init();
+    
+    function init() {
+      // 加载保存的方案列表
+      updateSavedPresetsList();
+    }
+    
+    // 更新当前选择的颜色代码
+    colorPicker.addEventListener('input', () => {
+      currentColorCode.textContent = colorPicker.value.toUpperCase();
+    });
+    
+    // 添加颜色到混合列表
+    addColorBtn.addEventListener('click', () => {
+      const color = colorPicker.value;
+      const weight = parseFloat(weightInput.value);
+      
+      // 验证输入
+      if (isNaN(weight) || weight <= 0) {
+        showNotification('请输入有效的克重', 'error');
+        return;
+      }
+      
+      // 添加到数据数组
+      colorData.push({
+        id: Date.now(), // 使用时间戳作为唯一ID
+        color,
+        weight
+      });
+      
+      // 添加到最近使用的颜色
+      addToRecentColors(color);
+      
+      // 更新UI
+      updateColorsList();
+      updateMixedColor();
+      updateTotalInfo();
+      updateRecentColorsDisplay();
+      
+      // 重置输入框
+      weightInput.value = "1.00";
+      
+      // 按钮动画效果
+      addColorBtn.classList.add('scale-95');
+      setTimeout(() => addColorBtn.classList.remove('scale-95'), 150);
+    });
+    
+    // 重置所有数据
+    resetBtn.addEventListener('click', () => {
+      colorData = [];
+      updateColorsList();
+      updateMixedColor();
+      updateTotalInfo();
+      
+      // 重置颜色选择器和输入框
+      colorPicker.value = "#ff0000";
+      currentColorCode.textContent = "#FF0000";
+      weightInput.value = "1.00";
+      
+      showNotification('已重置所有颜色');
+    });
+    
+    // 移除最后添加的颜色
+    removeLastBtn.addEventListener('click', () => {
+      if (colorData.length > 0) {
+        colorData.pop();
+        updateColorsList();
+        updateMixedColor();
+        updateTotalInfo();
+        showNotification('已移除最后一个颜色');
+      }
+    });
+    
+    // 更新颜色列表UI
+    function updateColorsList() {
+      // 清空列表
+      colorsList.innerHTML = '';
+      
+      // 如果没有颜色数据，显示提示信息
+      if (colorData.length === 0) {
+        colorsList.innerHTML = `
+          <div class="text-center text-neutral py-10">
+            <i class="fa fa-paint-brush text-3xl mb-2 opacity-30"></i>
+            <p>尚未添加任何颜色</p>
+          </div>
+        `;
+        removeLastBtn.disabled = true;
+        removeLastBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        return;
+      }
+      
+      // 启用移除按钮
+      removeLastBtn.disabled = false;
+      removeLastBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      
+      // 添加颜色项
+      colorData.forEach((item) => {
+        const colorItem = document.createElement('div');
+        colorItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200 color-item-hover';
+        colorItem.dataset.id = item.id;
+        
+        // 解析HEX颜色为RGB
+        const hex = item.color.replace('#', '');
+        const red = parseInt(hex.substring(0, 2), 16);
+        const green = parseInt(hex.substring(2, 4), 16);
+        const blue = parseInt(hex.substring(4, 6), 16);
+        
+        // 计算文本颜色（基于背景色亮度决定黑白文字）
+        const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+        const textColor = luminance > 0.5 ? 'text-black' : 'text-white';
+        
+        colorItem.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-full border border-gray-300" style="background-color: ${item.color}"></div>
+            <div>
+              <div class="text-sm font-medium">${item.color.toUpperCase()}</div>
+              <div class="flex items-center space-x-2">
+                <input type="number" class="weight-input w-20 text-sm px-2 py-1 border border-gray-300 rounded input-focus" 
+                       value="${item.weight.toFixed(2)}" min="0.01" step="0.01" data-id="${item.id}">
+                <span class="text-xs text-neutral">g</span>
+                <span class="text-xs text-neutral">(占比: <span class="weight-ratio">0%</span>)</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button class="move-up-btn text-neutral hover:text-primary p-1 transition-smooth" data-id="${item.id}">
+              <i class="fa fa-arrow-up"></i>
+            </button>
+            <button class="move-down-btn text-neutral hover:text-primary p-1 transition-smooth" data-id="${item.id}">
+              <i class="fa fa-arrow-down"></i>
+            </button>
+            <button class="remove-item text-neutral hover:text-red-500 p-1 transition-smooth" data-id="${item.id}">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+        `;
+        
+        colorsList.appendChild(colorItem);
+      });
+      
+      // 更新占比显示
+      updateWeightRatios();
+      
+      // 添加事件监听器
+      attachColorItemEvents();
+    }
+    
+    // 为颜色项添加事件监听器
+    function attachColorItemEvents() {
+      // 重量输入框事件
+      document.querySelectorAll('.weight-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          const newWeight = parseFloat(e.currentTarget.value);
+          
+          if (!isNaN(newWeight) && newWeight > 0) {
+            const item = colorData.find(item => item.id === id);
+            if (item) {
+              item.weight = newWeight;
+              updateMixedColor();
+              updateTotalInfo();
+              updateWeightRatios();
+              showNotification('已更新克重');
+            }
+          } else {
+            // 恢复原来的值
+            const item = colorData.find(item => item.id === id);
+            e.currentTarget.value = item ? item.weight.toFixed(2) : "1.00";
+            showNotification('请输入有效的克重', 'error');
+          }
+        });
+        
+        // 按Enter键时失去焦点，触发change事件
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            input.blur();
+          }
+        });
+      });
+      
+      // 移除单个颜色
+      document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          colorData = colorData.filter(item => item.id !== id);
+          updateColorsList();
+          updateMixedColor();
+          updateTotalInfo();
+          showNotification('已移除颜色');
+        });
+      });
+      
+      // 上移颜色
+      document.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          const index = colorData.findIndex(item => item.id === id);
+          
+          if (index > 0) {
+            // 交换位置
+            [colorData[index], colorData[index - 1]] = [colorData[index - 1], colorData[index]];
+            updateColorsList();
+          }
+        });
+      });
+      
+      // 下移颜色
+      document.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          const index = colorData.findIndex(item => item.id === id);
+          
+          if (index < colorData.length - 1) {
+            // 交换位置
+            [colorData[index], colorData[index + 1]] = [colorData[index + 1], colorData[index]];
+            updateColorsList();
+          }
+        });
+      });
+    }
+    
+    // 更新重量占比
+    function updateWeightRatios() {
+      if (colorData.length === 0) return;
+      
+      const total = colorData.reduce((sum, item) => sum + item.weight, 0);
+      
+      colorData.forEach((item, index) => {
+        const ratio = (item.weight / total) * 100;
+        const ratioElements = document.querySelectorAll('.weight-ratio');
+        if (ratioElements[index]) {
+          ratioElements[index].textContent = `${ratio.toFixed(1)}%`;
+        }
+      });
+    }
+    
+    // 更新总计信息
+    function updateTotalInfo() {
+      totalCount.textContent = `${colorData.length} 种颜色`;
+      
+      if (colorData.length === 0) {
+        totalInfoContainer.classList.add('hidden');
+        return;
+      }
+      
+      totalInfoContainer.classList.remove('hidden');
+      
+      // 计算总重量
+      const total = colorData.reduce((sum, item) => sum + item.weight, 0);
+      totalWeight.textContent = `${total.toFixed(2)} g`;
+      
+      // 更新占比图表
+      updateRatioChart();
+    }
+    
+    // 更新占比图表
+    function updateRatioChart() {
+      if (colorData.length === 0) return;
+      
+      ratioBars.innerHTML = '';
+      const total = colorData.reduce((sum, item) => sum + item.weight, 0);
+      
+      colorData.forEach(item => {
+        const ratio = (item.weight / total) * 100;
+        const bar = document.createElement('div');
+        bar.className = 'w-full md:w-auto flex-1 min-w-[120px]';
+        
+        // 计算文本颜色（基于背景色亮度决定黑白文字）
+        const hex = item.color.replace('#', '');
+        const red = parseInt(hex.substring(0, 2), 16);
+        const green = parseInt(hex.substring(2, 4), 16);
+        const blue = parseInt(hex.substring(4, 6), 16);
+        const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+        const textColor = luminance > 0.5 ? 'text-black' : 'text-white';
+        
+        bar.innerHTML = `
+          <div class="text-xs mb-1 flex justify-between">
+            <span>${item.color.toUpperCase()}</span>
+            <span>${ratio.toFixed(1)}%</span>
+          </div>
+          <div class="h-6 bg-gray-200 rounded-full overflow-hidden">
+            <div class="h-full rounded-full ${textColor}" style="width: ${ratio}%; background-color: ${item.color}"></div>
+          </div>
+        `;
+        
+        ratioBars.appendChild(bar);
+      });
+    }
+    
+    // 切换占比图表显示
+    showRatioBtn.addEventListener('click', () => {
+      ratioChart.classList.toggle('hidden');
+      showRatioBtn.innerHTML = ratioChart.classList.contains('hidden') 
+        ? '<i class="fa fa-pie-chart mr-1"></i> 查看占比' 
+        : '<i class="fa fa-chevron-up mr-1"></i> 收起占比';
+    });
+    
+    // 更新混合颜色
+    function updateMixedColor() {
+      // 如果没有颜色，默认为白色
+      if (colorData.length === 0) {
+        mixedColorPreview.style.backgroundColor = '#FFFFFF';
+        updateColorCodes(255, 255, 255, 1);
+        return;
+      }
+      
+      // 计算总重量
+      const totalWeight = colorData.reduce((sum, item) => sum + item.weight, 0);
+      
+      // 计算每种颜色的RGB值及其加权平均
+      let r = 0, g = 0, b = 0;
+      
+      colorData.forEach(item => {
+        // 解析HEX颜色为RGB
+        const hex = item.color.replace('#', '');
+        const red = parseInt(hex.substring(0, 2), 16);
+        const green = parseInt(hex.substring(2, 4), 16);
+        const blue = parseInt(hex.substring(4, 6), 16);
+        
+        // 计算权重
+        const weightRatio = item.weight / totalWeight;
+        
+        // 累加加权值
+        r += red * weightRatio;
+        g += green * weightRatio;
+        b += blue * weightRatio;
+      });
+      
+      // 四舍五入到整数
+      r = Math.round(r);
+      g = Math.round(g);
+      b = Math.round(b);
+      
+      // 更新预览颜色
+      const mixedHex = rgbToHex(r, g, b);
+      mixedColorPreview.style.backgroundColor = mixedHex;
+      
+      // 添加边框颜色以增强对比度
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      mixedColorPreview.style.borderColor = luminance > 0.5 ? '#ddd' : '#555';
+      
+      // 更新颜色代码显示
+      updateColorCodes(r, g, b, 1);
+    }
+    
+    // 更新颜色代码显示
+    function updateColorCodes(r, g, b, a) {
+      // RGB
+      rgbCode.textContent = `rgb(${r}, ${g}, ${b})`;
+      
+      // RGBA
+      rgbaCode.textContent = `rgba(${r}, ${g}, ${b}, ${a})`;
+      
+      // HEX
+      const hex = rgbToHex(r, g, b);
+      hexCode.textContent = hex;
+      
+      // HSL
+      const hsl = rgbToHsl(r, g, b);
+      hslCode.textContent = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+    }
+    
+    // RGB转HEX
+    function rgbToHex(r, g, b) {
+      return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+    }
+    
+    // RGB转HSL
+    function rgbToHsl(r, g, b) {
+      r /= 255;
+      g /= 255;
+      b /= 255;
+      
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      
+      if (max === min) {
+        h = s = 0; // 灰色
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        
+        h *= 60;
+      }
+      
+      return {
+        h: Math.round(h),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100)
+      };
+    }
+    
+    // 复制颜色代码功能
+    copyButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const targetId = e.currentTarget.dataset.target;
+        const textToCopy = document.getElementById(targetId).textContent;
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showNotification(`已复制: ${textToCopy}`);
+        }).catch(err => {
+          showNotification('复制失败，请手动复制', 'error');
+          console.error('复制失败:', err);
+        });
+      });
+    });
+    
+    // 排序颜色
+    sortColorsBtn.addEventListener('click', () => {
+      if (colorData.length <= 1) return;
+      
+      // 切换排序方向
+      sortAscending = !sortAscending;
+      
+      // 按重量排序
+      colorData.sort((a, b) => {
+        return sortAscending ? a.weight - b.weight : b.weight - a.weight;
+      });
+      
+      // 更新排序按钮图标
+      sortColorsBtn.innerHTML = sortAscending 
+        ? '<i class="fa fa-sort-amount-asc"></i> 升序' 
+        : '<i class="fa fa-sort-amount-desc"></i> 降序';
+      
+      updateColorsList();
+      showNotification(`已按${sortAscending ? '升序' : '降序'}排序`);
+    });
+    
+    // 添加到最近使用的颜色
+    function addToRecentColors(color) {
+      // 去重并限制数量
+      const index = recentColors.indexOf(color);
+      if (index !== -1) {
+        recentColors.splice(index, 1); // 移除已存在的，稍后添加到前面
+      }
+      
+      recentColors.unshift(color); // 添加到开头
+      
+      // 限制最多显示12种最近使用的颜色
+      if (recentColors.length > 12) {
+        recentColors.pop();
+      }
+    }
+    
+    // 更新最近使用的颜色显示
+    function updateRecentColorsDisplay() {
+      if (recentColors.length === 0) {
+        recentColorsContainer.innerHTML = `
+          <div class="text-center text-neutral text-sm py-4 w-full">
+            暂无使用记录
+          </div>
+        `;
+        return;
+      }
+      
+      recentColorsContainer.innerHTML = '';
+      
+      recentColors.forEach(color => {
+        const colorEl = document.createElement('div');
+        colorEl.className = 'w-8 h-8 rounded-full cursor-pointer border border-gray-300 transition-smooth hover:scale-110 hover:shadow-md';
+        colorEl.style.backgroundColor = color;
+        colorEl.title = color;
+        
+        // 点击最近使用的颜色时选中它
+        colorEl.addEventListener('click', () => {
+          colorPicker.value = color;
+          currentColorCode.textContent = color.toUpperCase();
+        });
+        
+        recentColorsContainer.appendChild(colorEl);
+      });
+    }
+    
+    // 随机混合颜色
+    randomMixBtn.addEventListener('click', () => {
+      // 生成3-5种随机颜色
+      const count = Math.floor(Math.random() * 3) + 3;
+      colorData = [];
+      
+      for (let i = 0; i < count; i++) {
+        // 生成随机颜色
+        const color = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+        // 生成随机重量 (1-10克)
+        const weight = (Math.random() * 9 + 1).toFixed(2);
+        
+        colorData.push({
+          id: Date.now() + i,
+          color,
+          weight: parseFloat(weight)
+        });
+        
+        // 添加到最近使用
+        addToRecentColors(color);
+      }
+      
+      // 更新UI
+      updateColorsList();
+      updateMixedColor();
+      updateTotalInfo();
+      updateRecentColorsDisplay();
+      
+      showNotification('已生成随机混合方案');
+    });
+    
+    // 帮助模态框
+    helpBtn.addEventListener('click', () => {
+      helpModal.classList.remove('hidden');
+      helpModal.classList.add('flex');
+    });
+    
+    closeHelpBtn.addEventListener('click', () => {
+      helpModal.classList.remove('flex');
+      helpModal.classList.add('hidden');
+    });
+    
+    // 点击模态框外部关闭
+    helpModal.addEventListener('click', (e) => {
+      if (e.target === helpModal) {
+        helpModal.classList.remove('flex');
+        helpModal.classList.add('hidden');
+      }
+    });
+    
+    // 保存方案模态框
+    savePresetBtn.addEventListener('click', () => {
+      if (colorData.length === 0) {
+        showNotification('请先添加颜色再保存方案', 'error');
+        return;
+      }
+      
+      // 清空输入框
+      presetNameInput.value = '';
+      presetDescriptionInput.value = '';
+      
+      // 显示模态框
+      savePresetModal.classList.remove('hidden');
+      savePresetModal.classList.add('flex');
+      
+      // 自动聚焦到名称输入框
+      setTimeout(() => presetNameInput.focus(), 300);
+    });
+    
+    closeSavePresetBtn.addEventListener('click', () => {
+      savePresetModal.classList.remove('flex');
+      savePresetModal.classList.add('hidden');
+    });
+    
+    // 点击模态框外部关闭
+    savePresetModal.addEventListener('click', (e) => {
+      if (e.target === savePresetModal) {
+        savePresetModal.classList.remove('flex');
+        savePresetModal.classList.add('hidden');
+      }
+    });
+    
+    // 确认保存方案
+    confirmSavePresetBtn.addEventListener('click', () => {
+      const name = presetNameInput.value.trim();
+      const description = presetDescriptionInput.value.trim();
+      
+      if (!name) {
+        showNotification('请输入方案名称', 'error');
+        presetNameInput.focus();
+        return;
+      }
+      
+      // 创建方案对象
+      const preset = {
+        id: Date.now(),
+        name,
+        description,
+        colors: [...colorData],
+        createdAt: new Date().toISOString(),
+        mixedColor: hexCode.textContent
+      };
+      
+      // 添加到保存的方案
+      savedPresets.unshift(preset);
+      
+      // 限制最多保存10个方案
+      if (savedPresets.length > 10) {
+        savedPresets.pop();
+      }
+      
+      // 保存到本地存储
+      localStorage.setItem('colorMixPresets', JSON.stringify(savedPresets));
+      
+      // 更新UI
+      updateSavedPresetsList();
+      
+      // 关闭模态框
+      savePresetModal.classList.remove('flex');
+      savePresetModal.classList.add('hidden');
+      
+      showNotification(`已保存方案: ${name}`);
+    });
+    
+    // 更新保存的方案列表
+    function updateSavedPresetsList() {
+      if (savedPresets.length === 0) {
+        savedPresetsContainer.innerHTML = `
+          <div class="text-center text-neutral text-sm py-4">
+            暂无保存的方案
+          </div>
+        `;
+        return;
+      }
+      
+      savedPresetsContainer.innerHTML = '';
+      
+      savedPresets.forEach(preset => {
+        const presetEl = document.createElement('div');
+        presetEl.className = 'flex items-center justify-between p-2 bg-gray-50 rounded-md border border-gray-200 color-item-hover';
+        
+        // 格式化日期
+        const date = new Date(preset.createdAt);
+        const formattedDate = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+        
+        presetEl.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-6 h-6 rounded-full border border-gray-300" style="background-color: ${preset.mixedColor}"></div>
+            <div>
+              <div class="text-sm font-medium">${preset.name}</div>
+              <div class="text-xs text-neutral">${preset.colors.length}种颜色 · ${formattedDate}</div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button class="load-preset-btn text-primary hover:text-primary/80 p-1 transition-smooth" data-id="${preset.id}" title="加载方案">
+              <i class="fa fa-download"></i>
+            </button>
+            <button class="delete-preset-btn text-neutral hover:text-red-500 p-1 transition-smooth" data-id="${preset.id}" title="删除方案">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+        `;
+        
+        savedPresetsContainer.appendChild(presetEl);
+      });
+      
+      // 添加事件监听器
+      attachPresetEvents();
+    }
+    
+    // 为方案项添加事件监听器
+    function attachPresetEvents() {
+      // 加载方案
+      document.querySelectorAll('.load-preset-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          const preset = savedPresets.find(p => p.id === id);
+          
+          if (preset) {
+            colorData = [...preset.colors];
+            
+            // 更新UI
+            updateColorsList();
+            updateMixedColor();
+            updateTotalInfo();
+            
+            showNotification(`已加载方案: ${preset.name}`);
+          }
+        });
+      });
+      
+      // 删除方案
+      document.querySelectorAll('.delete-preset-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          const presetIndex = savedPresets.findIndex(p => p.id === id);
+          
+          if (presetIndex !== -1) {
+            const presetName = savedPresets[presetIndex].name;
+            savedPresets.splice(presetIndex, 1);
+            
+            // 保存到本地存储
+            localStorage.setItem('colorMixPresets', JSON.stringify(savedPresets));
+            
+            // 更新UI
+            updateSavedPresetsList();
+            
+            showNotification(`已删除方案: ${presetName}`);
+          }
+        });
+      });
+    }
+    
+    // 显示通知
+    function showNotification(message, type = 'success') {
+      notificationText.textContent = message;
+      
+      // 根据类型更改图标
+      const icon = notification.querySelector('i');
+      if (type === 'error') {
+        icon.className = 'fa fa-exclamation-circle text-red-500';
+      } else {
+        icon.className = 'fa fa-check-circle text-secondary';
+      }
+      
+      // 显示通知
+      notification.classList.remove('translate-y-20', 'opacity-0');
+      notification.classList.add('translate-y-0', 'opacity-100');
+      
+      // 3秒后隐藏
+      setTimeout(() => {
+        notification.classList.remove('translate-y-0', 'opacity-100');
+        notification.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+    
+    // 允许通过按Enter键添加颜色
+    weightInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        addColorBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>

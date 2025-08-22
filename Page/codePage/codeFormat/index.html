@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码格式化工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        dark: '#1E293B',
+                        light: '#F8FAFC',
+                        html: '#E34C26',
+                        css: '#264DE4',
+                        js: '#F0DB4F',
+                        csharp: '#178600'
+                    },
+                    fontFamily: {
+                        mono: ['Consolas', 'Monaco', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .code-block {
+                @apply font-mono text-sm p-4 rounded-md bg-dark text-light overflow-auto transition-all duration-300;
+            }
+            .language-badge {
+                @apply text-xs font-bold px-2 py-1 rounded-full text-white inline-block;
+            }
+            .btn-hover {
+                @apply transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-6 md:py-10 max-w-6xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">代码格式化工具</h1>
+            <p class="text-gray-600">精确控制C#缩进层级</p>
+        </header>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- 输入区域 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-lg">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-xl font-bold text-gray-800">输入代码</h2>
+                    <div class="flex items-center gap-3">
+                        <label for="language" class="text-gray-600 whitespace-nowrap">语言:</label>
+                        <select id="language" class="border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/50 bg-white">
+                            <option value="html" data-color="html">HTML</option>
+                            <option value="css" data-color="css">CSS</option>
+                            <option value="javascript" data-color="js">JavaScript</option>
+                            <option value="csharp" data-color="csharp" selected>C#</option>
+                        </select>
+                        <span id="language-indicator" class="language-badge bg-csharp">C#</span>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <textarea id="code-input" rows="16" 
+                            class="w-full p-3 border border-gray-200 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200 resize-none"
+                            placeholder="粘贴需要格式化的代码...">public class CatalogService{private void CreateBaseEntities(CatalogsReadBase catalogs){InitializeDefaultValues(catalogs);ValidateCatalogData(catalogs);}public void ProcessCatalogs(List<Catalog> catalogs){foreach(var catalog in catalogs){if(catalog.IsActive){ProcessSingleCatalog(catalog);}}}}</textarea>
+                    
+                    <div class="mt-4 flex flex-wrap gap-3 justify-end">
+                        <button id="clear-btn" 
+                                class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md btn-hover flex items-center">
+                            <i class="fa fa-eraser mr-2"></i>清空
+                        </button>
+                        <button id="format-btn" 
+                                class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md btn-hover flex items-center">
+                            <i class="fa fa-indent mr-2"></i>格式化代码
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 输出区域 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-lg">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-800">格式化结果</h2>
+                </div>
+                
+                <div class="p-6">
+                    <pre id="format-result" class="code-block min-h-[320px]">
+<code class="text-gray-500 italic"><i class="fa fa-code mr-2"></i>格式化后的代码将显示在这里...</code>
+                    </pre>
+                    <!-- 隐藏的文本区域，用于正确复制代码 -->
+                    <textarea id="hidden-copy-area" class="hidden"></textarea>
+                    
+                    <div class="mt-4 flex justify-end">
+                        <button id="copy-btn" disabled
+                                class="bg-secondary hover:bg-secondary/90 text-white font-medium py-2 px-4 rounded-md btn-hover flex items-center disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            <i class="fa fa-copy mr-2"></i>复制代码
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 示例代码 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800">示例代码</h2>
+            </div>
+            
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="border border-gray-100 rounded-lg p-4 hover:border-primary/30 transition-colors duration-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-medium text-gray-800">HTML</h3>
+                        <span class="language-badge bg-html text-[10px]">HTML</span>
+                    </div>
+                    <button class="example-btn text-sm text-primary mb-2 hover:text-primary/80 transition-colors" data-lang="html">
+                        加载示例
+                    </button>
+                    <pre class="code-block text-xs overflow-auto max-h-36 h-36"><code>&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;title&gt;Test&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;div class="container"&gt;&lt;h1&gt;Hello&lt;/h1&gt;&lt;p&gt;World&lt;/p&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;</code></pre>
+                </div>
+                
+                <div class="border border-gray-100 rounded-lg p-4 hover:border-primary/30 transition-colors duration-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-medium text-gray-800">CSS</h3>
+                        <span class="language-badge bg-css text-[10px]">CSS</span>
+                    </div>
+                    <button class="example-btn text-sm text-primary mb-2 hover:text-primary/80 transition-colors" data-lang="css">
+                        加载示例
+                    </button>
+                    <pre class="code-block text-xs overflow-auto max-h-36 h-36"><code>.container{display:flex;justify-content:center;align-items:center;padding:20px;}.container .box{width:100px;height:100px;background:red;margin:10px;}.container .box:hover{background:blue;transition:background 0.3s;}</code></pre>
+                </div>
+                
+                <div class="border border-gray-100 rounded-lg p-4 hover:border-primary/30 transition-colors duration-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-medium text-gray-800">JavaScript</h3>
+                        <span class="language-badge bg-js text-gray-800 text-[10px]">JS</span>
+                    </div>
+                    <button class="example-btn text-sm text-primary mb-2 hover:text-primary/80 transition-colors" data-lang="javascript">
+                        加载示例
+                    </button>
+                    <pre class="code-block text-xs overflow-auto max-h-36 h-36"><code>class ShoppingCart{constructor(){this.items=[];this.total=0;}addItem(product,quantity=1){if(!product.price||quantity<=0)return;const item={...product,quantity};this.items.push(item);this.calculateTotal();}calculateTotal(){this.total=this.items.reduce((sum,item)=>sum+(item.price*item.quantity),0);}}</code></pre>
+                </div>
+                
+                <div class="border border-gray-100 rounded-lg p-4 hover:border-primary/30 transition-colors duration-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-medium text-gray-800">C#</h3>
+                        <span class="language-badge bg-csharp text-[10px]">C#</span>
+                    </div>
+                    <button class="example-btn text-sm text-primary mb-2 hover:text-primary/80 transition-colors" data-lang="csharp">
+                        加载示例
+                    </button>
+                    <pre class="code-block text-xs overflow-auto max-h-36 h-36"><code>public class CatalogService{private void CreateBaseEntities(CatalogsReadBase catalogs){InitializeDefaultValues(catalogs);ValidateCatalogData(catalogs);}public void ProcessCatalogs(List<Catalog> catalogs){foreach(var catalog in catalogs){if(catalog.IsActive){ProcessSingleCatalog(catalog);}}}}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 代码格式化核心类 - 最终优化版，确保C#缩进正确
+        class CodeFormatter {
+            constructor() {
+                // 语言配置
+                this.languages = {
+                    html: { name: 'HTML', color: 'bg-html' },
+                    css: { name: 'CSS', color: 'bg-css' },
+                    javascript: { 
+                        name: 'JavaScript', 
+                        color: 'bg-js'
+                    },
+                    csharp: { 
+                        name: 'C#', 
+                        color: 'bg-csharp'
+                    }
+                };
+
+                // 格式化选项 - 缩进大小为4个空格
+                this.options = {
+                    indentSize: 4,
+                    alignCsharpMembers: true
+                };
+            }
+            
+            // 设置格式化选项
+            setOptions(options) {
+                this.options = { ...this.options, ...options };
+            }
+            
+            // 主格式化函数
+            format(code, language) {
+                try {
+                    if (!code.trim()) return '';
+                    
+                    // 处理HTML实体
+                    let decodedCode = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+                    
+                    let formattedCode;
+                    switch(language) {
+                        case 'html':
+                            formattedCode = this.formatHtml(decodedCode);
+                            break;
+                        case 'css':
+                            formattedCode = this.formatCss(decodedCode);
+                            break;
+                        case 'javascript':
+                            formattedCode = this.formatJavaScript(decodedCode);
+                            break;
+                        case 'csharp':
+                            formattedCode = this.formatCSharp(decodedCode);
+                            break;
+                        default:
+                            formattedCode = this.formatGeneric(decodedCode);
+                    }
+                    
+                    // 还原HTML实体用于显示
+                    return formattedCode
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+                } catch (error) {
+                    console.error('格式化错误:', error);
+                    throw new Error('格式化过程中出现错误，请检查代码语法');
+                }
+            }
+            
+            // C#格式化 - 精确控制缩进层级
+            formatCSharp(cs) {
+                const indentSize = this.options.indentSize;
+                let indentLevel = 0;
+                let formattedLines = [];
+                let currentLine = '';
+                let inString = false;
+                let stringChar = '';
+                let prevChar = '';
+                
+                // 预处理：移除多余空行和空格
+                const cleanedCode = cs
+                    .replace(/\n{3,}/g, '\n\n')
+                    .replace(/^\s+/, '')
+                    .replace(/\s+$/g, '');
+                
+                // 按字符处理代码
+                for (let i = 0; i < cleanedCode.length; i++) {
+                    const char = cleanedCode[i];
+                    prevChar = i > 0 ? cleanedCode[i-1] : '';
+                    
+                    // 处理字符串状态
+                    if ((char === '"' || char === "'") && prevChar !== '\\') {
+                        if (inString && char === stringChar) {
+                            inString = false;
+                        } else if (!inString) {
+                            inString = true;
+                            stringChar = char;
+                        }
+                        currentLine += char;
+                        continue;
+                    }
+                    
+                    // 字符串中不处理格式
+                    if (inString) {
+                        currentLine += char;
+                        continue;
+                    }
+                    
+                    // 处理空格 - 只保留必要的空格
+                    if (char === ' ') {
+                        // 避免连续空格
+                        if (currentLine.slice(-1) === ' ') {
+                            continue;
+                        }
+                        currentLine += char;
+                        continue;
+                    }
+                    
+                    // 处理左大括号 - 放在单独一行，增加缩进
+                    if (char === '{') {
+                        // 当前行是方法声明或类声明，将{放在下一行
+                        if (currentLine.trim() !== '') {
+                            formattedLines.push(currentLine.trim());
+                            currentLine = '';
+                        }
+                        // 左大括号的缩进是当前层级
+                        formattedLines.push(' '.repeat(indentLevel * indentSize) + '{');
+                        // 进入新的层级，缩进+1
+                        indentLevel++;
+                        continue;
+                    }
+                    
+                    // 处理右大括号 - 放在单独一行，减少缩进
+                    if (char === '}') {
+                        if (currentLine.trim() !== '') {
+                            formattedLines.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                            currentLine = '';
+                        }
+                        // 右大括号的缩进是当前层级-1
+                        indentLevel = Math.max(0, indentLevel - 1);
+                        formattedLines.push(' '.repeat(indentLevel * indentSize) + '}');
+                        // 方法之间添加空行
+                        if (i + 1 < cleanedCode.length && cleanedCode[i+1] !== '}' && cleanedCode[i+1] !== '\n') {
+                            formattedLines.push(''); // 方法之间空一行
+                        }
+                        continue;
+                    }
+                    
+                    // 处理分号 - 分号后换行
+                    if (char === ';') {
+                        currentLine += ';';
+                        formattedLines.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                        currentLine = '';
+                        continue;
+                    }
+                    
+                    // 处理逗号 - 逗号后加空格
+                    if (char === ',') {
+                        currentLine += ', ';
+                        // 跳过原有的空格
+                        while (i + 1 < cleanedCode.length && cleanedCode[i+1] === ' ') {
+                            i++;
+                        }
+                        continue;
+                    }
+                    
+                    // 处理换行
+                    if (char === '\n') {
+                        if (currentLine.trim() !== '') {
+                            formattedLines.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                            currentLine = '';
+                        }
+                        continue;
+                    }
+                    
+                    // 处理其他字符
+                    currentLine += char;
+                }
+                
+                // 添加最后一行
+                if (currentLine.trim() !== '') {
+                    formattedLines.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                }
+                
+                // 对齐C#成员并确保正确缩进
+                return this.finalizeCSharpFormatting(formattedLines, indentSize);
+            }
+            
+            // 最终处理C#格式，确保正确的缩进和对齐
+            finalizeCSharpFormatting(lines, indentSize) {
+                // 清理空行
+                const cleanedLines = lines.filter(line => line.trim() !== '');
+                
+                // 重新计算缩进，确保层级正确
+                let indentLevel = 0;
+                let resultLines = [];
+                
+                cleanedLines.forEach(line => {
+                    const trimmedLine = line.trim();
+                    
+                    // 处理右大括号，先减少缩进
+                    if (trimmedLine === '}') {
+                        indentLevel = Math.max(0, indentLevel - 1);
+                        resultLines.push(' '.repeat(indentLevel * indentSize) + '}');
+                        return;
+                    }
+                    
+                    // 普通行，使用当前缩进级别
+                    resultLines.push(' '.repeat(indentLevel * indentSize) + trimmedLine);
+                    
+                    // 处理左大括号，增加缩进
+                    if (trimmedLine === '{') {
+                        indentLevel++;
+                    }
+                });
+                
+                // 添加方法之间的空行
+                let finalLines = [];
+                for (let i = 0; i < resultLines.length; i++) {
+                    finalLines.push(resultLines[i]);
+                    
+                    // 在方法结束后添加空行
+                    if (resultLines[i].trim() === '}' && 
+                        i + 1 < resultLines.length && 
+                        !resultLines[i+1].trim().startsWith('}') &&
+                        !resultLines[i+1].trim().endsWith('}')) {
+                        finalLines.push('');
+                    }
+                }
+                
+                // 再次清理连续空行
+                return finalLines
+                    .filter((line, index) => !(line.trim() === '' && finalLines[index - 1]?.trim() === ''))
+                    .join('\n');
+            }
+            
+            // JavaScript格式化
+            formatJavaScript(js) {
+                const indentSize = this.options.indentSize;
+                let indentLevel = 0;
+                let formattedLines = [];
+                let currentLine = '';
+                let inString = false;
+                let stringChar = '';
+                let prevChar = '';
+                
+                // 预处理
+                const cleanedCode = js.replace(/\n{3,}/g, '\n\n').replace(/^\s+/, '');
+                
+                // 按字符处理代码
+                for (let i = 0; i < cleanedCode.length; i++) {
+                    const char = cleanedCode[i];
+                    prevChar = i > 0 ? cleanedCode[i-1] : '';
+                    
+                    // 处理字符串状态
+                    if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
+                        if (inString && char === stringChar) {
+                            inString = false;
+                        } else if (!inString) {
+                            inString = true;
+                            stringChar = char;
+                        }
+                        currentLine += char;
+                        continue;
+                    }
+                    
+                    // 字符串中不处理格式
+                    if (inString) {
+                        currentLine += char;
+                        continue;
+                    }
+                    
+                    // 处理空格
+                    if (char === ' ' && currentLine.trim() === '') {
+                        continue;
+                    }
+                    
+                    // 处理左大括号 - 与前面的内容同一行
+                    if (char === '{') {
+                        currentLine += '{';
+                        formattedLines.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                        currentLine = '';
+                        indentLevel++;
+                        continue;
+                    }
+                    
+                    // 处理右大括号 - 放在单独一行
+                    if (char === '}') {
+                        if (currentLine.trim() !== '') {
+                            formattedLines.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                            currentLine = '';
+                        }
+                        indentLevel = Math.max(0, indentLevel - 1);
+                        formattedLines.push(' '.repeat(indentLevel * indentSize) + '}');
+                        // 方法之间添加空行
+                        if (i + 1 < cleanedCode.length && cleanedCode[i+1] !== '}' && cleanedCode[i+1] !== '\n') {
+                            formattedLines.push('');
+                        }
+                        continue;
+                    }
+                    
+                    // 处理分号 - 分号后换行
+                    if (char === ';') {
+                        currentLine += ';';
+                        formattedLines.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                        currentLine = '';
+                        continue;
+                    }
+                    
+                    // 处理逗号 - 逗号后加空格
+                    if (char === ',') {
+                        currentLine += ', ';
+                        // 跳过原有的空格
+                        while (i + 1 < cleanedCode.length && cleanedCode[i+1] === ' ') {
+                            i++;
+                        }
+                        continue;
+                    }
+                    
+                    // 处理换行
+                    if (char === '\n') {
+                        if (currentLine.trim() !== '') {
+                            formattedLines.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                            currentLine = '';
+                        }
+                        continue;
+                    }
+                    
+                    // 处理其他字符
+                    currentLine += char;
+                }
+                
+                // 添加最后一行
+                if (currentLine.trim() !== '') {
+                    formattedLines.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                }
+                
+                // 清理连续空行
+                return formattedLines
+                    .filter((line, index) => !(line.trim() === '' && formattedLines[index - 1]?.trim() === ''))
+                    .join('\n');
+            }
+            
+            // HTML格式化
+            formatHtml(html) {
+                // 基础HTML格式化实现
+                let cleaned = html.replace(/>\s+</g, '><');
+                cleaned = cleaned.replace(/\s{2,}/g, ' ');
+                
+                const indentSize = this.options.indentSize;
+                let indentLevel = 0;
+                let formatted = [];
+                let currentLine = '';
+                let inTag = false;
+                
+                for (let i = 0; i < cleaned.length; i++) {
+                    const char = cleaned[i];
+                    
+                    if (char === '<') {
+                        inTag = true;
+                        if (currentLine.trim()) {
+                            formatted.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                            currentLine = '';
+                        }
+                        currentLine += char;
+                        
+                        // 处理闭合标签
+                        if (i + 1 < cleaned.length && cleaned[i + 1] === '/') {
+                            indentLevel = Math.max(0, indentLevel - 1);
+                        }
+                    } 
+                    else if (char === '>') {
+                        currentLine += char;
+                        inTag = false;
+                        
+                        formatted.push(' '.repeat(indentLevel * indentSize) + currentLine);
+                        
+                        // 非闭合标签增加缩进
+                        if (!currentLine.startsWith('</') && !currentLine.endsWith('/>')) {
+                            indentLevel++;
+                        }
+                        currentLine = '';
+                    } 
+                    else {
+                        currentLine += char;
+                    }
+                }
+                
+                if (currentLine.trim()) {
+                    formatted.push(' '.repeat(indentLevel * indentSize) + currentLine.trim());
+                }
+                
+                return formatted.join('\n');
+            }
+            
+            // CSS格式化
+            formatCss(css) {
+                const indentSize = this.options.indentSize;
+                let formatted = [];
+                let inBlock = false;
+                let currentSelector = '';
+                let declarations = [];
+                
+                // 按分号分割声明
+                const tokens = css.split(';').map(t => t.trim() + ';').filter(t => t.trim() !== ';');
+                
+                tokens.forEach(token => {
+                    if (token.includes('{') && !token.includes('}')) {
+                        if (inBlock) {
+                            formatted.push(' '.repeat(indentSize) + declarations.join('\n' + ' '.repeat(indentSize)));
+                            formatted.push('}');
+                            formatted.push('');
+                        }
+                        
+                        currentSelector = token.split('{')[0].trim();
+                        declarations = [];
+                        inBlock = true;
+                        formatted.push(currentSelector + ' {');
+                    }
+                    else if (token.includes('}')) {
+                        if (inBlock) {
+                            const declPart = token.split('}')[0].trim();
+                            if (declPart) declarations.push(declPart + ';');
+                            
+                            formatted.push(' '.repeat(indentSize) + declarations.join('\n' + ' '.repeat(indentSize)));
+                            formatted.push('}');
+                            formatted.push('');
+                            
+                            inBlock = false;
+                        }
+                    }
+                    else if (inBlock && token.trim() !== ';') {
+                        declarations.push(token);
+                    }
+                    else if (token.trim() !== ';') {
+                        formatted.push(token);
+                    }
+                });
+                
+                if (inBlock) {
+                    formatted.push(' '.repeat(indentSize) + declarations.join('\n' + ' '.repeat(indentSize)));
+                    formatted.push('}');
+                }
+                
+                return formatted.filter(line => line.trim() !== '').join('\n');
+            }
+            
+            // 通用格式化
+            formatGeneric(code) {
+                return code;
+            }
+        }
+        
+        // 页面交互逻辑
+        document.addEventListener('DOMContentLoaded', () => {
+            const codeInput = document.getElementById('code-input');
+            const formatBtn = document.getElementById('format-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const formatResult = document.getElementById('format-result');
+            const copyBtn = document.getElementById('copy-btn');
+            const hiddenCopyArea = document.getElementById('hidden-copy-area');
+            const languageSelect = document.getElementById('language');
+            const languageIndicator = document.getElementById('language-indicator');
+            const exampleBtns = document.querySelectorAll('.example-btn');
+            
+            const formatter = new CodeFormatter();
+            
+            // 更新语言指示器
+            function updateLanguageIndicator() {
+                const lang = languageSelect.value;
+                const langConfig = formatter.languages[lang];
+                if (langConfig) {
+                    languageIndicator.className = `language-badge ${langConfig.color}`;
+                    languageIndicator.textContent = langConfig.name;
+                }
+            }
+            
+            // 初始化语言指示器
+            updateLanguageIndicator();
+            
+            // 语言选择变化时更新指示器
+            languageSelect.addEventListener('change', updateLanguageIndicator);
+            
+            // 格式化按钮点击事件
+            formatBtn.addEventListener('click', () => {
+                const code = codeInput.value;
+                const language = languageSelect.value;
+                
+                if (code.trim() === '') {
+                    showNotification('请输入代码', 'warning');
+                    return;
+                }
+                
+                try {
+                    // 格式化代码
+                    const formattedCode = formatter.format(code, language);
+                    
+                    // 显示结果
+                    formatResult.innerHTML = `<code>${formattedCode}</code>`;
+                    // 更新隐藏区域，用于复制
+                    hiddenCopyArea.value = formattedCode
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&amp;/g, '&');
+                    copyBtn.disabled = false;
+                    showNotification('代码格式化成功', 'success');
+                } catch (error) {
+                    formatResult.innerHTML = `<code class="text-red-400"><i class="fa fa-exclamation-circle mr-2"></i>格式化失败: ${error.message}</code>`;
+                    showNotification('格式化失败，请检查代码格式', 'error');
+                }
+            });
+            
+            // 清空按钮点击事件
+            clearBtn.addEventListener('click', () => {
+                codeInput.value = '';
+                formatResult.innerHTML = '<code class="text-gray-500 italic"><i class="fa fa-code mr-2"></i>格式化后的代码将显示在这里...</code>';
+                hiddenCopyArea.value = '';
+                copyBtn.disabled = true;
+            });
+            
+            // 复制按钮点击事件
+            copyBtn.addEventListener('click', () => {
+                try {
+                    hiddenCopyArea.select();
+                    document.execCommand('copy');
+                    showNotification('代码已复制到剪贴板', 'success');
+                } catch (err) {
+                    showNotification('复制失败，请手动复制', 'error');
+                }
+            });
+            
+            // 示例按钮点击事件
+            exampleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const lang = btn.getAttribute('data-lang');
+                    let exampleCode = btn.nextElementSibling.textContent;
+                    exampleCode = exampleCode.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+                    
+                    codeInput.value = exampleCode;
+                    languageSelect.value = lang;
+                    updateLanguageIndicator();
+                    formatBtn.click();
+                });
+            });
+            
+            // 通知提示函数
+            function showNotification(message, type = 'info') {
+                let notification = document.querySelector('.notification');
+                if (notification) notification.remove();
+                
+                notification = document.createElement('div');
+                notification.className = `notification fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg flex items-center z-50 transition-all duration-300 transform translate-y-10 opacity-0`;
+                
+                let bgColor, icon;
+                switch(type) {
+                    case 'success':
+                        bgColor = 'bg-secondary text-white';
+                        icon = 'fa-check-circle';
+                        break;
+                    case 'error':
+                        bgColor = 'bg-red-500 text-white';
+                        icon = 'fa-exclamation-circle';
+                        break;
+                    case 'warning':
+                        bgColor = 'bg-yellow-500 text-gray-800';
+                        icon = 'fa-exclamation-triangle';
+                        break;
+                    default:
+                        bgColor = 'bg-primary text-white';
+                        icon = 'fa-info-circle';
+                }
+                
+                notification.classList.add(...bgColor.split(' '));
+                notification.innerHTML = `<i class="fa ${icon} mr-2"></i>${message}`;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => notification.classList.remove('translate-y-10', 'opacity-0'), 10);
+                setTimeout(() => {
+                    notification.classList.add('translate-y-10', 'opacity-0');
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }
+
+            // 自动格式化示例代码
+            setTimeout(() => formatBtn.click(), 500);
+        });
+    </script>
+</body>
+</html>
