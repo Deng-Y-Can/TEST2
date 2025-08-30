@@ -1,0 +1,4838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级数据可视化平台</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- 引入ECharts词云扩展 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
+    <!-- 引入SheetJS用于Excel处理 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- 配置Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#64748B',
+                        accent: '#10B981',
+                        neutral: '#94A3B8',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .scrollbar-thin {
+                scrollbar-width: thin;
+            }
+
+                .scrollbar-thin::-webkit-scrollbar {
+                    width: 6px;
+                    height: 6px;
+                }
+
+                .scrollbar-thin::-webkit-scrollbar-thumb {
+                    background-color: rgba(156, 163, 175, 0.5);
+                    border-radius: 3px;
+                }
+
+            .transition-height {
+                transition: max-height 0.3s ease-in-out;
+            }
+
+            .card-shadow {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark">
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <!-- 页面标题 -->
+        <header class="mb-8 text-center">
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-dark mb-2">高级数据可视化平台</h1>
+            <p class="text-neutral max-w-3xl mx-auto">支持24种图表类型，可导入Excel数据，提供丰富的自定义选项</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左侧控制面板 -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- 图表设置卡片 -->
+                <div class="bg-white rounded-xl p-5 card-shadow">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-line-chart text-primary mr-2"></i>图表设置
+                    </h2>
+
+                    <!-- 图表类型选择 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral mb-1">图表类型</label>
+                        <select id="chartType" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                            <option value="line">折线图</option>
+                            <option value="bar">柱状图</option>
+                            <option value="pie">饼图</option>
+                            <option value="doughnut">环形图</option>
+                            <option value="radar">雷达图</option>
+                            <option value="scatter">散点图</option>
+                            <option value="bubble">气泡图</option>
+                            <option value="heatmap">热力图</option>
+                            <option value="tree">树状图</option>
+                            <option value="treemap">矩形树图</option>
+                            <option value="sunburst">旭日图</option>
+                            <option value="funnel">漏斗图</option>
+                            <option value="gauge">仪表盘</option>
+                            <option value="sankey">桑基图</option>
+                            <option value="graph">关系图</option>
+                            <option value="wordCloud">词云</option>
+                            <option value="boxplot">箱线图</option>
+                            <option value="waterfall">瀑布图</option>
+                            <option value="polar">极坐标图</option>
+                            <option value="calendar">日历图</option>
+                            <option value="candlestick">K线图</option>
+                            <option value="effectScatter">带涟漪效果的散点图</option>
+                            <option value="lines">线图(地理路径)</option>
+                            <option value="map">地图</option>
+                        </select>
+                    </div>
+
+                    <!-- 图表标题 -->
+                    <div class="mb-4">
+                        <label for="chartTitle" class="block text-sm font-medium text-neutral mb-1">图表标题</label>
+                        <input type="text" id="chartTitle" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                    </div>
+
+                    <!-- 数据来源选择 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral mb-2">数据来源</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="dataSource" value="sample" checked class="form-radio text-primary">
+                                <span class="ml-1 text-sm">示例数据</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="dataSource" value="excel" class="form-radio text-primary">
+                                <span class="ml-1 text-sm">Excel数据</span>
+                            </label>
+                        </div>
+
+                        <!-- Excel上传区域 -->
+                        <div id="excelUploadArea" class="mt-3 hidden">
+                            <div class="flex items-center border-2 border-dashed border-gray-200 rounded-md p-3 hover:bg-gray-50 transition-colors">
+                                <input type="file" id="excelFile" accept=".xlsx, .xls" class="hidden">
+                                <label for="excelFile" class="flex-1 cursor-pointer text-sm text-primary">
+                                    <i class="fa fa-upload mr-1"></i> 选择Excel文件
+                                </label>
+                                <span id="excelFileName" class="text-xs text-neutral truncate mx-2 flex-1"></span>
+                                <button id="clearExcel" class="text-xs text-red-500 hidden">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 列选择 -->
+                    <div class="space-y-3 mb-4">
+                        <label class="block text-sm font-medium text-neutral mb-1">类别列 (X轴/名称)</label>
+                        <select id="categoryColumn" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                            <option value="">请选择...</option>
+                        </select>
+
+                        <label class="block text-sm font-medium text-neutral mb-1">数值列 (Y轴/值) <span class="text-xs text-neutral">(按住Ctrl键可多选)</span></label>
+                        <select id="valueColumns" multiple size="4" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary scrollbar-thin">
+                            <option value="">请选择...</option>
+                        </select>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="flex flex-wrap gap-2">
+                        <button id="generateChart" class="flex-1 bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center">
+                            <i class="fa fa-refresh mr-1"></i> 生成图表
+                        </button>
+                        <button id="refreshChart" class="bg-secondary hover:bg-secondary/90 text-white py-2 px-3 rounded-md transition-colors">
+                            <i class="fa fa-repeat"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 图表样式设置 -->
+                <div class="bg-white rounded-xl p-5 card-shadow">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fa fa-sliders text-primary mr-2"></i>样式设置
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- 标题字体大小 -->
+                        <div>
+                            <label for="titleFontSize" class="block text-sm font-medium text-neutral mb-1">标题字体大小</label>
+                            <input type="number" id="titleFontSize" min="12" max="36" value="16" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                        </div>
+
+                        <!-- 显示图例 -->
+                        <div>
+                            <label class="block text-sm font-medium text-neutral mb-1">显示图例</label>
+                            <select id="showLegend" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                                <option value="true">是</option>
+                                <option value="false">否</option>
+                            </select>
+                        </div>
+
+                        <!-- 线条粗细 -->
+                        <div>
+                            <label for="lineWidth" class="block text-sm font-medium text-neutral mb-1">线条粗细</label>
+                            <input type="number" id="lineWidth" min="1" max="10" value="2" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                        </div>
+
+                        <!-- 数据点大小 -->
+                        <div>
+                            <label for="symbolSize" class="block text-sm font-medium text-neutral mb-1">数据点大小</label>
+                            <input type="number" id="symbolSize" min="2" max="20" value="6" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                        </div>
+
+                        <!-- 数据点形状 -->
+                        <div>
+                            <label for="symbolShape" class="block text-sm font-medium text-neutral mb-1">数据点形状</label>
+                            <select id="symbolShape" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                                <option value="circle">圆形</option>
+                                <option value="rect">矩形</option>
+                                <option value="roundRect">圆角矩形</option>
+                                <option value="triangle">三角形</option>
+                                <option value="diamond">菱形</option>
+                                <option value="pin">水滴形</option>
+                                <option value="arrow">箭头</option>
+                            </select>
+                        </div>
+
+                        <!-- 颜色方案 -->
+                        <div>
+                            <label for="colorScheme" class="block text-sm font-medium text-neutral mb-1">颜色方案</label>
+                            <select id="colorScheme" class="w-full p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                                <option value="default">默认</option>
+                                <option value="vibrant">鲜艳</option>
+                                <option value="pastel">柔和</option>
+                                <option value="cool">冷色调</option>
+                                <option value="warm">暖色调</option>
+                            </select>
+                        </div>
+
+                        <!-- 背景颜色 -->
+                        <div>
+                            <label for="backgroundColor" class="block text-sm font-medium text-neutral mb-1">背景颜色</label>
+                            <div class="flex">
+                                <input type="color" id="backgroundColor" value="#ffffff" class="w-10 h-10 p-0 border border-gray-200 rounded-l-md">
+                                <input type="text" id="backgroundColorText" value="#ffffff" class="flex-1 p-2 border border-gray-200 border-l-0 rounded-r-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                            </div>
+                        </div>
+
+                        <!-- 透明度 -->
+                        <div>
+                            <label for="opacity" class="block text-sm font-medium text-neutral mb-1">图形透明度</label>
+                            <input type="range" id="opacity" min="0.1" max="1" step="0.1" value="1" class="w-full">
+                            <div class="flex justify-between text-xs text-neutral">
+                                <span>透明</span>
+                                <span>不透明</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧图表和数据编辑区 -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- 图表显示区域 -->
+                <div class="bg-white rounded-xl p-5 card-shadow h-[450px]">
+                    <div id="chartContainer" class="w-full h-full"></div>
+                </div>
+
+                <!-- 图表操作按钮 -->
+                <div class="flex flex-wrap gap-2">
+                    <button id="downloadPNG" class="bg-secondary hover:bg-secondary/90 text-white py-2 px-4 rounded-md transition-colors flex items-center">
+                        <i class="fa fa-download mr-1"></i> 下载PNG
+                    </button>
+                    <button id="downloadSVG" class="bg-secondary hover:bg-secondary/90 text-white py-2 px-4 rounded-md transition-colors flex items-center">
+                        <i class="fa fa-download mr-1"></i> 下载SVG
+                    </button>
+                    <div class="ml-auto"></div>
+                    <button id="resetData" class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-md transition-colors flex items-center">
+                        <i class="fa fa-undo mr-1"></i> 重置数据
+                    </button>
+                    <button id="saveData" class="bg-accent hover:bg-accent/90 text-white py-2 px-4 rounded-md transition-colors flex items-center">
+                        <i class="fa fa-save mr-1"></i> 保存修改
+                    </button>
+                </div>
+
+                <!-- 数据编辑区域 -->
+                <div class="bg-white rounded-xl p-5 card-shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center">
+                            <i class="fa fa-table text-primary mr-2"></i>数据编辑
+                        </h2>
+                        <div class="flex gap-2">
+                            <button id="addRow" class="bg-primary/10 hover:bg-primary/20 text-primary py-1 px-3 rounded-md transition-colors text-sm flex items-center">
+                                <i class="fa fa-plus mr-1"></i> 新增行
+                            </button>
+                            <button id="addColumn" class="bg-primary/10 hover:bg-primary/20 text-primary py-1 px-3 rounded-md transition-colors text-sm flex items-center">
+                                <i class="fa fa-plus mr-1"></i> 新增列
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto scrollbar-thin">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead id="tableHeader" class="bg-gray-50">
+                                <!-- 表头将通过JavaScript动态生成 -->
+                            </thead>
+                            <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- 表格内容将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <footer class="mt-12 text-center text-neutral text-sm">
+            <p>高级数据可视化平台 &copy; 2025 | 支持24种图表类型</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+// 全局变量
+let chartInstance = null;
+let chartData = {};
+let currentChartType = 'line';
+let excelData = null;
+let originalSampleData = {};
+
+// 颜色方案
+const colorSchemes = {
+    default: ['#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#64748B'],
+    vibrant: ['#E53E3E', '#F6AD55', '#48BB78', '#38B2AC', '#4299E1', '#6366F1', '#805AD5', '#EC4899'],
+    pastel: ['#FED7D7', '#FEB2B2', '#FC8181', '#F687B3', '#E9D8FD', '#D6BCFA', '#B794F4', '#9F7AEA'],
+    cool: ['#3182CE', '#319795', '#805AD5', '#4299E1', '#00B5D8', '#00A3AD', '#556B2F', '#2E8B57'],
+    warm: ['#E67E22', '#E74C3C', '#C0392B', '#D35400', '#F39C12', '#F1C40F', '#D4AC0D', '#7D6608']
+};
+
+// 初始化
+async function init() {
+    try {
+        // 加载图表数据
+        await loadChartData();
+
+        // 初始化事件监听
+        initEventListeners();
+
+        // 初始化图表
+        initChart();
+
+        // 初始化数据表格
+        updateDataTable();
+
+        // 初始化列选择器（确保默认选择正确）
+        updateColumnSelectors();
+
+        // 背景颜色输入框同步
+        syncBackgroundColorInput();
+    } catch (error) {
+        console.error('初始化失败:', error);
+        alert('系统初始化失败: ' + error.message);
+    }
+}
+
+// 加载图表数据
+async function loadChartData() {
+    try {
+        const response = await fetch('chartData.json');
+        if (!response.ok) throw new Error('数据加载失败，状态码: ' + response.status);
+
+        chartData = await response.json();
+        originalSampleData = JSON.parse(JSON.stringify(chartData));
+
+        // 设置初始标题
+        document.getElementById('chartTitle').value = chartData[currentChartType]?.title || '图表';
+    } catch (error) {
+        console.error('加载图表数据出错:', error);
+        alert('加载图表数据失败: ' + error.message);
+        // 提供备用数据防止完全无法使用
+        chartData = {
+            line: {
+                title: "默认折线图数据",
+                data: [
+                    { "类别": "A", "数值1": 10, "数值2": 20 },
+                    { "类别": "B", "数值1": 15, "数值2": 25 },
+                    { "类别": "C", "数值1": 12, "数值2": 18 }
+                ]
+            }
+        };
+        originalSampleData = JSON.parse(JSON.stringify(chartData));
+    }
+}
+
+// 初始化事件监听
+function initEventListeners() {
+    // 图表类型变化
+    document.getElementById('chartType').addEventListener('change', (e) => {
+        currentChartType = e.target.value;
+        const currentChart = chartData[currentChartType];
+        if (currentChart?.title) {
+            document.getElementById('chartTitle').value = currentChart.title;
+        }
+
+        // 如果当前使用的是示例数据，则更新表格
+        if (document.querySelector('input[name="dataSource"][value="sample"]').checked) {
+            updateDataTable();
+        }
+
+        // 更新列选择器
+        updateColumnSelectors();
+    });
+
+    // 数据来源变化
+    document.querySelectorAll('input[name="dataSource"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const isExcel = e.target.value === 'excel';
+            document.getElementById('excelUploadArea').classList.toggle('hidden', !isExcel);
+
+            // 如果切换到Excel但没有数据，则提示上传
+            if (isExcel && !excelData) {
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="100%" class="text-center py-4 text-neutral">
+                            请上传Excel文件
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('tableHeader').innerHTML = '';
+            } else if (isExcel && excelData) {
+                // 如果有Excel数据，则显示
+                updateDataTable();
+            } else {
+                // 切换到示例数据
+                updateDataTable();
+            }
+
+            // 更新列选择器
+            updateColumnSelectors();
+        });
+    });
+
+    // Excel文件上传
+    document.getElementById('excelFile').addEventListener('change', handleExcelUpload);
+
+    // 清除Excel数据
+    document.getElementById('clearExcel').addEventListener('click', clearExcelData);
+
+    // 生成图表按钮
+    document.getElementById('generateChart').addEventListener('click', generateChart);
+
+    // 刷新图表
+    document.getElementById('refreshChart').addEventListener('click', generateChart);
+
+    // 下载PNG
+    document.getElementById('downloadPNG').addEventListener('click', () => {
+        if (chartInstance) {
+            try {
+                const link = document.createElement('a');
+                link.download = `${document.getElementById('chartTitle').value || '图表'}.png`;
+                link.href = chartInstance.getDataURL({
+                    type: 'png',
+                    pixelRatio: 2,
+                    backgroundColor: document.getElementById('backgroundColor').value
+                });
+                link.click();
+            } catch (error) {
+                console.error('下载PNG失败:', error);
+                alert('下载PNG失败: ' + error.message);
+            }
+        }
+    });
+
+    // 下载SVG
+    document.getElementById('downloadSVG').addEventListener('click', () => {
+        if (chartInstance) {
+            try {
+                const svg = chartInstance.getOption().svg;
+                if (svg) {
+                    const link = document.createElement('a');
+                    link.download = `${document.getElementById('chartTitle').value || '图表'}.svg`;
+                    link.href = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+                    link.click();
+                } else {
+                    alert('此图表类型不支持SVG下载');
+                }
+            } catch (error) {
+                console.error('下载SVG失败:', error);
+                alert('下载SVG失败: ' + error.message);
+            }
+        }
+    });
+
+    // 新增行
+    document.getElementById('addRow').addEventListener('click', addRow);
+
+    // 新增列
+    document.getElementById('addColumn').addEventListener('click', addColumn);
+
+    // 重置数据
+    document.getElementById('resetData').addEventListener('click', resetData);
+
+    // 保存修改
+    document.getElementById('saveData').addEventListener('click', saveData);
+
+    // 背景颜色选择器同步
+    document.getElementById('backgroundColor').addEventListener('input', syncBackgroundColorInput);
+    document.getElementById('backgroundColorText').addEventListener('input', () => {
+        const color = document.getElementById('backgroundColorText').value;
+        if (/^#[0-9A-F]{6}$/i.test(color)) {
+            document.getElementById('backgroundColor').value = color;
+        }
+    });
+
+    // 窗口大小变化时重绘图表
+    window.addEventListener('resize', () => {
+        if (chartInstance) {
+            setTimeout(() => {
+                try {
+                    chartInstance.resize();
+                } catch (error) {
+                    console.error('图表重绘失败:', error);
+                }
+            }, 300);
+        }
+    });
+}
+
+// 同步背景颜色输入框
+function syncBackgroundColorInput() {
+    const color = document.getElementById('backgroundColor').value;
+    document.getElementById('backgroundColorText').value = color;
+}
+
+// 初始化图表
+function initChart() {
+    const container = document.getElementById('chartContainer');
+    // 销毁已存在的实例
+    if (chartInstance) {
+        chartInstance.dispose();
+    }
+    chartInstance = echarts.init(container);
+
+    // 设置初始图表
+    generateChart();
+}
+
+// 处理Excel上传
+function handleExcelUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 显示文件名
+    document.getElementById('excelFileName').textContent = file.name;
+    document.getElementById('clearExcel').classList.remove('hidden');
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            // 获取第一个工作表
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+
+            // 转换为JSON
+            excelData = XLSX.utils.sheet_to_json(worksheet);
+
+            // 更新数据表格
+            updateDataTable();
+
+            // 更新列选择器
+            updateColumnSelectors();
+
+            // 自动生成图表
+            generateChart();
+        } catch (error) {
+            console.error('解析Excel文件出错:', error);
+            alert('解析Excel文件失败: ' + error.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// 清除Excel数据
+function clearExcelData() {
+    excelData = null;
+    document.getElementById('excelFile').value = '';
+    document.getElementById('excelFileName').textContent = '';
+    document.getElementById('clearExcel').classList.add('hidden');
+
+    // 切换到示例数据
+    document.querySelector('input[name="dataSource"][value="sample"]').checked = true;
+    document.getElementById('excelUploadArea').classList.add('hidden');
+
+    // 更新数据表格
+    updateDataTable();
+
+    // 更新列选择器
+    updateColumnSelectors();
+}
+
+// 更新数据表格
+function updateDataTable() {
+    const tableHeader = document.getElementById('tableHeader');
+    const tableBody = document.getElementById('tableBody');
+    tableHeader.innerHTML = '';
+    tableBody.innerHTML = '';
+
+    // 获取当前数据源
+    const data = getCurrentData();
+    if (!data || (Array.isArray(data) && data.length === 0) ||
+        (data.data && Array.isArray(data.data) && data.data.length === 0)) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="100%" class="text-center py-4 text-neutral">
+                    没有数据可供显示
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // 标准化数据格式
+    const normalizedData = normalizeData(data);
+    if (!normalizedData || normalizedData.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="100%" class="text-center py-4 text-neutral">
+                    数据格式不正确
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // 获取列名
+    const columns = Object.keys(normalizedData[0]);
+
+    // 创建表头
+    columns.forEach(column => {
+        const th = document.createElement('th');
+        th.className = 'px-4 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider border-b';
+        th.textContent = column;
+        tableHeader.appendChild(th);
+    });
+
+    // 添加删除列按钮
+    const deleteColTh = document.createElement('th');
+    deleteColTh.className = 'px-2 py-3 text-center text-xs font-medium text-neutral uppercase tracking-wider border-b';
+    deleteColTh.innerHTML = '<i class="fa fa-trash-o"></i>';
+    tableHeader.appendChild(deleteColTh);
+
+    // 创建表格内容
+    normalizedData.forEach((row, rowIndex) => {
+        const tr = document.createElement('tr');
+        tr.className = rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+
+        columns.forEach(column => {
+            const td = document.createElement('td');
+            td.className = 'px-4 py-2 text-sm text-dark border-b';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = row[column] !== undefined ? row[column] : '';
+            input.className = 'w-full p-1 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary';
+            input.addEventListener('change', (e) => {
+                // 更新数据
+                if (document.querySelector('input[name="dataSource"][value="sample"]').checked) {
+                    // 更新示例数据
+                    if (chartData[currentChartType].data && Array.isArray(chartData[currentChartType].data)) {
+                        chartData[currentChartType].data[rowIndex][column] = e.target.value;
+                    } else if (chartData[currentChartType].data && typeof chartData[currentChartType].data === 'object') {
+                        // 特殊数据结构
+                        chartData[currentChartType].data[rowIndex][column] = e.target.value;
+                    }
+                } else if (excelData) {
+                    // 更新Excel数据
+                    excelData[rowIndex][column] = e.target.value;
+                }
+            });
+
+            td.appendChild(input);
+            tr.appendChild(td);
+        });
+
+        // 添加删除行按钮
+        const deleteTd = document.createElement('td');
+        deleteTd.className = 'px-2 py-2 text-center border-b';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'text-red-500 hover:text-red-700 transition-colors';
+        deleteBtn.innerHTML = '<i class="fa fa-trash-o"></i>';
+        deleteBtn.addEventListener('click', () => {
+            // 删除行
+            if (document.querySelector('input[name="dataSource"][value="sample"]').checked) {
+                // 删除示例数据行
+                if (chartData[currentChartType].data && Array.isArray(chartData[currentChartType].data)) {
+                    chartData[currentChartType].data.splice(rowIndex, 1);
+                }
+            } else if (excelData) {
+                // 删除Excel数据行
+                excelData.splice(rowIndex, 1);
+            }
+
+            // 更新表格
+            updateDataTable();
+        });
+
+        deleteTd.appendChild(deleteBtn);
+        tr.appendChild(deleteTd);
+
+        tableBody.appendChild(tr);
+    });
+}
+
+// 标准化数据格式
+function normalizeData(data) {
+    // 处理不同结构的数据
+    if (data.data && Array.isArray(data.data)) {
+        return data.data;
+    } else if (Array.isArray(data)) {
+        return data;
+    } else if (typeof data === 'object') {
+        // 处理特殊结构数据
+        if (data.nodes && data.links) {
+            // 关系图数据
+            return data.nodes.map(node => ({ ...node, type: 'node' }))
+                .concat(data.links.map(link => ({ ...link, type: 'link' })));
+        } else if (data.xAxis && data.yAxis && data.data) {
+            // 热力图数据
+            const normalized = [];
+            for (let i = 0; i < data.yAxis.length; i++) {
+                for (let j = 0; j < data.xAxis.length; j++) {
+                    normalized.push({
+                        y: data.yAxis[i],
+                        x: data.xAxis[j],
+                        value: data.data[i][j]
+                    });
+                }
+            }
+            return normalized;
+        } else if (data.coordinates && data.links) {
+            // 线图(地理路径)数据
+            const normalized = [];
+            Object.keys(data.coordinates).forEach(name => {
+                normalized.push({
+                    name,
+                    longitude: data.coordinates[name][0],
+                    latitude: data.coordinates[name][1],
+                    type: 'location'
+                });
+            });
+            data.links.forEach(link => {
+                normalized.push({
+                    ...link,
+                    type: 'link'
+                });
+            });
+            return normalized;
+        } else {
+            return [data];
+        }
+    }
+    return [];
+}
+
+// 获取当前数据源
+function getCurrentData() {
+    if (document.querySelector('input[name="dataSource"][value="excel"]').checked && excelData) {
+        return { data: excelData };
+    } else {
+        return chartData[currentChartType] || { data: [] };
+    }
+}
+
+// 更新列选择器
+function updateColumnSelectors() {
+    const categorySelect = document.getElementById('categoryColumn');
+    const valueSelect = document.getElementById('valueColumns');
+
+    // 清空选择器
+    categorySelect.innerHTML = '<option value="">请选择...</option>';
+    valueSelect.innerHTML = '<option value="">请选择...</option>';
+
+    // 获取当前数据
+    const data = getCurrentData();
+    const normalizedData = normalizeData(data);
+
+    if (!normalizedData || normalizedData.length === 0) return;
+
+    // 获取列名
+    const columns = Object.keys(normalizedData[0]);
+
+    // 填充选择器
+    columns.forEach(column => {
+        // 类别列选项
+        const categoryOption = document.createElement('option');
+        categoryOption.value = column;
+        categoryOption.textContent = column;
+        categorySelect.appendChild(categoryOption);
+
+        // 数值列选项
+        const valueOption = document.createElement('option');
+        valueOption.value = column;
+        valueOption.textContent = column;
+        valueSelect.appendChild(valueOption);
+    });
+
+    // 尝试自动选择合适的列
+    autoSelectColumns(columns);
+}
+
+// 自动选择合适的列
+function autoSelectColumns(columns) {
+    // 根据不同图表类型优化列选择
+    switch (currentChartType) {
+        case 'wordCloud':
+            // 词云图特殊处理
+            const wordColumnNames = ['词语', '关键词', 'name', 'word', 'term'];
+            const weightColumnNames = ['权重', 'value', 'count', '频次'];
+
+            for (const col of columns) {
+                for (const name of wordColumnNames) {
+                    if (col.toLowerCase().includes(name.toLowerCase())) {
+                        document.getElementById('categoryColumn').value = col;
+
+                        for (const valCol of columns) {
+                            if (valCol !== col) {
+                                for (const wName of weightColumnNames) {
+                                    if (valCol.toLowerCase().includes(wName.toLowerCase())) {
+                                        selectValueColumn(valCol);
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+
+                        const firstValueCol = columns.find(c => c !== col) || columns[1];
+                        if (firstValueCol) selectValueColumn(firstValueCol);
+                        return;
+                    }
+                }
+            }
+            break;
+
+        case 'pie':
+        case 'doughnut':
+        case 'gauge':
+            // 这些图表通常只需要一个数值列
+            const nameColumnNames = ['名称', '类别', '项目', '指标', 'name', 'category', 'item'];
+            const valueColumnNames = ['数值', '值', '数量', '金额', 'value', 'amount'];
+
+            for (const col of columns) {
+                for (const name of nameColumnNames) {
+                    if (col.toLowerCase().includes(name.toLowerCase())) {
+                        document.getElementById('categoryColumn').value = col;
+
+                        for (const valCol of columns) {
+                            if (valCol !== col) {
+                                for (const vName of valueColumnNames) {
+                                    if (valCol.toLowerCase().includes(vName.toLowerCase())) {
+                                        selectValueColumn(valCol);
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+
+                        const firstValueCol = columns.find(c => c !== col) || columns[1];
+                        if (firstValueCol) selectValueColumn(firstValueCol);
+                        return;
+                    }
+                }
+            }
+            break;
+
+        case 'candlestick':
+            // K线图需要开盘、收盘、最低、最高价格
+            const dateColumnNames = ['日期', '时间', 'date', 'time'];
+            const openColumnNames = ['开盘', 'open'];
+            const closeColumnNames = ['收盘', 'close'];
+            const lowColumnNames = ['最低', 'low'];
+            const highColumnNames = ['最高', 'high'];
+
+            // 查找日期列
+            let dateCol = null;
+            for (const col of columns) {
+                for (const name of dateColumnNames) {
+                    if (col.toLowerCase().includes(name.toLowerCase())) {
+                        dateCol = col;
+                        break;
+                    }
+                }
+                if (dateCol) break;
+            }
+
+            // 查找K线数据列
+            const klineCols = [];
+            for (const col of columns) {
+                if (dateCol && col === dateCol) continue;
+
+                for (const name of openColumnNames) {
+                    if (col.toLowerCase().includes(name.toLowerCase())) {
+                        klineCols.push(col);
+                        break;
+                    }
+                }
+                if (klineCols.length > 0) continue;
+
+                for (const name of closeColumnNames) {
+                    if (col.toLowerCase().includes(name.toLowerCase())) {
+                        klineCols.push(col);
+                        break;
+                    }
+                }
+                if (klineCols.length > 1) continue;
+
+                for (const name of lowColumnNames) {
+                    if (col.toLowerCase().includes(name.toLowerCase())) {
+                        klineCols.push(col);
+                        break;
+                    }
+                }
+                if (klineCols.length > 2) continue;
+
+                for (const name of highColumnNames) {
+                    if (col.toLowerCase().includes(name.toLowerCase())) {
+                        klineCols.push(col);
+                        break;
+                    }
+                }
+                if (klineCols.length > 3) break;
+            }
+
+            if (dateCol) {
+                document.getElementById('categoryColumn').value = dateCol;
+                klineCols.forEach(col => selectValueColumn(col));
+                return;
+            }
+            break;
+    }
+
+    // 通用列选择逻辑
+    const categoryColumnNames = ['name', '日期', '月份', '产品', '类别', '公司', '地区', '城市', '项目', '指标', '阶段', '车型'];
+
+    for (const col of columns) {
+        for (const name of categoryColumnNames) {
+            if (col.toLowerCase().includes(name.toLowerCase())) {
+                document.getElementById('categoryColumn').value = col;
+
+                // 选择剩余的作为数值列
+                const valueColumns = columns.filter(c => c !== col);
+                if (valueColumns.length > 0) {
+                    // 根据图表类型选择合适数量的列
+                    let count = 3; // 默认选3列
+                    if (['pie', 'doughnut', 'gauge', 'wordCloud'].includes(currentChartType)) {
+                        count = 1; // 这些图表通常只需要1个数值列
+                    } else if (['scatter', 'effectScatter'].includes(currentChartType)) {
+                        count = 2; // 散点图通常需要2个数值列
+                    } else if (['bubble'].includes(currentChartType)) {
+                        count = 3; // 气泡图通常需要3个数值列
+                    }
+
+                    const selectedValues = valueColumns.slice(0, count);
+                    selectedValues.forEach(col => selectValueColumn(col));
+                }
+                return;
+            }
+        }
+    }
+
+    // 如果没有找到明显的类别列，选择第一个作为类别列
+    if (columns.length > 0) {
+        document.getElementById('categoryColumn').value = columns[0];
+
+        // 选择剩余的作为数值列
+        if (columns.length > 1) {
+            let count = 3;
+            if (['pie', 'doughnut', 'gauge', 'wordCloud'].includes(currentChartType)) {
+                count = 1;
+            } else if (['scatter', 'effectScatter'].includes(currentChartType)) {
+                count = 2;
+            } else if (['bubble'].includes(currentChartType)) {
+                count = 3;
+            }
+
+            const valueColumns = columns.slice(1);
+            const selectedValues = valueColumns.slice(0, count);
+            selectedValues.forEach(col => selectValueColumn(col));
+        }
+    }
+}
+
+// 选中指定的数值列
+function selectValueColumn(column) {
+    Array.from(document.getElementById('valueColumns').options).forEach(option => {
+        if (option.value === column) {
+            option.selected = true;
+        }
+    });
+}
+
+// 新增行
+function addRow() {
+    const data = getCurrentData();
+    const normalizedData = normalizeData(data);
+
+    if (!normalizedData || normalizedData.length === 0) return;
+
+    // 创建新行，复制第一行的结构
+    const newRow = {};
+    Object.keys(normalizedData[0]).forEach(key => {
+        newRow[key] = '';
+    });
+
+    // 添加到数据源
+    if (document.querySelector('input[name="dataSource"][value="sample"]').checked) {
+        if (chartData[currentChartType].data && Array.isArray(chartData[currentChartType].data)) {
+            chartData[currentChartType].data.push(newRow);
+        }
+    } else if (excelData) {
+        excelData.push(newRow);
+    }
+
+    // 更新表格
+    updateDataTable();
+}
+
+// 新增列
+function addColumn() {
+    const data = getCurrentData();
+    const normalizedData = normalizeData(data);
+
+    if (!normalizedData || normalizedData.length === 0) return;
+
+    // 生成新列名
+    let newColName = '新列1';
+    let counter = 1;
+    const columns = Object.keys(normalizedData[0]);
+
+    while (columns.includes(newColName)) {
+        counter++;
+        newColName = `新列${counter}`;
+    }
+
+    // 为每一行添加新列
+    if (document.querySelector('input[name="dataSource"][value="sample"]').checked) {
+        if (chartData[currentChartType].data && Array.isArray(chartData[currentChartType].data)) {
+            chartData[currentChartType].data.forEach(row => {
+                row[newColName] = '';
+            });
+        }
+    } else if (excelData) {
+        excelData.forEach(row => {
+            row[newColName] = '';
+        });
+    }
+
+    // 更新表格和列选择器
+    updateDataTable();
+    updateColumnSelectors();
+}
+
+// 重置数据
+function resetData() {
+    if (document.querySelector('input[name="dataSource"][value="sample"]').checked) {
+        // 重置示例数据
+        if (originalSampleData && originalSampleData[currentChartType]) {
+            chartData[currentChartType] = JSON.parse(JSON.stringify(originalSampleData[currentChartType]));
+            document.getElementById('chartTitle').value = chartData[currentChartType].title;
+            updateDataTable();
+            updateColumnSelectors();
+        }
+    } else if (excelData) {
+        // 询问是否清除Excel数据
+        if (confirm('确定要清除当前Excel数据吗？')) {
+            clearExcelData();
+        }
+    }
+}
+
+// 保存修改
+function saveData() {
+    // 对于示例数据，更新标题
+    if (document.querySelector('input[name="dataSource"][value="sample"]').checked) {
+        chartData[currentChartType].title = document.getElementById('chartTitle').value;
+    }
+
+    // 重新生成图表
+    generateChart();
+
+    // 显示保存成功提示
+    const saveBtn = document.getElementById('saveData');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fa fa-check mr-1"></i> 保存成功';
+    saveBtn.classList.remove('bg-secondary');
+    saveBtn.classList.add('bg-green-600');
+
+    setTimeout(() => {
+        saveBtn.innerHTML = originalText;
+        saveBtn.classList.remove('bg-green-600');
+        saveBtn.classList.add('bg-secondary');
+    }, 2000);
+}
+
+// 生成图表
+function generateChart() {
+    if (!chartInstance) {
+        initChart();
+        if (!chartInstance) return;
+    }
+
+    // 清空图表
+    chartInstance.clear();
+
+    // 获取当前数据
+    const data = getCurrentData();
+    const normalizedData = normalizeData(data);
+
+    if (!normalizedData || normalizedData.length === 0) {
+        chartInstance.setOption({
+            title: {
+                text: '无数据可显示',
+                left: 'center',
+                top: 'middle'
+            }
+        });
+        return;
+    }
+
+    // 获取选中的列
+    const categoryColumn = document.getElementById('categoryColumn').value;
+    const valueColumns = Array.from(document.getElementById('valueColumns').selectedOptions).map(option => option.value);
+
+    // 验证列选择
+    if (!categoryColumn || valueColumns.length === 0) {
+        chartInstance.setOption({
+            title: {
+                text: '请选择类别列和至少一个数值列',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444'
+                }
+            }
+        });
+        return;
+    }
+
+    // 获取图表参数
+    const chartTitle = document.getElementById('chartTitle').value || '图表';
+    const titleFontSize = parseInt(document.getElementById('titleFontSize').value) || 16;
+    const showLegend = document.getElementById('showLegend').value === 'true';
+    const lineWidth = parseInt(document.getElementById('lineWidth').value) || 2;
+    const symbolSize = parseInt(document.getElementById('symbolSize').value) || 6;
+    const symbolShape = document.getElementById('symbolShape').value || 'circle';
+    const colorScheme = document.getElementById('colorScheme').value || 'default';
+    const colors = colorSchemes[colorScheme] || colorSchemes.default;
+    const backgroundColor = document.getElementById('backgroundColor').value || '#ffffff';
+    const opacity = parseFloat(document.getElementById('opacity').value) || 1;
+
+    // 根据图表类型生成不同的配置
+    let option;
+
+    try {
+        switch (currentChartType) {
+            case 'line':
+                option = generateLineChartOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData,
+                    lineWidth, symbolSize, symbolShape, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'bar':
+                option = generateBarChartOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'pie':
+                option = generatePieChartOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns[0], normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'doughnut':
+                option = generateDoughnutChartOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns[0], normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'radar':
+                option = generateRadarChartOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'scatter':
+                option = generateScatterChartOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData,
+                    symbolSize, symbolShape, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'bubble':
+                option = generateBubbleChartOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'heatmap':
+                option = generateHeatmapOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'tree':
+                option = generateTreeChartOption(
+                    chartTitle, titleFontSize, showLegend,
+                    normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'treemap':
+                option = generateTreemapOption(
+                    chartTitle, titleFontSize, showLegend,
+                    normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'sunburst':
+                option = generateSunburstOption(
+                    chartTitle, titleFontSize, showLegend,
+                    normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'funnel':
+                option = generateFunnelOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns[0], normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'gauge':
+                option = generateGaugeOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns[0], normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'sankey':
+                option = generateSankeyOption(
+                    chartTitle, titleFontSize, showLegend,
+                    normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'graph':
+                option = generateGraphOption(
+                    chartTitle, titleFontSize, showLegend,
+                    normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'wordCloud':
+                option = generateWordCloudOption(
+                    chartTitle, titleFontSize,
+                    categoryColumn, valueColumns[0], normalizedData,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'boxplot':
+                option = generateBoxplotOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns[0], normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'waterfall':
+                option = generateWaterfallOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns[0], normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'polar':
+                option = generatePolarOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'calendar':
+                option = generateCalendarOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns[0], normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'candlestick':
+                option = generateCandlestickOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'effectScatter':
+                option = generateEffectScatterOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData,
+                    symbolSize, symbolShape, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'lines':
+                option = generateLinesOption(
+                    chartTitle, titleFontSize, showLegend,
+                    normalizedData, colors, lineWidth,
+                    backgroundColor, opacity
+                );
+                break;
+            case 'map':
+                option = generateMapOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns[0], normalizedData, colors,
+                    backgroundColor, opacity
+                );
+                break;
+            default:
+                // 默认使用折线图配置
+                option = generateLineChartOption(
+                    chartTitle, titleFontSize, showLegend,
+                    categoryColumn, valueColumns, normalizedData,
+                    lineWidth, symbolSize, symbolShape, colors,
+                    backgroundColor, opacity
+                );
+        }
+
+        // 设置图表配置
+        if (option) {
+            chartInstance.setOption(option);
+        }
+    } catch (error) {
+        console.error('生成图表失败:', error);
+        chartInstance.setOption({
+            title: {
+                text: '生成图表失败: ' + error.message,
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444'
+                }
+            }
+        });
+    }
+}
+
+// 生成折线图配置
+function generateLineChartOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data,
+    lineWidth, symbolSize, symbolShape, colors,
+    backgroundColor, opacity
+) {
+    // 准备X轴数据
+    const xAxisData = data.map(item => item[categoryColumn]);
+
+    // 准备系列数据
+    const series = valueColumns.map((column, index) => {
+        return {
+            name: column,
+            type: 'line',
+            data: data.map(item => parseFloat(item[column]) || 0),
+            lineStyle: {
+                width: lineWidth
+            },
+            symbol: symbolShape,
+            symbolSize: symbolSize,
+            itemStyle: {
+                color: colors[index % colors.length],
+                opacity: opacity
+            },
+            emphasis: {
+                scale: true
+            }
+        };
+    });
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'axis'
+        },
+        legend: {
+            data: valueColumns,
+            show: showLegend,
+            top: 30
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: xAxisData
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: series
+    };
+}
+
+// 生成柱状图配置
+function generateBarChartOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data, colors,
+    backgroundColor, opacity
+) {
+    // 准备X轴数据
+    const xAxisData = data.map(item => item[categoryColumn]);
+
+    // 准备系列数据
+    const series = valueColumns.map((column, index) => {
+        return {
+            name: column,
+            type: 'bar',
+            data: data.map(item => parseFloat(item[column]) || 0),
+            itemStyle: {
+                color: colors[index % colors.length],
+                opacity: opacity
+            },
+            emphasis: {
+                focus: 'series'
+            }
+        };
+    });
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            }
+        },
+        legend: {
+            data: valueColumns,
+            show: showLegend,
+            top: 30
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: xAxisData
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: series
+    };
+}
+
+// 生成饼图配置
+function generatePieChartOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumn, data, colors,
+    backgroundColor, opacity
+) {
+    // 准备数据
+    const pieData = data.map(item => {
+        return {
+            name: item[categoryColumn],
+            value: parseFloat(item[valueColumn]) || 0
+        };
+    }).filter(item => item.value > 0);
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 10,
+            show: showLegend,
+            data: pieData.map(item => item.name)
+        },
+        series: [
+            {
+                name: valueColumn,
+                type: 'pie',
+                radius: '70%',
+                center: ['50%', '60%'],
+                data: pieData,
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                },
+                itemStyle: {
+                    color: function (params) {
+                        return colors[params.dataIndex % colors.length];
+                    },
+                    opacity: opacity
+                }
+            }
+        ]
+    };
+}
+
+// 生成环形图配置
+function generateDoughnutChartOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumn, data, colors,
+    backgroundColor, opacity
+) {
+    // 准备数据
+    const pieData = data.map(item => {
+        return {
+            name: item[categoryColumn],
+            value: parseFloat(item[valueColumn]) || 0
+        };
+    }).filter(item => item.value > 0);
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 10,
+            show: showLegend,
+            data: pieData.map(item => item.name)
+        },
+        series: [
+            {
+                name: valueColumn,
+                type: 'pie',
+                radius: ['40%', '70%'],
+                center: ['50%', '60%'],
+                data: pieData,
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                },
+                itemStyle: {
+                    color: function (params) {
+                        return colors[params.dataIndex % colors.length];
+                    },
+                    opacity: opacity
+                }
+            }
+        ]
+    };
+}
+
+// 生成雷达图配置
+function generateRadarChartOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data, colors,
+    backgroundColor, opacity
+) {
+    // 计算每个指标的最大值，用于雷达图的轴范围
+    const maxValues = {};
+    valueColumns.forEach(column => {
+        maxValues[column] = Math.max(...data.map(item => parseFloat(item[column]) || 0)) * 1.1;
+        // 确保至少有一个合理的最小值
+        if (maxValues[column] === 0) maxValues[column] = 100;
+    });
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item'
+        },
+        legend: {
+            top: 30,
+            data: data.map(item => item[categoryColumn]),
+            show: showLegend
+        },
+        radar: {
+            indicator: valueColumns.map(column => {
+                return {
+                    name: column,
+                    max: maxValues[column]
+                };
+            })
+        },
+        series: [
+            {
+                type: 'radar',
+                symbol: 'circle',
+                symbolSize: 8,
+                lineStyle: {
+                    width: 3,
+                    opacity: opacity
+                },
+                emphasis: {
+                    areaStyle: {
+                        color: 'rgba(255, 255, 255, 0.3)'
+                    }
+                },
+                data: data.map((item, index) => {
+                    return {
+                        name: item[categoryColumn],
+                        value: valueColumns.map(column => parseFloat(item[column]) || 0),
+                        itemStyle: {
+                            color: colors[index % colors.length]
+                        },
+                        lineStyle: {
+                            color: colors[index % colors.length]
+                        },
+                        areaStyle: {
+                            color: colors[index % colors.length],
+                            opacity: opacity
+                        }
+                    };
+                })
+            }
+        ]
+    };
+}
+
+// 生成散点图配置
+function generateScatterChartOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data,
+    symbolSize, symbolShape, colors,
+    backgroundColor, opacity
+) {
+    // 确保至少有两个数值列
+    const usedValueColumns = valueColumns.length >= 2 ? valueColumns.slice(0, 2) : [...valueColumns, valueColumns[0] || '值2'];
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: function (params) {
+                return `${params.name}: ${params.value[0]}, ${params.value[1]}`;
+            }
+        },
+        legend: {
+            data: [...new Set(data.map(item => item[categoryColumn]))],
+            show: showLegend,
+            top: 30
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'value',
+            name: usedValueColumns[0]
+        },
+        yAxis: {
+            type: 'value',
+            name: usedValueColumns[1]
+        },
+        series: [...new Set(data.map(item => item[categoryColumn]))].map((category, index) => {
+            const categoryData = data.filter(item => item[categoryColumn] === category);
+            return {
+                name: category,
+                type: 'scatter',
+                data: categoryData.map(item => [
+                    parseFloat(item[usedValueColumns[0]]) || 0,
+                    parseFloat(item[usedValueColumns[1]]) || 0
+                ]),
+                symbol: symbolShape,
+                symbolSize: symbolSize,
+                itemStyle: {
+                    color: colors[index % colors.length],
+                    opacity: opacity
+                }
+            };
+        })
+    };
+}
+
+// 生成气泡图配置
+function generateBubbleChartOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data, colors,
+    backgroundColor, opacity
+) {
+    // 确保至少有三个数值列
+    while (valueColumns.length < 3) {
+        valueColumns.push(valueColumns[valueColumns.length - 1] || `值${valueColumns.length + 1}`);
+    }
+    const usedValueColumns = valueColumns.slice(0, 3);
+
+    // 计算最大气泡大小
+    const values = data.map(item => parseFloat(item[usedValueColumns[2]]) || 0);
+    const maxValue = Math.max(...values, 1); // 避免除以0
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: function (params) {
+                return `${params.name}: ${params.value[0]}, ${params.value[1]}, ${params.value[2]}`;
+            }
+        },
+        legend: {
+            data: [...new Set(data.map(item => item[categoryColumn]))],
+            show: showLegend,
+            top: 30
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'value',
+            name: usedValueColumns[0]
+        },
+        yAxis: {
+            type: 'value',
+            name: usedValueColumns[1]
+        },
+        series: [...new Set(data.map(item => item[categoryColumn]))].map((category, index) => {
+            const categoryData = data.filter(item => item[categoryColumn] === category);
+            return {
+                name: category,
+                type: 'scatter',
+                data: categoryData.map(item => [
+                    parseFloat(item[usedValueColumns[0]]) || 0,
+                    parseFloat(item[usedValueColumns[1]]) || 0,
+                    parseFloat(item[usedValueColumns[2]]) || 0
+                ]),
+                symbolSize: function (data) {
+                    // 根据第三列的值计算气泡大小
+                    return 5 + (data[2] / maxValue) * 40;
+                },
+                itemStyle: {
+                    color: colors[index % colors.length],
+                    opacity: opacity
+                },
+                emphasis: {
+                    focus: 'series',
+                    scale: true
+                }
+            };
+        })
+    };
+}
+
+// 生成热力图配置
+// 生成热力图（修复格式错误版）
+function generateHeatmapOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data, colors,
+    backgroundColor, opacity
+) {
+    // 辅助函数：检测数据格式并转换为标准格式
+    function normalizeHeatmapData(inputData) {
+        // 格式1：标准矩阵格式 {xAxis: [], yAxis: [], data: [[]]}
+        if (inputData && typeof inputData === 'object' && !Array.isArray(inputData) &&
+            Array.isArray(inputData.xAxis) && Array.isArray(inputData.yAxis) && Array.isArray(inputData.data)) {
+            return {
+                type: 'matrix',
+                x: inputData.xAxis,
+                y: inputData.yAxis,
+                values: inputData.data
+            };
+        }
+
+        // 格式2：纯二维数组 [[1,2],[3,4]]
+        if (Array.isArray(inputData) && inputData.length > 0 && Array.isArray(inputData[0])) {
+            return {
+                type: 'matrix',
+                x: inputData[0].map((_, i) => `X${i + 1}`), // 自动生成X轴标签
+                y: inputData.map((_, i) => `Y${i + 1}`),   // 自动生成Y轴标签
+                values: inputData
+            };
+        }
+
+        // 格式3：表格格式 [{x: 'a', y: 'b', value: 1}, ...]
+        if (Array.isArray(inputData) && inputData.length > 0) {
+            // 检查是否包含x、y、value字段
+            const hasX = inputData.some(item => 'x' in item);
+            const hasY = inputData.some(item => 'y' in item);
+            const hasValue = inputData.some(item => 'value' in item);
+
+            if (hasX && hasY && hasValue) {
+                const xAxis = [...new Set(inputData.map(item => item.x))].sort();
+                const yAxis = [...new Set(inputData.map(item => item.y))].sort();
+
+                // 构建值矩阵
+                const values = yAxis.map(y =>
+                    xAxis.map(x => {
+                        const item = inputData.find(i => i.x === x && i.y === y);
+                        return item ? parseFloat(item.value) || 0 : 0;
+                    })
+                );
+
+                return {
+                    type: 'matrix',
+                    x: xAxis,
+                    y: yAxis,
+                    values: values
+                };
+            }
+        }
+
+        // 格式4：使用指定的分类列和值列 [{cat: 'a', v1:1, v2:2}, ...]
+        if (Array.isArray(inputData) && inputData.length > 0 && categoryColumn && valueColumns.length > 0) {
+            const xAxis = [...new Set(inputData.map(item => item[categoryColumn]))].sort();
+            const yAxis = [...valueColumns];
+
+            // 构建值矩阵
+            const values = yAxis.map(y =>
+                xAxis.map(x => {
+                    const item = inputData.find(i => i[categoryColumn] === x);
+                    return item ? parseFloat(item[y]) || 0 : 0;
+                })
+            );
+
+            return {
+                type: 'matrix',
+                x: xAxis,
+                y: yAxis,
+                values: values
+            };
+        }
+
+        // 无法识别的数据格式
+        return null;
+    }
+
+    // 转换数据格式
+    const normalizedData = normalizeHeatmapData(data);
+
+    // 数据格式错误处理
+    if (!normalizedData) {
+        return {
+            backgroundColor: backgroundColor,
+            title: {
+                text: '热力图数据格式错误',
+                left: 'center',
+                top: '20%',
+                textStyle: {
+                    color: '#EF4444',
+                    fontSize: titleFontSize
+                }
+            },
+            graphic: {
+                elements: [{
+                    type: 'text',
+                    left: 'center',
+                    top: '50%',
+                    style: {
+                        text: '支持的格式：\n1. {xAxis: [], yAxis: [], data: [[]]}\n2. 纯二维数组 [[1,2],[3,4]]\n3. 表格格式 [{x: "", y: "", value: 1}, ...]\n4. 分类值列格式（需指定分类列和值列）',
+                        fontSize: 14,
+                        fill: '#666',
+                        lineHeight: 24,
+                        textAlign: 'center'
+                    }
+                }]
+            }
+        };
+    }
+
+    // 提取标准化后的数据
+    const { x: xAxisData, y: yAxisData, values: matrixData } = normalizedData;
+
+    // 验证矩阵维度
+    if (matrixData.some(row => row.length !== xAxisData.length)) {
+        return {
+            backgroundColor: backgroundColor,
+            title: {
+                text: '热力图数据维度不匹配',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444',
+                    fontSize: titleFontSize
+                }
+            }
+        };
+    }
+
+    // 转换为ECharts热力图格式
+    const heatmapData = [];
+    yAxisData.forEach((y, yIdx) => {
+        xAxisData.forEach((x, xIdx) => {
+            heatmapData.push([xIdx, yIdx, matrixData[yIdx][xIdx]]);
+        });
+    });
+
+    // 计算值范围
+    const values = heatmapData.map(item => item[2]).filter(v => !isNaN(v));
+    if (values.length === 0) {
+        return {
+            backgroundColor: backgroundColor,
+            title: {
+                text: '热力图无有效数值',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444',
+                    fontSize: titleFontSize
+                }
+            }
+        };
+    }
+
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+
+    // 自动调整标签旋转
+    const xLabelRotate = xAxisData.length > 8 ? 45 : xAxisData.length > 5 ? 30 : 0;
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            position: 'top',
+            formatter: function (params) {
+                return `${xAxisData[params.data[0]]} × ${yAxisData[params.data[1]]}: ${params.data[2].toFixed(2)}`;
+            }
+        },
+        grid: {
+            left: '10%',
+            right: '10%',
+            bottom: xAxisData.length > 8 ? '15%' : '10%',
+            top: '20%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: xAxisData,
+            axisLabel: {
+                rotate: xLabelRotate,
+                interval: 0
+            },
+            splitArea: {
+                show: true
+            }
+        },
+        yAxis: {
+            type: 'category',
+            data: yAxisData,
+            splitArea: {
+                show: true
+            }
+        },
+        visualMap: {
+            min: minValue,
+            max: maxValue,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center',
+            bottom: '5%',
+            inRange: {
+                color: colors.length ? colors : ['#f0f9ff', '#bae6fd', '#38bdf8', '#0284c7']
+            }
+        },
+        series: [{
+            type: 'heatmap',
+            data: heatmapData,
+            label: {
+                show: xAxisData.length <= 10 && yAxisData.length <= 10
+            },
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowColor: 'rgba(0,0,0,0.3)'
+                }
+            }
+        }]
+    };
+}
+
+// 生成树状图配置
+function generateTreeChartOption(
+    title, titleFontSize, showLegend,
+    data, colors,
+    backgroundColor, opacity
+) {
+    // 还原树形数据结构
+    let treeData = null;
+    if (data.length > 0 && data[0].name === '总公司') {
+        // 尝试从第一个节点还原完整树结构
+        treeData = data[0];
+        // 递归构建子节点
+        function buildChildren(node) {
+            if (node.children && node.children.length > 0) {
+                node.children = node.children.map(childName => {
+                    const childNode = data.find(item => item.name === childName.name);
+                    if (childNode) {
+                        return buildChildren(childNode);
+                    }
+                    return childName;
+                });
+            }
+            return node;
+        }
+        treeData = buildChildren(treeData);
+    } else if (chartData.tree && chartData.tree.data) {
+        // 使用原始数据
+        treeData = chartData.tree.data;
+    }
+
+    if (!treeData) {
+        return {
+            title: {
+                text: '树状图数据格式不正确',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444'
+                }
+            }
+        };
+    }
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            triggerOn: 'mousemove'
+        },
+        series: [
+            {
+                type: 'tree',
+                data: [treeData],
+                top: '10%',
+                left: '7%',
+                bottom: '10%',
+                right: '20%',
+                symbolSize: 7,
+                label: {
+                    position: 'left',
+                    verticalAlign: 'middle',
+                    align: 'right'
+                },
+                leaves: {
+                    label: {
+                        position: 'right',
+                        verticalAlign: 'middle',
+                        align: 'left'
+                    }
+                },
+                emphasis: {
+                    focus: 'descendant'
+                },
+                expandAndCollapse: true,
+                animationDuration: 550,
+                animationDurationUpdate: 750,
+                lineStyle: {
+                    width: 2,
+                    opacity: opacity
+                },
+                itemStyle: {
+                    color: function (params) {
+                        return colors[params.dataIndex % colors.length];
+                    },
+                    opacity: opacity
+                }
+            }
+        ]
+    };
+}
+
+// 生成矩形树图配置
+function generateTreemapOption(
+    title, titleFontSize, showLegend,
+    data, colors,
+    backgroundColor, opacity
+) {
+    // 获取原始树形数据
+    let treemapData = chartData.treemap?.data || null;
+
+    if (!treemapData) {
+        return {
+            title: {
+                text: '矩形树图数据格式不正确',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444'
+                }
+            }
+        };
+    }
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c}'
+        },
+        series: [
+            {
+                name: '销售额',
+                type: 'treemap',
+                data: [treemapData],
+                roam: false,
+                label: {
+                    show: true,
+                    formatter: '{b}'
+                },
+                emphasis: {
+                    focus: 'descendant'
+                },
+                itemStyle: {
+                    borderColor: '#fff',
+                    opacity: opacity
+                },
+                levels: [
+                    {
+                        itemStyle: {
+                            borderColor: '#fff',
+                            borderWidth: 3,
+                            color: function (params) {
+                                return colors[params.dataIndex % colors.length];
+                            }
+                        }
+                    },
+                    {
+                        itemStyle: {
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        }
+                    },
+                    {
+                        itemStyle: {
+                            borderColor: '#fff',
+                            borderWidth: 1
+                        }
+                    }
+                ]
+            }
+        ]
+    };
+}
+
+// 生成旭日图配置
+function generateSunburstOption(
+    title, titleFontSize, showLegend,
+    data, colors,
+    backgroundColor, opacity
+) {
+    // 获取原始数据
+    let sunburstData = chartData.sunburst?.data || null;
+
+    if (!sunburstData) {
+        return {
+            title: {
+                text: '旭日图数据格式不正确',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444'
+                }
+            }
+        };
+    }
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c}'
+        },
+        series: {
+            type: 'sunburst',
+            data: [sunburstData],
+            radius: [0, '90%'],
+            label: {
+                rotate: 'radial'
+            },
+            emphasis: {
+                focus: 'ancestor'
+            },
+            itemStyle: {
+                color: function (params) {
+                    return colors[params.dataIndex % colors.length];
+                },
+                borderColor: '#fff',
+                opacity: opacity
+            }
+        }
+    };
+}
+
+// 生成漏斗图配置
+function generateFunnelOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumn, data, colors,
+    backgroundColor, opacity
+) {
+    // 准备数据
+    const funnelData = data.map(item => {
+        return {
+            name: item[categoryColumn],
+            value: parseFloat(item[valueColumn]) || 0
+        };
+    }).filter(item => item.value > 0);
+
+    // 按值排序（漏斗图通常需要从大到小排序）
+    funnelData.sort((a, b) => b.value - a.value);
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b}: {c}'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 10,
+            show: showLegend,
+            data: funnelData.map(item => item.name)
+        },
+        series: [
+            {
+                name: valueColumn,
+                type: 'funnel',
+                left: '10%',
+                top: 60,
+                bottom: 60,
+                width: '80%',
+                minSize: '0%',
+                maxSize: '100%',
+                sort: 'descending',
+                gap: 2,
+                label: {
+                    show: true,
+                    position: 'inside'
+                },
+                labelLine: {
+                    length: 10,
+                    lineStyle: {
+                        width: 1,
+                        type: 'solid'
+                    }
+                },
+                itemStyle: {
+                    borderColor: '#fff',
+                    borderWidth: 1,
+                    color: function (params) {
+                        return colors[params.dataIndex % colors.length];
+                    },
+                    opacity: opacity
+                },
+                emphasis: {
+                    label: {
+                        fontSize: 16
+                    }
+                },
+                data: funnelData
+            }
+        ]
+    };
+}
+
+// 生成仪表盘配置
+function generateGaugeOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumn, data, colors,
+    backgroundColor, opacity
+) {
+    // 准备数据
+    const gaugeData = data.map((item, index) => {
+        return {
+            name: item[categoryColumn],
+            value: parseFloat(item[valueColumn]) || 0,
+            itemStyle: {
+                color: colors[index % colors.length]
+            }
+        };
+    });
+
+    // 计算最大分值，用于设置仪表盘范围
+    const maxValue = Math.max(...gaugeData.map(item => item.value), 100);
+    const gaugeMax = Math.ceil(maxValue * 1.2 / 10) * 10; // 向上取整到10的倍数
+
+    // 计算仪表盘尺寸（根据数据量动态调整，最多3列布局）
+    const colCount = Math.min(3, gaugeData.length);
+    const gaugeSize = Math.min(80 / colCount, 30); // 控制单仪表盘最大尺寸
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c}/{d}',
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: gaugeData.map(item => item.name),
+            show: showLegend,
+            top: 30,
+            left: 'center',
+            orient: 'horizontal',
+            padding: [0, 20]
+        },
+        series: gaugeData.map((item, index) => {
+            // 计算仪表盘位置（3列布局，自动换行）
+            const colIndex = index % colCount;
+            const rowIndex = Math.floor(index / colCount);
+            const left = `${15 + colIndex * (80 / colCount)}%`;
+            const top = `${30 + rowIndex * 40}%`;
+
+            return {
+                name: item.name,
+                type: 'gauge',
+                center: [left, top], // 动态计算位置
+                radius: `${gaugeSize}%`, // 动态计算尺寸
+                startAngle: 180,
+                endAngle: 0,
+                min: 0,
+                max: gaugeMax,
+                splitNumber: 10,
+                itemStyle: {
+                    color: item.itemStyle.color,
+                    opacity: opacity
+                },
+                progress: {
+                    show: true,
+                    overlap: false,
+                    roundCap: true,
+                    clip: false,
+                    itemStyle: {
+                        opacity: opacity
+                    }
+                },
+                pointer: {
+                    show: true,
+                    length: '70%',
+                    width: 3,
+                    itemStyle: {
+                        color: '#1D2129'
+                    }
+                },
+                axisLine: {
+                    lineStyle: {
+                        width: 15,
+                        color: [
+                            [0.3, '#FED7D7'],
+                            [0.7, '#FEB2B2'],
+                            [1, '#FC8181']
+                        ]
+                    }
+                },
+                splitLine: {
+                    show: true,
+                    length: 12,
+                    lineStyle: {
+                        color: '#1D2129',
+                        width: 2
+                    }
+                },
+                axisTick: {
+                    show: true,
+                    length: 8,
+                    lineStyle: {
+                        color: '#1D2129',
+                        width: 1
+                    }
+                },
+                axisLabel: {
+                    show: true,
+                    distance: 20,
+                    fontSize: 12,
+                    color: '#1D2129',
+                    formatter: function (value) {
+                        return `${value}`;
+                    }
+                },
+                title: {
+                    show: true,
+                    offsetCenter: [0, '60%'],
+                    fontSize: 14,
+                    color: '#1D2129'
+                },
+                detail: {
+                    show: true,
+                    width: 60,
+                    height: 18,
+                    offsetCenter: [0, '30%'],
+                    fontSize: 16,
+                    color: '#FFFFFF',
+                    backgroundColor: item.itemStyle.color,
+                    borderRadius: 4,
+                    formatter: '{value}',
+                    opacity: opacity
+                },
+                data: [
+                    {
+                        value: item.value,
+                        name: item.name
+                    }
+                ]
+            };
+        })
+    };
+}
+
+// 生成桑基图配置
+function generateSankeyOption(
+    title, titleFontSize, showLegend,
+    data, colors,
+    backgroundColor, opacity
+) {
+    // 提取原始桑基图数据（从chartData获取完整结构）
+    const sankeyRawData = chartData.sankey?.data || null;
+    if (!sankeyRawData || !sankeyRawData.nodes || !sankeyRawData.links) {
+        return {
+            backgroundColor: backgroundColor,
+            title: {
+                text: '桑基图数据格式错误',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444',
+                    fontSize: titleFontSize
+                }
+            }
+        };
+    }
+
+    // 处理节点颜色
+    const nodesWithColor = sankeyRawData.nodes.map((node, index) => ({
+        ...node,
+        itemStyle: {
+            color: colors[index % colors.length],
+            opacity: opacity
+        }
+    }));
+
+    // 处理链路颜色（继承源节点颜色）
+    const linksWithColor = sankeyRawData.links.map(link => {
+        const sourceNode = nodesWithColor.find(node => node.name === link.source);
+        return {
+            ...link,
+            lineStyle: {
+                color: sourceNode ? sourceNode.itemStyle.color : '#64748B',
+                opacity: opacity * 0.7,
+                curveness: 0.5
+            }
+        };
+    });
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            triggerOn: 'mousemove',
+            formatter: function (params) {
+                if (params.type === 'node') {
+                    return `节点: ${params.name}`;
+                } else {
+                    return `流量: ${params.source.name} → ${params.target.name}: ${params.value}`;
+                }
+            },
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: nodesWithColor.map(node => node.name),
+            show: showLegend,
+            top: 30,
+            left: 'center',
+            orient: 'horizontal',
+            padding: [0, 20],
+            pageButtonPosition: 'end',
+            pageIcons: {
+                next: '→',
+                prev: '←'
+            }
+        },
+        grid: {
+            left: '5%',
+            right: '5%',
+            top: '20%',
+            bottom: '10%'
+        },
+        series: [
+            {
+                type: 'sankey',
+                layout: 'none',
+                emphasis: {
+                    focus: 'adjacency',
+                    lineStyle: {
+                        width: 5,
+                        opacity: 1
+                    }
+                },
+                data: nodesWithColor,
+                links: linksWithColor,
+                lineStyle: {
+                    color: 'gradient',
+                    curveness: 0.5
+                },
+                label: {
+                    show: true,
+                    fontSize: 12,
+                    color: '#1D2129',
+                    distance: 5
+                }
+            }
+        ]
+    };
+}
+
+// 生成关系图配置
+function generateGraphOption(
+    title, titleFontSize, showLegend,
+    data, colors,
+    backgroundColor, opacity
+) {
+    // 提取原始关系图数据
+    const graphRawData = chartData.graph?.data || null;
+    if (!graphRawData || !graphRawData.nodes || !graphRawData.links) {
+        return {
+            backgroundColor: backgroundColor,
+            title: {
+                text: '关系图数据格式错误',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444',
+                    fontSize: titleFontSize
+                }
+            }
+        };
+    }
+
+    // 处理节点样式（按类别分配颜色）
+    const categories = graphRawData.categories || [
+        { name: '默认类别' }
+    ];
+    const nodesWithStyle = graphRawData.nodes.map(node => {
+        const categoryIndex = node.category || 0;
+        return {
+            ...node,
+            symbolSize: node.value ? Math.min(50, Math.max(10, node.value / 2)) : 20, // 按value调整大小
+            itemStyle: {
+                color: colors[categoryIndex % colors.length],
+                opacity: opacity,
+                borderColor: '#FFFFFF',
+                borderWidth: 2
+            },
+            label: {
+                show: true,
+                fontSize: 12,
+                color: '#1D2129',
+                distance: node.symbolSize ? node.symbolSize + 5 : 25
+            }
+        };
+    });
+
+    // 处理链路样式
+    const linksWithStyle = graphRawData.links.map(link => ({
+        ...link,
+        lineStyle: {
+            color: '#CBD5E1',
+            width: 2,
+            opacity: opacity * 0.6,
+            curveness: 0.3
+        }
+    }));
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: function (params) {
+                if (params.type === 'node') {
+                    return `节点: ${params.name}\n类别: ${categories[params.data.category || 0].name}\n数值: ${params.data.value || '无'}`;
+                } else {
+                    return `关系: ${params.source.name} → ${params.target.name}`;
+                }
+            },
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: categories.map(cat => cat.name),
+            show: showLegend,
+            top: 30,
+            left: 'center'
+        },
+        series: [
+            {
+                type: 'graph',
+                layout: 'force',
+                force: {
+                    repulsion: 250, // 节点间距
+                    edgeLength: 80, // 链路长度
+                    gravity: 0.1, // 重力影响
+                    layoutAnimation: true
+                },
+                roam: true, // 支持拖拽和缩放
+                label: {
+                    show: true,
+                    position: 'right',
+                    fontSize: 12
+                },
+                edgeLabel: {
+                    show: false,
+                    fontSize: 10,
+                    color: '#64748B'
+                },
+                data: nodesWithStyle,
+                links: linksWithStyle,
+                categories: categories.map((cat, index) => ({
+                    ...cat,
+                    itemStyle: {
+                        color: colors[index % colors.length]
+                    }
+                })),
+                emphasis: {
+                    focus: 'adjacency',
+                    lineStyle: {
+                        width: 5,
+                        opacity: 1
+                    },
+                    itemStyle: {
+                        opacity: 1
+                    }
+                }
+            }
+        ]
+    };
+}
+
+// 生成词云配置
+function generateWordCloudOption(
+    chartTitle, titleFontSize,
+    categoryColumn, valueColumn, normalizedData,
+    backgroundColor, opacity
+) {
+    // 容器ID固定为chartContainer（根据HTML结构）
+    const containerId = 'chartContainer';
+
+    // 调试日志函数
+    const debugLog = (message, level = 'log') => {
+        console[level](`[词云图调试] ${new Date().toISOString().slice(11, 23)} - ${message}`);
+    };
+
+    // 1. 容器检查与修复（针对h-[450px]的容器）
+    const container = document.getElementById(containerId);
+    if (container) {
+        const style = window.getComputedStyle(container);
+        // 验证容器尺寸（父容器是h-[450px]，确保子容器继承高度）
+        if (style.height !== '100%') {
+            container.style.height = '100%';
+            debugLog(`容器高度已强制设置为100%，匹配父容器h-[450px]`);
+        }
+        if (style.width !== '100%') {
+            container.style.width = '100%';
+            debugLog(`容器宽度已强制设置为100%`);
+        }
+        // 确保没有内边距影响实际绘制区域
+        container.style.padding = '0';
+    } else {
+        debugLog(`未找到ID为${containerId}的容器，可能导致显示异常`, 'error');
+    }
+
+    // 2. 基础参数验证与日志
+    debugLog(`开始生成词云图，标题: ${chartTitle || '未设置标题'}`);
+    debugLog(`类别列: ${categoryColumn || '未设置'}, 值列: ${valueColumn || '未设置'}`);
+    debugLog(`数据量: ${normalizedData ? (Array.isArray(normalizedData) ? normalizedData.length : '非数组') : '无数据'}`);
+
+    // 3. 基础数据校验
+    if (!normalizedData || !Array.isArray(normalizedData)) {
+        debugLog('数据为空或非数组', 'error');
+        return createErrorConfig(chartTitle, backgroundColor, "数据格式错误\n请提供有效的数组数据");
+    }
+
+    if (normalizedData.length === 0) {
+        debugLog('数据数组为空，使用默认示例数据', 'warn');
+        normalizedData = [
+            { [categoryColumn || 'name']: '示例关键词1', [valueColumn || 'value']: 30 },
+            { [categoryColumn || 'name']: '示例关键词2', [valueColumn || 'value']: 25 },
+            { [categoryColumn || 'name']: '示例关键词3', [valueColumn || 'value']: 20 },
+            { [categoryColumn || 'name']: '示例关键词4', [valueColumn || 'value']: 15 },
+            { [categoryColumn || 'name']: '示例关键词5', [valueColumn || 'value']: 10 }
+        ];
+    }
+
+    // 4. 验证必要字段（针对词语和权重列）
+    if (!categoryColumn) {
+        debugLog('未指定类别列，使用默认列名 "词语"', 'warn');
+        categoryColumn = '词语';
+    }
+    if (!valueColumn) {
+        debugLog('未指定值列，使用默认列名 "权重"', 'warn');
+        valueColumn = '权重';
+    }
+
+    // 5. 数据预处理与清洗（适配normalizedData）
+    let validCount = 0;
+    const wordData = normalizedData.map((item, index) => {
+        try {
+            if (!item || typeof item !== 'object') {
+                throw new Error('不是有效对象');
+            }
+
+            // 提取并处理词（针对"词语"列）
+            let word = item[categoryColumn];
+            if (word === undefined || word === null) {
+                word = `未知词_${index}`;
+                debugLog(`数据项 ${index} 缺少${categoryColumn}值，使用默认值: ${word}`);
+            } else {
+                word = String(word).trim();
+                if (word.length < 1) {
+                    word = `空词_${index}`;
+                    debugLog(`数据项 ${index} ${categoryColumn}为空，使用默认值: ${word}`);
+                } else if (word.length < 2) {
+                    word = `${word}_${index}`;
+                    debugLog(`数据项 ${index} ${categoryColumn}长度不足，扩展为: ${word}`);
+                }
+            }
+
+            // 提取并处理权重（针对"权重"列）
+            let weight;
+            if (item[valueColumn] === undefined || item[valueColumn] === null) {
+                weight = 5 + Math.random() * 45; // 适配450px高度的权重范围
+                debugLog(`数据项 ${index} 缺少${valueColumn}值，使用随机值: ${weight.toFixed(1)}`);
+            } else {
+                weight = Number(item[valueColumn]);
+                if (isNaN(weight) || !isFinite(weight) || weight <= 0) {
+                    weight = 5 + Math.random() * 45;
+                    debugLog(`数据项 ${index} ${valueColumn}无效(${item[valueColumn]})，使用随机值: ${weight.toFixed(1)}`);
+                }
+            }
+
+            validCount++;
+            return { name: word, value: weight };
+        } catch (e) {
+            debugLog(`数据项 ${index} 处理失败: ${e.message}，已跳过`);
+            return null;
+        }
+    }).filter(Boolean);
+
+    // 6. 检查有效数据数量
+    debugLog(`有效数据项: ${validCount}/${normalizedData.length}`);
+    if (wordData.length === 0) {
+        debugLog('无有效数据，强制生成示例数据', 'warn');
+        for (let i = 0; i < 5; i++) {
+            wordData.push({ name: `自动生成词${i + 1}`, value: 10 + Math.random() * 40 });
+        }
+    }
+
+    // 7. 计算权重范围（适配450px高度容器）
+    const weights = wordData.map(item => item.value).filter(v => !isNaN(v) && isFinite(v));
+    if (weights.length === 0) {
+        debugLog('所有权重无效，使用默认权重范围', 'error');
+        return createErrorConfig(chartTitle, backgroundColor, "权重数据无效\n无法生成词云");
+    }
+
+    let minWeight = Math.min(...weights);
+    let maxWeight = Math.max(...weights);
+
+    // 确保权重差异足够在450px高度内显示
+    if (maxWeight - minWeight < 10) {
+        debugLog('权重差异过小，自动扩大以适配容器高度', 'warn');
+        const mid = (minWeight + maxWeight) / 2;
+        minWeight = Math.max(1, mid - 15);
+        maxWeight = mid + 15;
+    }
+
+    // 根据450px高度调整字体范围
+    const sizeRange = [14, 60];
+
+    // 处理权重相同的特殊情况
+    let adjustedSizeRange = sizeRange;
+    if (minWeight === maxWeight) {
+        debugLog('所有词权重相同，调整大小范围以适配容器');
+        adjustedSizeRange = [18, 45];
+    }
+
+    // 8. 词云形状处理
+    const supportedShapes = ['circle', 'cardioid', 'diamond', 'triangle-forward', 'triangle', 'pentagon', 'star'];
+    let shape = 'circle';
+
+    try {
+        const shapeElement = document.getElementById('wordCloudShape');
+        if (shapeElement && shapeElement.value && supportedShapes.includes(shapeElement.value)) {
+            shape = shapeElement.value;
+            debugLog(`使用指定形状: ${shape}`);
+        }
+    } catch (e) {
+        debugLog(`获取形状配置失败: ${e.message}，使用默认圆形`);
+    }
+
+    // 9. 确保透明度有效
+    const safeOpacity = (opacity !== undefined && typeof opacity === 'number' && opacity >= 0 && opacity <= 1)
+        ? opacity
+        : 0.9;
+
+    // 10. 构建最终配置（针对h-[450px]容器优化）
+    const option = {
+        backgroundColor: backgroundColor || 'transparent', // 适应父容器白色背景
+        title: {
+            text: chartTitle || '词云图',
+            left: 'center',
+            top: 15, // 适配450px高度的标题位置
+            textStyle: {
+                fontSize: titleFontSize || 16,
+                color: '#333',
+                fontWeight: 'normal'
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c}',
+            extraCssText: 'padding: 6px 10px; border-radius: 4px; background: rgba(255,255,255,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.15);'
+        },
+        series: [
+            {
+                type: 'wordCloud',
+                // 针对450px高度优化的布局
+                gridSize: 6, // 适合中等尺寸容器的间距
+                sizeRange: adjustedSizeRange,
+                rotationRange: [-30, 30, 0],
+                shape: shape,
+                // 精确适配450px高度的容器
+                width: '92%',
+                height: '82%', // 预留标题空间后剩余的高度
+                top: '13%',    // 标题下方开始
+                left: '4%',
+                drawOutOfBound: false,
+                // 文本样式：确保在白色背景上可见
+                textStyle: {
+                    color: function () {
+                        // 与白色背景形成高对比度的颜色集合
+                        const colors = [
+                            '#e53e3e', '#c53030', '#9b2c2c', // 红色系
+                            '#2b6cb0', '#2c5282', '#1a365d', // 蓝色系
+                            '#805ad5', '#6b46c1', '#44337a', // 紫色系
+                            '#dd6b20', '#c05621', '#8b4367'  // 棕色调
+                        ];
+                        return colors[Math.floor(Math.random() * colors.length)];
+                    },
+                    fontFamily: 'Arial, "Microsoft YaHei", sans-serif', // 确保中文显示
+                    fontWeight: '500',
+                    emphasis: {
+                        shadowBlur: 8,
+                        shadowColor: 'rgba(0, 0, 0, 0.2)'
+                    }
+                },
+                // 交互增强
+                emphasis: {
+                    focus: 'self',
+                    textStyle: {
+                        shadowBlur: 12,
+                        shadowColor: 'rgba(0, 0, 0, 0.4)',
+                        fontSize: function (params) {
+                            return params.data.textStyle.fontSize * 1.1;
+                        }
+                    }
+                },
+                // 数据处理：确保在450px高度内合理分布
+                data: wordData
+                    .sort((a, b) => b.value - a.value)
+                    .map(item => {
+                        let fontSize;
+                        if (minWeight === maxWeight) {
+                            fontSize = adjustedSizeRange[0] + Math.random() * (adjustedSizeRange[1] - adjustedSizeRange[0]);
+                        } else {
+                            // 非线性映射，适配450px高度
+                            const sizeRatio = Math.pow((item.value - minWeight) / (maxWeight - minWeight), 0.7);
+                            fontSize = adjustedSizeRange[0] + sizeRatio * (adjustedSizeRange[1] - adjustedSizeRange[0]);
+                        }
+                        // 强制限制在适合450px高度的范围内
+                        fontSize = Math.max(12, Math.min(70, fontSize));
+                        return {
+                            name: item.name,
+                            value: item.value,
+                            textStyle: {
+                                fontSize: fontSize,
+                                opacity: safeOpacity
+                            }
+                        };
+                    })
+            }
+        ]
+    };
+
+    debugLog('词云配置生成成功，已适配450px高度容器');
+    return option;
+}
+
+// 优化错误配置生成函数（适配当前容器）
+function createErrorConfig(title, backgroundColor, message) {
+    return {
+        backgroundColor: backgroundColor || 'transparent',
+        title: {
+            text: title || '词云图',
+            left: 'center',
+            top: '20%',
+            textStyle: {
+                fontSize: 16,
+                color: '#333'
+            }
+        },
+        graphic: {
+            elements: [{
+                type: 'text',
+                left: 'center',
+                top: '50%',
+                style: {
+                    text: message,
+                    fontSize: 14,
+                    fill: '#EF4444',
+                    lineHeight: 24,
+                    textAlign: 'center',
+                    fontWeight: 'bold'
+                }
+            }]
+        }
+    };
+}
+
+// 生成箱线图配置
+function generateBoxplotOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumn, data, colors,
+    backgroundColor, opacity
+) {
+    // 处理箱线图数据（按类别分组，每组生成统计数据）
+    const categoryGroups = {};
+    data.forEach(item => {
+        const category = item[categoryColumn] || '未知类别';
+        const value = parseFloat(item[valueColumn]) || 0;
+        if (!categoryGroups[category]) {
+            categoryGroups[category] = [];
+        }
+        categoryGroups[category].push(value);
+    });
+
+    // 为每组数据生成箱线图所需的五数概括（min, Q1, median, Q3, max）
+    const boxplotData = [];
+    const categories = [];
+    Object.entries(categoryGroups).forEach(([category, values], index) => {
+        if (values.length < 5) return; // 箱线图至少需要5个数据点
+
+        // 排序并计算统计量
+        const sorted = [...values].sort((a, b) => a - b);
+        const len = sorted.length;
+        const min = sorted[0];
+        const max = sorted[len - 1];
+        const median = len % 2 === 1
+            ? sorted[Math.floor(len / 2)]
+            : (sorted[len / 2 - 1] + sorted[len / 2]) / 2;
+        const Q1 = sorted[Math.floor(len / 4)];
+        const Q3 = sorted[Math.floor(len * 3 / 4)];
+
+        boxplotData.push([min, Q1, median, Q3, max]);
+        categories.push(category);
+    });
+
+    if (boxplotData.length === 0) {
+        return {
+            backgroundColor: backgroundColor,
+            title: {
+                text: '箱线图数据不足（每组需至少5个数据点）',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444',
+                    fontSize: titleFontSize
+                }
+            }
+        };
+    }
+
+    // 计算异常值
+    const outliers = [];
+    Object.entries(categoryGroups).forEach(([category, values], index) => {
+        if (values.length < 5 || index >= boxplotData.length) return;
+
+        const [min, Q1, median, Q3, max] = boxplotData[index];
+        const IQR = Q3 - Q1;
+        const lowerBound = Q1 - 1.5 * IQR;
+        const upperBound = Q3 + 1.5 * IQR;
+
+        // 筛选异常值
+        values.forEach(value => {
+            if (value < lowerBound || value > upperBound) {
+                outliers.push([
+                    index, // 类别索引
+                    value  // 异常值
+                ]);
+            }
+        });
+    });
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: function (params) {
+                if (params.componentType === 'series') {
+                    if (params.seriesType === 'boxplot') {
+                        const data = params.data;
+                        return [
+                            `${params.name}:`,
+                            `最小值: ${data[0].toFixed(2)}`,
+                            `下四分位: ${data[1].toFixed(2)}`,
+                            `中位数: ${data[2].toFixed(2)}`,
+                            `上四分位: ${data[3].toFixed(2)}`,
+                            `最大值: ${data[4].toFixed(2)}`
+                        ].join('<br/>');
+                    } else if (params.seriesType === 'scatter') {
+                        return `异常值: ${params.value[1].toFixed(2)}`;
+                    }
+                }
+                return '';
+            },
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: ['数据分布', '异常值'],
+            show: showLegend,
+            top: 30,
+            left: 'center'
+        },
+        grid: {
+            left: '10%',
+            right: '10%',
+            bottom: '15%',
+            top: '20%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: categories,
+            boundaryGap: true,
+            name: categoryColumn,
+            nameLocation: 'middle',
+            nameGap: 30,
+            axisLabel: {
+                interval: 0,
+                rotate: 30
+            }
+        },
+        yAxis: {
+            type: 'value',
+            name: valueColumn,
+            nameLocation: 'middle',
+            nameGap: 50,
+            splitArea: {
+                show: true,
+                areaStyle: {
+                    opacity: 0.1
+                }
+            }
+        },
+        series: [
+            {
+                name: '数据分布',
+                type: 'boxplot',
+                data: boxplotData,
+                itemStyle: {
+                    color: '#3B82F6',
+                    opacity: opacity
+                },
+                lineStyle: {
+                    color: '#1E40AF',
+                    width: 2
+                },
+                emphasis: {
+                    itemStyle: {
+                        color: '#1E40AF',
+                        opacity: 1
+                    }
+                }
+            },
+            {
+                name: '异常值',
+                type: 'scatter',
+                data: outliers,
+                symbol: 'circle',
+                symbolSize: 8,
+                itemStyle: {
+                    color: '#EF4444',
+                    opacity: opacity
+                },
+                emphasis: {
+                    symbolSize: 10,
+                    itemStyle: {
+                        color: '#DC2626',
+                        opacity: 1
+                    }
+                }
+            }
+        ]
+    };
+}
+
+// 生成瀑布图配置
+function generateWaterfallOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumn, data, colors,
+    backgroundColor, opacity
+) {
+    // 准备瀑布图数据
+    const waterfallData = data.map(item => {
+        return {
+            name: item[categoryColumn] || '未知项',
+            value: parseFloat(item[valueColumn]) || 0
+        };
+    });
+
+    // 计算累积值，用于瀑布图的堆叠效果
+    let total = 0;
+    const stackData = [];
+    waterfallData.forEach((item, index) => {
+        stackData.push({
+            ...item,
+            // 正值从上一个累积值开始，负值从当前累积值开始
+            stack: item.value >= 0 ? total : total + item.value,
+            itemStyle: {
+                color: item.value >= 0 ? colors[0 % colors.length] : colors[1 % colors.length],
+                opacity: opacity
+            }
+        });
+        total += item.value;
+    });
+
+    // 添加总计项
+    stackData.push({
+        name: '总计',
+        value: total,
+        stack: 0,
+        itemStyle: {
+            color: colors[2 % colors.length],
+            opacity: opacity
+        }
+    });
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: function (params) {
+                const param = params[0];
+                return `${param.name}: ${param.value.toFixed(2)}`;
+            },
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: ['增加值', '减少值', '总计'],
+            show: showLegend,
+            top: 30,
+            left: 'center'
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '15%',
+            top: '20%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: stackData.map(item => item.name),
+            axisLabel: {
+                interval: 0,
+                rotate: 30
+            }
+        },
+        yAxis: {
+            type: 'value',
+            name: valueColumn,
+            nameLocation: 'middle',
+            nameGap: 50
+        },
+        series: [
+            {
+                type: 'bar',
+                data: stackData.map(item => ({
+                    value: item.value,
+                    itemStyle: item.itemStyle
+                })),
+                // 使用堆叠实现瀑布图效果
+                stack: 'total',
+                emphasis: {
+                    focus: 'series',
+                    itemStyle: {
+                        opacity: 1
+                    }
+                },
+                label: {
+                    show: true,
+                    position: 'top',
+                    formatter: function (params) {
+                        return params.value >= 0 ? `+${params.value.toFixed(2)}` : params.value.toFixed(2);
+                    },
+                    fontSize: 12
+                }
+            },
+            // 隐藏的堆叠层，用于实现瀑布图的视觉效果
+            {
+                type: 'bar',
+                data: stackData.map(item => item.stack),
+                stack: 'total',
+                itemStyle: {
+                    color: 'transparent'
+                },
+                emphasis: {
+                    disabled: true
+                }
+            }
+        ]
+    };
+}
+
+// 生成极坐标图配置
+function generatePolarOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data, colors,
+    backgroundColor, opacity
+) {
+    // 核心：所有配置项均为“非undefined”，避免ECharts解析时找不到属性
+    const defaultData = [
+        { category: '类别1', value1: 10, value2: 8 },
+        { category: '类别2', value1: 15, value2: 12 },
+        { category: '类别3', value1: 8, value2: 14 },
+        { category: '类别4', value1: 12, value2: 9 },
+        { category: '类别5', value1: 18, value2: 15 }
+    ];
+
+    // 1. 基础参数容错（确保无undefined）
+    const validData = (data && Array.isArray(data) && data.length) ? data.filter(item => item && typeof item === 'object') : defaultData;
+    const validCatCol = (categoryColumn && typeof categoryColumn === 'string') ? categoryColumn : 'category';
+    const validValueCols = (valueColumns && Array.isArray(valueColumns) && valueColumns.length) ? valueColumns.filter(col => col && typeof col === 'string') : ['value1', 'value2'];
+    const validColors = (colors && Array.isArray(colors) && colors.length) ? colors.filter(c => c && typeof c === 'string') : ['#3366cc', '#dc3912', '#ff9900', '#109618'];
+    const validOpacity = (typeof opacity === 'number' && opacity >= 0 && opacity <= 1) ? opacity : 0.8;
+    const validPolarType = (() => {
+        try {
+            const dom = document.getElementById('polarType');
+            return dom && ['line', 'bar'].includes(dom.value) ? dom.value : 'line';
+        } catch (e) { return 'line'; }
+    })();
+
+    // 2. 提取类别（确保角度轴有合法数据）
+    const categories = [...new Set(
+        validData.map(item => {
+            const cat = item[validCatCol];
+            return (cat != null && String(cat).trim()) ? String(cat).trim() : `类别_${Math.random().toString(36).slice(2, 6)}`;
+        })
+    )];
+
+    // 3. 构建系列（关键：每个系列必须明确绑定polar坐标系，且无多余属性）
+    const series = validValueCols.map((col, idx) => ({
+        name: col,
+        type: validPolarType,
+        data: categories.map(cat => {
+            const item = validData.find(i => String(i[validCatCol]).trim() === cat);
+            const val = item ? parseFloat(item[col]) : 0;
+            return isNaN(val) ? 0 : val;
+        }),
+        coordinateSystem: 'polar', // 强制绑定极坐标，ECharts底层必须要这个
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: { width: 2, opacity: validOpacity, color: validColors[idx % validColors.length] },
+        itemStyle: { color: validColors[idx % validColors.length], opacity: validOpacity },
+        areaStyle: validPolarType === 'line' ? { opacity: validOpacity * 0.3, color: validColors[idx % validColors.length] } : null,
+        emphasis: { focus: 'series', itemStyle: { opacity: 1, shadowBlur: 6 } }
+    }));
+
+    // 4. 最终配置（严格按照ECharts极坐标结构，无嵌套错误）
+    return {
+        backgroundColor: backgroundColor || 'transparent',
+        title: {
+            text: title || '极坐标图',
+            left: 'center',
+            top: 10,
+            textStyle: { fontSize: (typeof titleFontSize === 'number') ? titleFontSize : 16, color: '#333' }
+        },
+        tooltip: { trigger: 'item', formatter: params => `${params.seriesName}<br/>${params.name}：${params.value || 0}` },
+        legend: {
+            show: typeof showLegend === 'boolean' ? showLegend : validValueCols.length > 1,
+            data: validValueCols,
+            top: 30,
+            left: 'center'
+        },
+        // 极坐标核心：angleAxis和radiusAxis必须放在polar内部（错误高发点！）
+        polar: {
+            radius: ['30%', '80%'],
+            center: ['50%', '50%'],
+            angleAxis: {
+                type: 'category',
+                data: categories,
+                boundaryGap: false,
+                axisLabel: { fontSize: 12, color: '#666' }
+            },
+            radiusAxis: {
+                type: 'value',
+                min: 0,
+                max: Math.max(...series.flatMap(s => s.data), 1) * 1.2, // 确保数值有效
+                splitNumber: 5,
+                axisLabel: { formatter: '{value}' }
+            }
+        },
+        series: series // 系列必须跟在polar外面，不能嵌套进polar！
+    };
+}
+
+// 生成日历图配置
+function generateCalendarOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumn, data, colors,
+    backgroundColor, opacity
+) {
+    // 处理日历图数据（需要日期格式的数据）
+    const calendarData = data.map(item => {
+        const date = new Date(item[categoryColumn]);
+        // 确保日期有效
+        if (isNaN(date.getTime())) return null;
+
+        return {
+            name: item[categoryColumn],
+            value: [
+                date.getFullYear(),
+                date.getMonth() + 1,
+                date.getDate(),
+                parseFloat(item[valueColumn]) || 0
+            ]
+        };
+    }).filter(item => item !== null);
+
+    if (calendarData.length === 0) {
+        return {
+            backgroundColor: backgroundColor,
+            title: {
+                text: '日历图数据格式错误（需要有效的日期数据）',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444',
+                    fontSize: titleFontSize
+                }
+            }
+        };
+    }
+
+    // 获取日期范围
+    const dates = calendarData.map(item => new Date(...item.value.slice(0, 3)));
+    const minDate = new Date(Math.min(...dates));
+    const maxDate = new Date(Math.max(...dates));
+
+    // 计算日历范围（年-月）
+    const startYear = minDate.getFullYear();
+    const startMonth = minDate.getMonth() + 1;
+    const endYear = maxDate.getFullYear();
+    const endMonth = maxDate.getMonth() + 1;
+
+    // 计算值范围用于颜色映射
+    const values = calendarData.map(item => item.value[3]);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: function (params) {
+                const value = params.value;
+                return `${value[0]}年${value[1]}月${value[2]}日: ${value[3].toFixed(2)}`;
+            },
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        visualMap: {
+            min: minValue,
+            max: maxValue,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center',
+            bottom: 10,
+            inRange: {
+                color: ['#FED7D7', '#FEB2B2', '#FC8181', '#EF4444', '#DC2626'],
+                opacity: opacity
+            }
+        },
+        calendar: {
+            top: '15%',
+            left: 'center',
+            range: [`${startYear}-${startMonth}`, `${endYear}-${endMonth}`],
+            cellSize: ['auto', 20],
+            dayLabel: {
+                nameMap: ['日', '一', '二', '三', '四', '五', '六'],
+                fontSize: 12
+            },
+            monthLabel: {
+                fontSize: 14,
+                nameMap: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+            },
+            yearLabel: {
+                show: true,
+                fontSize: 16,
+                formatter: '{yyyy}年'
+            },
+            splitLine: {
+                show: true,
+                lineStyle: {
+                    color: '#E2E8F0',
+                    width: 1
+                }
+            }
+        },
+        series: [
+            {
+                type: 'heatmap',
+                coordinateSystem: 'calendar',
+                data: calendarData.map(item => ({
+                    name: item.name,
+                    value: item.value
+                })),
+                itemStyle: {
+                    borderRadius: 4,
+                    opacity: opacity
+                },
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)',
+                        opacity: 1
+                    }
+                }
+            }
+        ]
+    };
+}
+
+// 生成K线图配置
+function generateCandlestickOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data,
+    backgroundColor, opacity
+) {
+    // 确保有足够的数值列（开盘、收盘、最低、最高）
+    if (valueColumns.length < 4) {
+        return {
+            backgroundColor: backgroundColor,
+            title: {
+                text: 'K线图需要至少4个数值列（开盘、收盘、最低、最高）',
+                left: 'center',
+                top: 'middle',
+                textStyle: {
+                    color: '#EF4444',
+                    fontSize: titleFontSize
+                }
+            }
+        };
+    }
+
+    // 处理K线图数据
+    const candlestickData = data.map(item => {
+        return [
+            parseFloat(item[valueColumns[0]]) || 0, // 开盘价
+            parseFloat(item[valueColumns[1]]) || 0, // 收盘价
+            parseFloat(item[valueColumns[2]]) || 0, // 最低价
+            parseFloat(item[valueColumns[3]]) || 0  // 最高价
+        ];
+    });
+
+    const categories = data.map(item => item[categoryColumn] || '');
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: function (params) {
+                const param = params[0];
+                const value = param.value;
+                return [
+                    `${param.name}`,
+                    `开盘: ${value[0].toFixed(2)}`,
+                    `收盘: ${value[1].toFixed(2)}`,
+                    `最低: ${value[2].toFixed(2)}`,
+                    `最高: ${value[3].toFixed(2)}`
+                ].join('<br/>');
+            },
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: ['K线'],
+            show: showLegend,
+            top: 30,
+            left: 'center'
+        },
+        grid: {
+            left: '10%',
+            right: '10%',
+            bottom: '15%',
+            top: '20%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: categories,
+            boundaryGap: false,
+            axisLabel: {
+                interval: Math.ceil(categories.length / 20), // 控制显示的标签数量
+                rotate: 45
+            }
+        },
+        yAxis: {
+            type: 'value',
+            scale: true, // 自动计算合适的范围
+            splitArea: {
+                show: true,
+                areaStyle: {
+                    opacity: 0.1
+                }
+            }
+        },
+        series: [
+            {
+                name: 'K线',
+                type: 'candlestick',
+                data: candlestickData,
+                itemStyle: {
+                    color: '#EF4444',        // 下跌（收盘价 < 开盘价）
+                    color0: '#10B981',       // 上涨（收盘价 >= 开盘价）
+                    borderColor: '#EF4444',  // 下跌边框
+                    borderColor0: '#10B981', // 上涨边框
+                    opacity: opacity
+                },
+                emphasis: {
+                    itemStyle: {
+                        opacity: 1
+                    }
+                },
+                markPoint: {
+                    data: [
+                        { type: 'max', name: '最大值', valueDim: 'highest' },
+                        { type: 'min', name: '最小值', valueDim: 'lowest' }
+                    ],
+                    symbolSize: 40,
+                    label: {
+                        fontSize: 12
+                    }
+                }
+            }
+        ]
+    };
+}
+
+// 生成带涟漪效果的散点图配置
+function generateEffectScatterOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data,
+    symbolSize, symbolShape, colors,
+    backgroundColor, opacity
+) {
+    // 确保至少有两个数值列
+    const usedValueColumns = valueColumns.length >= 2 ? valueColumns.slice(0, 2) : [...valueColumns, valueColumns[0] || '值2'];
+
+    // 获取所有类别
+    const categories = [...new Set(data.map(item => item[categoryColumn]))];
+
+    // 计算最大值用于控制涟漪效果
+    const allValues = [];
+    data.forEach(item => {
+        allValues.push(parseFloat(item[usedValueColumns[0]]) || 0);
+        allValues.push(parseFloat(item[usedValueColumns[1]]) || 0);
+    });
+    const maxValue = Math.max(...allValues, 1); // 避免除以0
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: function (params) {
+                return `${params.name}: ${params.value[0].toFixed(2)}, ${params.value[1].toFixed(2)}`;
+            },
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: categories,
+            show: showLegend,
+            top: 30,
+            left: 'center'
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'value',
+            name: usedValueColumns[0]
+        },
+        yAxis: {
+            type: 'value',
+            name: usedValueColumns[1]
+        },
+        series: categories.map((category, index) => {
+            const categoryData = data.filter(item => item[categoryColumn] === category);
+            return {
+                name: category,
+                type: 'effectScatter',
+                data: categoryData.map(item => [
+                    parseFloat(item[usedValueColumns[0]]) || 0,
+                    parseFloat(item[usedValueColumns[1]]) || 0
+                ]),
+                symbol: symbolShape,
+                symbolSize: symbolSize,
+                itemStyle: {
+                    color: colors[index % colors.length],
+                    opacity: opacity
+                },
+                emphasis: {
+                    scale: true
+                },
+                // 涟漪效果配置
+                effectType: 'ripple',
+                rippleEffect: {
+                    period: 3, // 涟漪周期
+                    brushType: 'stroke', // 涟漪绘制方式
+                    scale: 2.5, // 涟漪最大缩放比例
+                    color: colors[index % colors.length],
+                    opacity: opacity * 0.6
+                }
+            };
+        })
+    };
+}
+
+// 生成线路图（地理路径）配置
+function generateLinesOption(
+    title, titleFontSize, showLegend,
+    data, colors, lineWidth,
+    backgroundColor, opacity
+) {
+    // -------------------------- 1. 数据来源修复（移除全局变量依赖） --------------------------
+    // 仅使用传入的data参数，避免依赖外部chartData导致的undefined错误
+    const linesRawData = (data && typeof data === 'object' && data.lines && data.lines.data)
+        ? data.lines.data
+        : { coordinates: {}, links: [] };
+
+    // 基础数据校验与容错
+    const coordinates = linesRawData.coordinates && typeof linesRawData.coordinates === 'object'
+        ? linesRawData.coordinates
+        : {};
+    const links = linesRawData.links && Array.isArray(linesRawData.links)
+        ? linesRawData.links
+        : [];
+
+    // 数据为空时使用默认示例数据（避免图表空白）
+    if (Object.keys(coordinates).length === 0 || links.length === 0) {
+        console.warn('线路图数据为空，使用示例数据');
+        return {
+            backgroundColor: backgroundColor || 'transparent',
+            title: {
+                text: title || '线路图',
+                left: 'center',
+                textStyle: {
+                    fontSize: titleFontSize || 16,
+                    color: '#333'
+                }
+            },
+            tooltip: { trigger: 'item' },
+            geo: {
+                map: 'china',
+                roam: true,
+                label: { show: true },
+                itemStyle: { areaColor: '#f8f9fa', borderColor: '#ddd' }
+            },
+            series: [
+                {
+                    name: '路线',
+                    type: 'lines',
+                    data: [
+                        { source: '北京', target: '上海', value: 5 },
+                        { source: '广州', target: '北京', value: 3 }
+                    ],
+                    lineStyle: { width: 2, color: '#3B82F6' }
+                },
+                {
+                    name: '地点',
+                    type: 'scatter',
+                    coordinateSystem: 'geo',
+                    data: [
+                        { name: '北京', value: [116.404, 39.915] },
+                        { name: '上海', value: [121.4737, 31.2304] },
+                        { name: '广州', value: [113.2644, 23.1291] }
+                    ]
+                }
+            ]
+        };
+    }
+
+    // -------------------------- 2. 参数容错处理（避免undefined导致的配置错误） --------------------------
+    // 颜色数组容错
+    const validColors = (colors && Array.isArray(colors) && colors.length > 0)
+        ? colors.filter(color => typeof color === 'string' && color.trim())
+        : ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+    // 线宽容错
+    const validLineWidth = (typeof lineWidth === 'number' && lineWidth > 0)
+        ? Math.min(Math.max(lineWidth, 1), 10)  // 限制在1-10px之间
+        : 2;
+
+    // 透明度容错
+    const validOpacity = (typeof opacity === 'number' && opacity >= 0 && opacity <= 1)
+        ? opacity
+        : 0.8;
+
+    // -------------------------- 3. 数据处理（确保坐标和线路格式正确） --------------------------
+    // 提取坐标点（过滤无效坐标）
+    const points = Object.entries(coordinates).map(([name, coord]) => {
+        // 验证坐标格式是否为[经度, 纬度]数组
+        if (Array.isArray(coord) && coord.length >= 2 && !isNaN(coord[0]) && !isNaN(coord[1])) {
+            return { name, value: [Number(coord[0]), Number(coord[1])] };
+        } else {
+            console.warn(`无效坐标格式: ${name} -> ${coord}，已跳过`);
+            return null;
+        }
+    }).filter(Boolean);  // 过滤null值
+
+    // 提取线路（过滤无效线路）
+    const linesData = links.map((link, index) => {
+        // 验证线路是否包含有效起点和终点
+        if (!link.source || !link.target) {
+            console.warn(`线路${index}缺少起点或终点，已跳过`);
+            return null;
+        }
+
+        // 验证起点和终点是否存在于坐标中
+        const hasSource = points.some(p => p.name === link.source);
+        const hasTarget = points.some(p => p.name === link.target);
+        if (!hasSource || !hasTarget) {
+            console.warn(`线路${index}的起点或终点不存在于坐标中，已跳过`);
+            return null;
+        }
+
+        return {
+            source: link.source,
+            target: link.target,
+            value: (typeof link.value === 'number' && link.value > 0) ? link.value : 1,
+            lineIndex: link.lineIndex || 0  // 容错线路索引
+        };
+    }).filter(Boolean);  // 过滤null值
+
+    // 处理无有效线路的情况
+    if (linesData.length === 0) {
+        return {
+            backgroundColor: backgroundColor || 'transparent',
+            title: {
+                text: title || '线路图',
+                left: 'center',
+                textStyle: {
+                    fontSize: titleFontSize || 16,
+                    color: '#EF4444'
+                }
+            },
+            graphic: {
+                elements: [{
+                    type: 'text',
+                    left: 'center',
+                    top: '50%',
+                    style: {
+                        text: '无有效线路数据',
+                        fontSize: 14,
+                        fill: '#EF4444'
+                    }
+                }]
+            }
+        };
+    }
+
+    // -------------------------- 4. 线路效果计算 --------------------------
+    const lineValues = linesData.map(line => line.value);
+    const maxLineValue = Math.max(...lineValues, 1);  // 避免除以0
+
+    // -------------------------- 5. 最终配置（符合ECharts规范） --------------------------
+    return {
+        backgroundColor: backgroundColor || 'transparent',
+        title: {
+            text: title || '线路图',
+            left: 'center',
+            top: 10,
+            textStyle: {
+                fontSize: titleFontSize || 16,
+                color: '#333',
+                fontWeight: 'normal'
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: (params) => {
+                if (params.seriesName === '路线') {
+                    return `${params.data.source} → ${params.data.target}<br/>强度: ${params.data.value}`;
+                } else {
+                    return params.name;
+                }
+            },
+            padding: 8,
+            borderRadius: 4,
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            border: 'none'
+        },
+        legend: {
+            data: ['路线', '地点'],
+            show: typeof showLegend === 'boolean' ? showLegend : true,
+            top: 30,
+            left: 'center',
+            textStyle: {
+                color: '#666',
+                fontSize: 12
+            },
+            itemWidth: 12,
+            itemHeight: 12
+        },
+        // 地图配置（确保geo组件正确初始化）
+        geo: {
+            map: 'china',  // 需确保已加载中国地图数据
+            roam: true,    // 支持缩放和平移
+            zoom: 1.2,     // 默认缩放级别
+            label: {
+                show: true,
+                fontSize: 12,
+                color: '#333',
+                formatter: (params) => {
+                    // 只显示有线路关联的城市标签
+                    const hasRelation = linesData.some(line =>
+                        line.source === params.name || line.target === params.name
+                    );
+                    return hasRelation ? params.name : '';
+                }
+            },
+            itemStyle: {
+                areaColor: '#f8f9fa',
+                borderColor: '#ddd',
+                opacity: validOpacity
+            },
+            emphasis: {
+                itemStyle: {
+                    areaColor: '#e6f7ff'
+                },
+                label: {
+                    color: '#1890ff'
+                }
+            },
+            // 修复地图渲染范围问题
+            layoutCenter: ['50%', '50%'],
+            layoutSize: '90%'
+        },
+        series: [
+            {
+                name: '路线',
+                type: 'lines',
+                zlevel: 2,  // 线路在地图之上
+                effect: {
+                    show: true,
+                    period: 6,  // 动画周期
+                    trailLength: 0.7,  // 尾迹长度
+                    color: '#fff',     // 箭头颜色
+                    symbolSize: 3      // 箭头大小
+                },
+                lineStyle: {
+                    width: validLineWidth,
+                    opacity: validOpacity * 0.7,
+                    curveness: 0.2,    // 线路曲率
+                    cap: 'round'       // 线条端点样式
+                },
+                data: linesData.map(line => ({
+                    ...line,
+                    lineStyle: {
+                        // 循环使用颜色数组，避免越界
+                        color: validColors[line.lineIndex % validColors.length]
+                    },
+                    // 根据线路值调整特效大小
+                    effect: {
+                        symbolSize: 2 + (line.value / maxLineValue) * 4
+                    }
+                }))
+            },
+            {
+                name: '地点',
+                type: 'scatter',
+                coordinateSystem: 'geo',  // 绑定到地理坐标系
+                zlevel: 3,  // 地点在最上层
+                symbol: 'circle',
+                symbolSize: 10,
+                label: {
+                    show: true,
+                    position: 'right',
+                    offset: [5, 0],
+                    fontSize: 12,
+                    formatter: '{b}',
+                    color: '#333'
+                },
+                itemStyle: {
+                    color: '#3B82F6',
+                    opacity: validOpacity,
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                    shadowBlur: 4,
+                    shadowColor: 'rgba(59, 130, 246, 0.3)'
+                },
+                emphasis: {
+                    symbolSize: 14,
+                    itemStyle: {
+                        opacity: 1,
+                        shadowBlur: 8
+                    }
+                },
+                data: points
+            }
+        ]
+    };
+}
+
+// 配套的渲染函数（确保线路图正确初始化）
+function renderLinesChart(containerId, option) {
+    try {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error(`线路图容器不存在: ${containerId}`);
+            return null;
+        }
+
+        // 确保容器有尺寸
+        container.style.width = container.style.width || '100%';
+        container.style.height = container.style.height || '500px';
+
+        // 销毁旧实例
+        const oldChart = echarts.getInstanceByDom(container);
+        if (oldChart) {
+            oldChart.dispose();
+        }
+
+        // 初始化新实例
+        const chart = echarts.init(container);
+
+        // 关键：检查是否已加载地图，未加载则尝试加载
+        if (!echarts.getMap('china')) {
+            console.warn('未加载中国地图数据，尝试动态加载');
+            // 动态加载地图数据（需确保地图数据来源可靠）
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/echarts/map/js/china.js';
+            script.onload = () => {
+                chart.setOption(option);
+            };
+            script.onerror = () => {
+                console.error('地图数据加载失败，使用简化模式');
+                chart.setOption({
+                    ...option,
+                    geo: { ...option.geo, map: undefined }  // 移除地图配置，避免报错
+                });
+            };
+            document.head.appendChild(script);
+        } else {
+            chart.setOption(option);
+        }
+
+        // 响应窗口大小变化
+        window.addEventListener('resize', () => chart.resize());
+        return chart;
+    } catch (e) {
+        console.error(`线路图渲染失败: ${e.message}`);
+        return null;
+    }
+}
+
+
+// 生成地图配置（续）
+function generateMapOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumn, data, colors,
+    backgroundColor, opacity
+) {
+    // 处理地图数据（需要地区名称和对应值）
+    const mapData = data.map(item => {
+        return {
+            name: item[categoryColumn] || '未知地区',
+            value: parseFloat(item[valueColumn]) || 0
+        };
+    });
+
+    // 计算值范围用于颜色映射
+    const values = mapData.map(item => item.value);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c}',
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: [valueColumn],
+            show: showLegend,
+            top: 30,
+            left: 'center'
+        },
+        visualMap: {
+            min: minValue,
+            max: maxValue,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center',
+            bottom: 10,
+            inRange: {
+                color: colors,
+                opacity: opacity
+            }
+        },
+        geo: {
+            map: 'china',
+            roam: true, // 支持缩放和平移
+            label: {
+                show: true,
+                fontSize: 12,
+                color: '#1D2129'
+            },
+            itemStyle: {
+                areaColor: '#F8FAFC',
+                borderColor: '#94A3B8',
+                opacity: opacity
+            },
+            emphasis: {
+                itemStyle: {
+                    areaColor: '#E2E8F0'
+                }
+            }
+        },
+        series: [
+            {
+                name: valueColumn,
+                type: 'map',
+                map: 'china',
+                roam: false,
+                label: {
+                    show: true,
+                    fontSize: 12
+                },
+                itemStyle: {
+                    borderColor: '#FFFFFF',
+                    borderWidth: 1,
+                    opacity: opacity
+                },
+                emphasis: {
+                    itemStyle: {
+                        areaColor: '#3B82F6',
+                        opacity: 1
+                    },
+                    label: {
+                        color: '#FFFFFF'
+                    }
+                },
+                data: mapData
+            }
+        ]
+    };
+}
+
+// 生成平行坐标系配置
+function generateParallelOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data, colors,
+    backgroundColor, opacity
+) {
+    // 准备平行坐标系数据
+    const dimensions = valueColumns;
+    const parallelData = data.map((item, index) => {
+        const values = dimensions.map(dim => parseFloat(item[dim]) || 0);
+        return {
+            name: item[categoryColumn] || `数据${index + 1}`,
+            value: values,
+            itemStyle: {
+                color: colors[index % colors.length],
+                opacity: opacity
+            }
+        };
+    });
+
+    // 计算每个维度的范围
+    const dimensionRanges = dimensions.map((dim, dimIndex) => {
+        const values = data.map(item => parseFloat(item[dim]) || 0);
+        return [Math.min(...values), Math.max(...values)];
+    });
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item'
+        },
+        legend: {
+            data: data.map(item => item[categoryColumn] || '未知类别'),
+            show: showLegend,
+            top: 30,
+            left: 'center'
+        },
+        parallel: {
+            left: '5%',
+            right: '5%',
+            top: '20%',
+            bottom: '15%',
+            axisExpandable: true,
+            axisExpandCenter: 1,
+            axisExpandCount: 10,
+            dimension: dimensions.map((dim, index) => ({
+                name: dim,
+                type: 'value',
+                min: dimensionRanges[index][0],
+                max: dimensionRanges[index][1]
+            }))
+        },
+        series: [
+            {
+                type: 'parallel',
+                lineStyle: {
+                    width: 2,
+                    opacity: opacity
+                },
+                emphasis: {
+                    lineStyle: {
+                        width: 4,
+                        opacity: 1
+                    }
+                },
+                data: parallelData
+            }
+        ]
+    };
+}
+
+// 生成雷达图（多维度）配置
+function generateMultiRadarOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data, colors,
+    backgroundColor, opacity
+) {
+    // 计算每个指标的最大值，用于雷达图的轴范围
+    const maxValues = {};
+    valueColumns.forEach(column => {
+        maxValues[column] = Math.max(...data.map(item => parseFloat(item[column]) || 0)) * 1.1;
+        // 确保至少有一个合理的最小值
+        if (maxValues[column] === 0) maxValues[column] = 100;
+    });
+
+    // 准备雷达图数据
+    const radarData = data.map((item, index) => {
+        return {
+            name: item[categoryColumn] || `数据${index + 1}`,
+            value: valueColumns.map(column => parseFloat(item[column]) || 0),
+            itemStyle: {
+                color: colors[index % colors.length]
+            },
+            lineStyle: {
+                color: colors[index % colors.length]
+            },
+            areaStyle: {
+                color: colors[index % colors.length],
+                opacity: opacity * 0.3
+            }
+        };
+    });
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item'
+        },
+        legend: {
+            top: 30,
+            data: radarData.map(item => item.name),
+            show: showLegend
+        },
+        radar: {
+            indicator: valueColumns.map(column => {
+                return {
+                    name: column,
+                    max: maxValues[column]
+                };
+            }),
+            splitArea: {
+                areaStyle: {
+                    color: ['rgba(255, 255, 255, 0.5)', 'rgba(200, 200, 200, 0.3)']
+                }
+            }
+        },
+        series: [
+            {
+                type: 'radar',
+                symbol: 'circle',
+                symbolSize: 6,
+                lineStyle: {
+                    width: 2,
+                    opacity: opacity
+                },
+                emphasis: {
+                    areaStyle: {
+                        color: 'rgba(255, 255, 255, 0.5)'
+                    }
+                },
+                data: radarData
+            }
+        ]
+    };
+}
+
+// 生成热力图（多维）配置
+function generateMultiHeatmapOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data, colors,
+    backgroundColor, opacity
+) {
+    // 提取x轴和y轴数据
+    const xAxisData = [...new Set(data.map(item => item.x))].sort();
+    const yAxisData = [...new Set(data.map(item => item.y))].sort();
+
+    // 构建二维数组数据
+    const heatmapData = [];
+    yAxisData.forEach(y => {
+        xAxisData.forEach(x => {
+            const item = data.find(i => i.x === x && i.y === y);
+            heatmapData.push([
+                xAxisData.indexOf(x),
+                yAxisData.indexOf(y),
+                item ? parseFloat(item.value) || 0 : 0
+            ]);
+        });
+    });
+
+    // 计算值范围用于颜色映射
+    const values = heatmapData.map(item => item[2]);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            position: 'top',
+            formatter: function (params) {
+                return `${xAxisData[params.data[0]]} × ${yAxisData[params.data[1]]}: ${params.data[2].toFixed(2)}`;
+            }
+        },
+        grid: {
+            height: '60%',
+            width: '80%',
+            left: '10%',
+            top: '20%'
+        },
+        xAxis: {
+            type: 'category',
+            data: xAxisData,
+            splitArea: {
+                show: true,
+                areaStyle: {
+                    opacity: 0.1
+                }
+            }
+        },
+        yAxis: {
+            type: 'category',
+            data: yAxisData,
+            splitArea: {
+                show: true,
+                areaStyle: {
+                    opacity: 0.1
+                }
+            }
+        },
+        visualMap: {
+            min: minValue,
+            max: maxValue,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center',
+            bottom: '10%',
+            color: colors,
+            opacity: opacity
+        },
+        series: [{
+            name: '热力值',
+            type: 'heatmap',
+            data: heatmapData,
+            label: {
+                show: true,
+                fontSize: 12
+            },
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            }
+        }]
+    };
+}
+
+// 生成仪表盘（多指标）配置
+function generateMultiGaugeOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumn, data, colors,
+    backgroundColor, opacity
+) {
+    // 准备数据
+    const gaugeData = data.map((item, index) => {
+        return {
+            name: item[categoryColumn],
+            value: parseFloat(item[valueColumn]) || 0,
+            itemStyle: {
+                color: colors[index % colors.length]
+            }
+        };
+    });
+
+    // 计算最大分值，用于设置仪表盘范围
+    const maxValue = Math.max(...gaugeData.map(item => item.value), 100);
+    const gaugeMax = Math.ceil(maxValue * 1.2 / 10) * 10; // 向上取整到10的倍数
+
+    // 计算仪表盘尺寸（根据数据量动态调整，最多3列布局）
+    const colCount = Math.min(3, gaugeData.length);
+    const gaugeSize = Math.min(80 / colCount, 30); // 控制单仪表盘最大尺寸
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c}/{d}',
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: gaugeData.map(item => item.name),
+            show: showLegend,
+            top: 30,
+            left: 'center',
+            orient: 'horizontal',
+            padding: [0, 20]
+        },
+        series: gaugeData.map((item, index) => {
+            // 计算仪表盘位置（3列布局，自动换行）
+            const colIndex = index % colCount;
+            const rowIndex = Math.floor(index / colCount);
+            const left = `${15 + colIndex * (80 / colCount)}%`;
+            const top = `${30 + rowIndex * 40}%`;
+
+            return {
+                name: item.name,
+                type: 'gauge',
+                center: [left, top], // 动态计算位置
+                radius: `${gaugeSize}%`, // 动态计算尺寸
+                startAngle: 180,
+                endAngle: 0,
+                min: 0,
+                max: gaugeMax,
+                splitNumber: 10,
+                itemStyle: {
+                    color: item.itemStyle.color,
+                    opacity: opacity
+                },
+                progress: {
+                    show: true,
+                    overlap: false,
+                    roundCap: true,
+                    clip: false,
+                    itemStyle: {
+                        opacity: opacity
+                    }
+                },
+                pointer: {
+                    show: true,
+                    length: '70%',
+                    width: 3,
+                    itemStyle: {
+                        color: '#1D2129'
+                    }
+                },
+                axisLine: {
+                    lineStyle: {
+                        width: 15,
+                        color: [
+                            [0.3, '#FED7D7'],
+                            [0.7, '#FEB2B2'],
+                            [1, '#FC8181']
+                        ]
+                    }
+                },
+                splitLine: {
+                    show: true,
+                    length: 12,
+                    lineStyle: {
+                        color: '#1D2129',
+                        width: 2
+                    }
+                },
+                axisTick: {
+                    show: true,
+                    length: 8,
+                    lineStyle: {
+                        color: '#1D2129',
+                        width: 1
+                    }
+                },
+                axisLabel: {
+                    show: true,
+                    distance: 20,
+                    fontSize: 12,
+                    color: '#1D2129',
+                    formatter: function (value) {
+                        return `${value}`;
+                    }
+                },
+                title: {
+                    show: true,
+                    offsetCenter: [0, '60%'],
+                    fontSize: 14,
+                    color: '#1D2129'
+                },
+                detail: {
+                    show: true,
+                    width: 60,
+                    height: 18,
+                    offsetCenter: [0, '30%'],
+                    fontSize: 16,
+                    color: '#FFFFFF',
+                    backgroundColor: item.itemStyle.color,
+                    borderRadius: 4,
+                    formatter: '{value}',
+                    opacity: opacity
+                },
+                data: [
+                    {
+                        value: item.value,
+                        name: item.name
+                    }
+                ]
+            };
+        })
+    };
+}
+
+// 生成散点图（三维）配置
+function generate3DScatterOption(
+    title, titleFontSize, showLegend,
+    categoryColumn, valueColumns, data,
+    symbolSize, symbolShape, colors,
+    backgroundColor, opacity
+) {
+    // 确保至少有三个数值列
+    while (valueColumns.length < 3) {
+        valueColumns.push(valueColumns[valueColumns.length - 1] || `值${valueColumns.length + 1}`);
+    }
+    const usedValueColumns = valueColumns.slice(0, 3);
+
+    // 获取所有类别
+    const categories = [...new Set(data.map(item => item[categoryColumn]))];
+
+    return {
+        backgroundColor: backgroundColor,
+        title: {
+            text: title,
+            left: 'center',
+            textStyle: {
+                fontSize: titleFontSize
+            }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: function (params) {
+                return `${params.name}: ${params.value[0].toFixed(2)}, ${params.value[1].toFixed(2)}, ${params.value[2].toFixed(2)}`;
+            },
+            extraCssText: 'padding: 8px 12px; border-radius: 4px;'
+        },
+        legend: {
+            data: categories,
+            show: showLegend,
+            top: 30,
+            left: 'center'
+        },
+        grid3D: {
+            boxWidth: 200,
+            boxHeight: 100,
+            boxDepth: 150,
+            viewControl: {
+                // 3D控制器配置
+                projection: 'orthographic'
+            },
+            axisLine: {
+                lineStyle: {
+                    color: '#1D2129'
+                }
+            },
+            axisLabel: {
+                color: '#1D2129'
+            }
+        },
+        xAxis3D: {
+            type: 'value',
+            name: usedValueColumns[0]
+        },
+        yAxis3D: {
+            type: 'value',
+            name: usedValueColumns[1]
+        },
+        zAxis3D: {
+            type: 'value',
+            name: usedValueColumns[2]
+        },
+        series: categories.map((category, index) => {
+            const categoryData = data.filter(item => item[categoryColumn] === category);
+            return {
+                name: category,
+                type: 'scatter3D',
+                data: categoryData.map(item => [
+                    parseFloat(item[usedValueColumns[0]]) || 0,
+                    parseFloat(item[usedValueColumns[1]]) || 0,
+                    parseFloat(item[usedValueColumns[2]]) || 0
+                ]),
+                symbol: symbolShape,
+                symbolSize: symbolSize,
+                itemStyle: {
+                    color: colors[index % colors.length],
+                    opacity: opacity
+                },
+                emphasis: {
+                    scale: true,
+                    itemStyle: {
+                        opacity: 1
+                    }
+                }
+            };
+        })
+    };
+}
+
+// 初始化所有图表类型的选择器
+function initChartTypeSelector() {
+    const chartTypeSelect = document.getElementById('chartType');
+    const chartTypes = [
+        { value: 'line', text: '折线图' },
+        { value: 'bar', text: '柱状图' },
+        { value: 'pie', text: '饼图' },
+        { value: 'doughnut', text: '环形图' },
+        { value: 'radar', text: '雷达图' },
+        { value: 'scatter', text: '散点图' },
+        { value: 'bubble', text: '气泡图' },
+        { value: 'heatmap', text: '热力图' },
+        { value: 'tree', text: '树状图' },
+        { value: 'treemap', text: '矩形树图' },
+        { value: 'sunburst', text: '旭日图' },
+        { value: 'funnel', text: '漏斗图' },
+        { value: 'gauge', text: '仪表盘' },
+        { value: 'sankey', text: '桑基图' },
+        { value: 'graph', text: '关系图' },
+        { value: 'wordCloud', text: '词云图' },
+        { value: 'boxplot', text: '箱线图' },
+        { value: 'waterfall', text: '瀑布图' },
+        { value: 'polar', text: '极坐标图' },
+        { value: 'calendar', text: '日历图' },
+        { value: 'candlestick', text: 'K线图' },
+        { value: 'effectScatter', text: '涟漪散点图' },
+        { value: 'lines', text: '线路图' },
+        { value: 'map', text: '地图' }
+    ];
+
+    // 清空并填充选择器
+    chartTypeSelect.innerHTML = '';
+    chartTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.value;
+        option.textContent = type.text;
+        chartTypeSelect.appendChild(option);
+    });
+
+    // 设置默认值
+    chartTypeSelect.value = currentChartType;
+}
+
+// 添加额外的图表参数控制
+function addChartSpecificControls() {
+    const controlsContainer = document.getElementById('chartSpecificControls');
+
+    // 根据当前图表类型添加特定参数
+    function updateSpecificControls() {
+        controlsContainer.innerHTML = '';
+
+        switch (currentChartType) {
+            case 'wordCloud':
+                // 词云图特定参数
+                controlsContainer.innerHTML = `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral mb-1">词云形状</label>
+                        <select id="wordCloudShape" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                            <option value="circle">圆形</option>
+                            <option value="cardioid">心形</option>
+                            <option value="diamond">菱形</option>
+                            <option value="triangle-forward">三角形</option>
+                            <option value="triangle">三角形</option>
+                            <option value="pentagon">五边形</option>
+                            <option value="star">星形</option>
+                        </select>
+                    </div>
+                `;
+                break;
+
+            case 'polar':
+                // 极坐标图特定参数
+                controlsContainer.innerHTML = `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral mb-1">极坐标类型</label>
+                        <select id="polarType" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                            <option value="line">线图</option>
+                            <option value="bar">柱状图</option>
+                        </select>
+                    </div>
+                `;
+                break;
+        }
+    }
+
+    // 初始化并添加事件监听
+    updateSpecificControls();
+    document.getElementById('chartType').addEventListener('change', (e) => {
+        currentChartType = e.target.value;
+        updateSpecificControls();
+    });
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function () {
+    init();
+    initChartTypeSelector();
+    addChartSpecificControls();
+});
