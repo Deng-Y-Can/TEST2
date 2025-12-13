@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纯净版Python执行器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-weight: normal;
+            font-size: 16px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-run {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-run:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            padding: 12px 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-weight: 500;
+        }
+        
+        .panel-body {
+            height: 400px;
+            position: relative;
+        }
+        
+        #editor {
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+            border: none;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+        }
+        
+        #output {
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+            margin: 0;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            white-space: pre;
+            overflow: auto;
+            line-height: 1.5;
+        }
+        
+        .status-bar {
+            padding: 8px 15px;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+        
+        .sample-group {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* 解决乱码和显示问题的核心样式 */
+        .no-wrap {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .error {
+            color: #e74c3c;
+        }
+        
+        .success {
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>纯净版Python执行器</h1>
+            <p class="subtitle">轻量 · 稳定 · 无乱码</p>
+        </header>
+        
+        <div class="controls">
+            <button id="runBtn" class="btn-run">运行代码 (Ctrl+Enter)</button>
+            <button id="resetBtn" class="btn-secondary">重置</button>
+            <button id="clearBtn" class="btn-secondary">清空输出</button>
+            
+            <div class="sample-group">
+                <span>示例:</span>
+                <select id="sampleSelect">
+                    <option value="">-- 选择示例 --</option>
+                    <option value="hello">基础输出</option>
+                    <option value="loop">循环语句</option>
+                    <option value="function">函数示例</option>
+                    <option value="condition">条件判断</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="panel">
+                <div class="panel-header">代码编辑区</div>
+                <div class="panel-body">
+                    <textarea id="editor" class="no-wrap"># 请在此编写Python代码
+# 支持基本语法：变量、循环、函数、条件等
+
+# 示例：函数与循环
+def sum_numbers(n):
+    total = 0
+    for i in range(1, n+1):
+        total += i
+    return total
+
+# 调用函数
+result = sum_numbers(5)
+print(f"1到5的和是: {result}")
+
+# 条件判断
+if result > 10:
+    print(f"{result} 大于 10")
+else:
+    print(f"{result} 小于或等于 10")</textarea>
+                </div>
+                <div class="status-bar">
+                    <span id="lineCount">行数: 15</span>
+                    <span>提示: 编写代码后点击"运行代码"执行</span>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">执行结果</div>
+                <div class="panel-body">
+                    <pre id="output" class="no-wrap">等待执行...</pre>
+                </div>
+                <div class="status-bar">
+                    <span id="executionTime">执行时间: --</span>
+                    <span id="executionStatus">状态: 未执行</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 核心解释器（精简优化版，解决乱码和逻辑问题）
+        class PythonInterpreter {
+            constructor() {
+                this.vars = Object.create(null); // 使用纯净对象避免原型污染
+                this.functions = Object.create(null);
+                this.output = [];
+            }
+            
+            reset() {
+                this.vars = Object.create(null);
+                this.functions = Object.create(null);
+                this.output = [];
+            }
+            
+            print(...args) {
+                const line = args.map(arg => this.toString(arg)).join(' ');
+                this.output.push(line);
+                return line;
+            }
+            
+            toString(value) {
+                if (value === null || value === undefined) return '';
+                if (Array.isArray(value)) return `[${value.map(v => this.toString(v)).join(', ')}]`;
+                return String(value);
+            }
+            
+            parseExpression(expr) {
+                // 简单表达式解析（避免复杂正则导致的乱码）
+                try {
+                    // 替换变量
+                    let processed = expr;
+                    for (const key in this.vars) {
+                        if (this.vars.hasOwnProperty(key)) {
+                            // 精确匹配变量名，避免部分替换
+                            processed = processed.replace(new RegExp(`\\b${key}\\b`, 'g'), this.toString(this.vars[key]));
+                        }
+                    }
+                    
+                    // 处理字符串
+                    if ((processed.startsWith('"') && processed.endsWith('"')) || 
+                        (processed.startsWith("'") && processed.endsWith("'"))) {
+                        return processed.slice(1, -1);
+                    }
+                    
+                    // 处理数组
+                    if (processed.startsWith('[') && processed.endsWith(']')) {
+                        const arrStr = processed.slice(1, -1);
+                        if (!arrStr.trim()) return [];
+                        return arrStr.split(',').map(item => {
+                            const trimmed = item.trim();
+                            if (trimmed.startsWith('"') && trimmed.endsWith('"')) return trimmed.slice(1, -1);
+                            if (!isNaN(trimmed)) return Number(trimmed);
+                            return this.vars[trimmed] !== undefined ? this.vars[trimmed] : trimmed;
+                        });
+                    }
+                    
+                    // 处理range
+                    if (processed.startsWith('range(') && processed.endsWith(')')) {
+                        const params = processed.slice(6, -1).split(',').map(p => parseInt(p.trim()) || 0);
+                        const start = params.length > 1 ? params[0] : 0;
+                        const end = params.length > 1 ? params[1] : params[0];
+                        const step = params.length > 2 ? params[2] : 1;
+                        const result = [];
+                        for (let i = start; i < end; i += step) result.push(i);
+                        return result;
+                    }
+                    
+                    // 数字直接返回
+                    if (!isNaN(processed)) return Number(processed);
+                    
+                    // 简单运算（使用安全的计算方式）
+                    const safeOps = /^[\d+\-*/%.()\s]+$/.test(processed);
+                    if (safeOps) {
+                        return eval(processed); // 仅限安全运算
+                    }
+                    
+                    return this.vars[processed] !== undefined ? this.vars[processed] : processed;
+                } catch (e) {
+                    throw new Error(`表达式错误: ${expr} (${e.message})`);
+                }
+            }
+            
+            parseFunctionDefinition(lines, index) {
+                const line = lines[index].trim();
+                const match = line.match(/def (\w+)\((.*?)\):/);
+                if (!match) return null;
+                
+                const name = match[1];
+                const params = match[2].split(',').map(p => p.trim()).filter(p => p);
+                const body = [];
+                let i = index + 1;
+                const baseIndent = lines[index].search(/\S|$/); // 基础缩进量
+                
+                // 正确识别函数体（解决嵌套和缩进问题）
+                while (i < lines.length) {
+                    const currentIndent = lines[i].search(/\S|$/);
+                    const trimmed = lines[i].trim();
+                    
+                    // 退出条件：遇到同级或更高级别的非空行
+                    if (currentIndent <= baseIndent && trimmed) break;
+                    
+                    if (trimmed) {
+                        body.push(trimmed);
+                    }
+                    i++;
+                }
+                
+                // 提取返回语句
+                let returnExpr = null;
+                const returnIndex = body.findIndex(l => l.startsWith('return '));
+                if (returnIndex !== -1) {
+                    returnExpr = body[returnIndex].slice(7).trim();
+                    body.splice(returnIndex); // 移除return及之后的语句
+                }
+                
+                this.functions[name] = { params, body, returnExpr };
+                return i - 1; // 返回函数结束的行索引
+            }
+            
+            executeFunction(name, args) {
+                const func = this.functions[name];
+                if (!func) throw new Error(`函数 ${name} 未定义`);
+                if (args.length !== func.params.length) {
+                    throw new Error(`函数 ${name} 需要 ${func.params.length} 个参数，但提供了 ${args.length} 个`);
+                }
+                
+                // 保存当前变量环境
+                const savedVars = { ...this.vars };
+                
+                // 设置函数参数
+                func.params.forEach((param, i) => {
+                    this.vars[param] = args[i];
+                });
+                
+                // 执行函数体
+                let returnValue = null;
+                for (const line of func.body) {
+                    const result = this.executeLine(line);
+                    if (result === 'return') break; // 遇到return提前退出
+                }
+                
+                // 处理返回值
+                if (func.returnExpr) {
+                    returnValue = this.parseExpression(func.returnExpr);
+                }
+                
+                // 恢复变量环境
+                this.vars = savedVars;
+                return returnValue;
+            }
+            
+            executeLine(line) {
+                line = line.trim();
+                if (!line || line.startsWith('#')) return; // 忽略空行和注释
+                
+                // 处理print语句
+                if (line.startsWith('print(') && line.endsWith(')')) {
+                    const argsStr = line.slice(6, -1);
+                    const args = argsStr ? this.parseArguments(argsStr) : [];
+                    this.print(...args);
+                    return;
+                }
+                
+                // 处理函数调用
+                const funcCallMatch = line.match(/^(\w+)\((.*)\)$/);
+                if (funcCallMatch) {
+                    const [, name, argsStr] = funcCallMatch;
+                    const args = argsStr ? this.parseArguments(argsStr) : [];
+                    const result = this.executeFunction(name, args);
+                    if (result !== undefined) {
+                        this.vars['__last_result__'] = result; // 保存最后结果
+                    }
+                    return;
+                }
+                
+                // 处理赋值语句
+                const eqIndex = line.indexOf('=');
+                if (eqIndex !== -1) {
+                    const varName = line.slice(0, eqIndex).trim();
+                    const expr = line.slice(eqIndex + 1).trim();
+                    this.vars[varName] = this.parseExpression(expr);
+                    return;
+                }
+                
+                // 处理if语句
+                if (line.startsWith('if ')) {
+                    const conditionExpr = line.slice(3).replace(/:$/, '').trim();
+                    const conditionResult = Boolean(this.parseExpression(conditionExpr));
+                    return { type: 'if', condition: conditionResult };
+                }
+                
+                // 处理else语句
+                if (line === 'else:') {
+                    return { type: 'else' };
+                }
+                
+                // 处理elif语句
+                if (line.startsWith('elif ')) {
+                    const conditionExpr = line.slice(5).replace(/:$/, '').trim();
+                    const conditionResult = Boolean(this.parseExpression(conditionExpr));
+                    return { type: 'elif', condition: conditionResult };
+                }
+                
+                // 处理for循环
+                if (line.startsWith('for ')) {
+                    const match = line.match(/for (\w+) in (.*):/);
+                    if (match) {
+                        const [, varName, iterExpr] = match;
+                        const iterable = this.parseExpression(iterExpr);
+                        if (!Array.isArray(iterable)) {
+                            throw new Error(`for循环需要数组，得到 ${typeof iterable}`);
+                        }
+                        return { 
+                            type: 'for', 
+                            varName, 
+                            iterable: [...iterable], // 复制数组避免修改
+                            index: 0 
+                        };
+                    }
+                }
+                
+                // 处理while循环
+                if (line.startsWith('while ')) {
+                    const conditionExpr = line.replace(/while (.*):/, '$1').trim();
+                    return { 
+                        type: 'while', 
+                        conditionExpr,
+                        condition: Boolean(this.parseExpression(conditionExpr))
+                    };
+                }
+                
+                // 处理return语句
+                if (line.startsWith('return ')) {
+                    return 'return';
+                }
+                
+                // 处理普通表达式
+                this.parseExpression(line);
+            }
+            
+            parseArguments(argsStr) {
+                // 简单参数解析（解决逗号在字符串中的问题）
+                const args = [];
+                let current = '';
+                let inString = false;
+                let quoteChar = '';
+                
+                for (const char of argsStr) {
+                    if ((char === '"' || char === "'") && (!quoteChar || char === quoteChar)) {
+                        inString = !inString;
+                        if (!inString) quoteChar = '';
+                        else quoteChar = char;
+                        current += char;
+                    } else if (char === ',' && !inString) {
+                        args.push(this.parseExpression(current.trim()));
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                
+                if (current.trim()) {
+                    args.push(this.parseExpression(current.trim()));
+                }
+                
+                return args;
+            }
+            
+            execute(code) {
+                const startTime = performance.now();
+                this.reset();
+                const lines = code.split('\n');
+                let i = 0;
+                const loopStack = [];
+                const conditionStack = [];
+                
+                try {
+                    while (i < lines.length) {
+                        const line = lines[i];
+                        const trimmed = line.trim();
+                        
+                        // 忽略空行和注释
+                        if (!trimmed || trimmed.startsWith('#')) {
+                            i++;
+                            continue;
+                        }
+                        
+                        // 处理函数定义
+                        if (trimmed.startsWith('def ')) {
+                            const funcEndIndex = this.parseFunctionDefinition(lines, i);
+                            if (funcEndIndex !== null) {
+                                i = funcEndIndex + 1;
+                                continue;
+                            }
+                        }
+                        
+                        // 处理循环和条件嵌套
+                        let skip = false;
+                        
+                        // 检查是否需要跳过当前行
+                        for (const item of conditionStack) {
+                            if (item.type === 'if' && !item.condition) {
+                                skip = true;
+                                break;
+                            }
+                        }
+                        
+                        if (skip) {
+                            // 检查是否是嵌套的条件或循环
+                            if (trimmed.startsWith('if ') || trimmed.startsWith('for ') || 
+                                trimmed.startsWith('while ') || trimmed === 'else:' || trimmed.startsWith('elif ')) {
+                                this.executeLine(trimmed); // 仅解析不执行
+                            }
+                            i++;
+                            continue;
+                        }
+                        
+                        // 执行当前行
+                        const result = this.executeLine(trimmed);
+                        
+                        // 处理循环
+                        if (result && (result.type === 'for' || result.type === 'while')) {
+                            loopStack.push({ ...result, line: i });
+                            if (result.type === 'for' && result.iterable.length > 0) {
+                                this.vars[result.varName] = result.iterable[0];
+                                i++; // 进入循环体
+                            } else if (result.type === 'while' && result.condition) {
+                                i++; // 进入循环体
+                            } else {
+                                // 循环条件不满足，跳过循环体
+                                const baseIndent = line.search(/\S|$/);
+                                i++;
+                                while (i < lines.length) {
+                                    const currentIndent = lines[i].search(/\S|$/);
+                                    const lineTrimmed = lines[i].trim();
+                                    if (currentIndent <= baseIndent && lineTrimmed) break;
+                                    i++;
+                                }
+                            }
+                            continue;
+                        }
+                        
+                        // 处理条件语句
+                        if (result && (result.type === 'if' || result.type === 'elif' || result.type === 'else')) {
+                            conditionStack.push(result);
+                            const baseIndent = line.search(/\S|$/);
+                            i++;
+                            
+                            // 条件不满足时跳过代码块
+                            if ((result.type === 'if' && !result.condition) || 
+                                (result.type === 'elif' && !result.condition)) {
+                                while (i < lines.length) {
+                                    const currentIndent = lines[i].search(/\S|$/);
+                                    const lineTrimmed = lines[i].trim();
+                                    if (currentIndent <= baseIndent && lineTrimmed && 
+                                        (lineTrimmed.startsWith('if ') || lineTrimmed.startsWith('elif ') || lineTrimmed === 'else:')) {
+                                        break; // 遇到下一个条件语句
+                                    }
+                                    if (currentIndent <= baseIndent && lineTrimmed) {
+                                        break; // 遇到同级别的其他语句
+                                    }
+                                    i++;
+                                }
+                            }
+                            continue;
+                        }
+                        
+                        // 处理循环迭代
+                        if (loopStack.length > 0) {
+                            const loop = loopStack[loopStack.length - 1];
+                            const baseIndent = lines[loop.line].search(/\S|$/);
+                            const currentIndent = line.search(/\S|$/);
+                            
+                            // 检查是否到达循环体末尾
+                            if (currentIndent <= baseIndent) {
+                                if (loop.type === 'for') {
+                                    loop.index++;
+                                    if (loop.index < loop.iterable.length) {
+                                        this.vars[loop.varName] = loop.iterable[loop.index];
+                                        i = loop.line + 1; // 回到循环体开始
+                                    } else {
+                                        loopStack.pop();
+                                        i++;
+                                    }
+                                } else if (loop.type === 'while') {
+                                    loop.condition = Boolean(this.parseExpression(loop.conditionExpr));
+                                    if (loop.condition) {
+                                        i = loop.line + 1; // 回到循环体开始
+                                    } else {
+                                        loopStack.pop();
+                                        i++;
+                                    }
+                                }
+                                continue;
+                            }
+                        }
+                        
+                        // 处理条件结束
+                        if (conditionStack.length > 0) {
+                            const cond = conditionStack[conditionStack.length - 1];
+                            const baseIndent = lines[i - 1].search(/\S|$/);
+                            const currentIndent = line.search(/\S|$/);
+                            
+                            // 检查是否到达条件块末尾
+                            if (currentIndent <= baseIndent) {
+                                conditionStack.pop();
+                            }
+                        }
+                        
+                        i++;
+                    }
+                    
+                    return {
+                        success: true,
+                        output: this.output.join('\n'),
+                        time: performance.now() - startTime
+                    };
+                } catch (e) {
+                    return {
+                        success: false,
+                        output: this.output.join('\n'),
+                        error: e.message,
+                        time: performance.now() - startTime
+                    };
+                }
+            }
+        }
+        
+        // 页面初始化（解决乱码和加载问题）
+        document.addEventListener('DOMContentLoaded', () => {
+            const interpreter = new PythonInterpreter();
+            const editor = document.getElementById('editor');
+            const output = document.getElementById('output');
+            const runBtn = document.getElementById('runBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const sampleSelect = document.getElementById('sampleSelect');
+            const lineCountEl = document.getElementById('lineCount');
+            const executionTimeEl = document.getElementById('executionTime');
+            const executionStatusEl = document.getElementById('executionStatus');
+            
+            // 示例代码（确保无特殊字符导致乱码）
+            const samples = {
+                hello: `# 基础输出示例
+print("Hello, World!")
+print("这是纯净版Python执行器")
+
+# 变量和字符串
+name = "Python"
+version = 3.11
+print(f"语言: {name}, 版本: {version}")
+
+# 简单计算
+a = 10
+b = 20
+print(f"{a} + {b} = {a + b}")`,
+                
+                loop: `# 循环语句示例
+print("for循环计数:")
+for i in range(1, 6):
+    print(f"第 {i} 次循环")
+
+print("\nwhile循环:")
+count = 0
+while count < 5:
+    count += 1
+    print(f"计数: {count}")
+
+print("\n循环嵌套:")
+for i in range(1, 4):
+    for j in range(1, 4):
+        print(f"{i} × {j} = {i * j}", end="  ")
+    print()  # 换行`,
+                
+                function: `# 函数示例
+def add(a, b):
+    "返回两个数的和"
+    return a + b
+
+def multiply(a, b):
+    "返回两个数的积"
+    return a * b
+
+def calculate(a, b):
+    "计算多种结果"
+    sum_ab = add(a, b)
+    product_ab = multiply(a, b)
+    return [sum_ab, product_ab, a - b, a / b]
+
+# 使用函数
+x = 15
+y = 3
+
+print(f"{x} + {y} = {add(x, y)}")
+print(f"{x} × {y} = {multiply(x, y)}")
+
+results = calculate(x, y)
+print(f"\n计算结果: 和={results[0]}, 积={results[1]}, 差={results[2]}, 商={results[3]}")`,
+                
+                condition: `# 条件判断示例
+score = 85
+
+# 多条件判断
+if score >= 90:
+    grade = "优秀"
+elif score >= 80:
+    grade = "良好"
+elif score >= 60:
+    grade = "及格"
+else:
+    grade = "不及格"
+
+print(f"分数: {score} → 等级: {grade}")
+
+# 条件表达式
+result = "通过" if score >= 60 else "未通过"
+print(f"结果: {result}")
+
+# 复合条件
+num = 15
+if num > 10 and num % 2 == 1:
+    print(f"\n{num} 是大于10的奇数")
+
+# 条件与循环结合
+print("\n1-10的奇偶判断:")
+for n in range(1, 11):
+    if n % 2 == 0:
+        print(f"{n} 是偶数")
+    else:
+        print(f"{n} 是奇数")`
+            };
+            
+            // 更新行数统计
+            function updateLineCount() {
+                const lineCount = editor.value.split('\n').length;
+                lineCountEl.textContent = `行数: ${lineCount}`;
+            }
+            
+            // 运行代码
+            function runCode() {
+                output.textContent = '执行中...';
+                executionStatusEl.textContent = '状态: 执行中';
+                
+                setTimeout(() => {
+                    const code = editor.value;
+                    const result = interpreter.execute(code);
+                    
+                    // 显示结果（确保无乱码）
+                    if (result.success) {
+                        output.textContent = result.output || '代码执行成功，但无输出';
+                        executionStatusEl.innerHTML = '<span class="success">状态: 成功</span>';
+                    } else {
+                        output.textContent = result.output 
+                            ? `${result.output}\n\n错误: ${result.error}` 
+                            : `错误: ${result.error}`;
+                        executionStatusEl.innerHTML = '<span class="error">状态: 失败</span>';
+                    }
+                    
+                    executionTimeEl.textContent = `执行时间: ${result.time.toFixed(2)}ms`;
+                }, 10);
+            }
+            
+            // 事件绑定
+            runBtn.addEventListener('click', runCode);
+            
+            resetBtn.addEventListener('click', () => {
+                editor.value = `# 请在此编写Python代码
+# 支持基本语法：变量、循环、函数、条件等
+
+# 示例：函数与循环
+def sum_numbers(n):
+    total = 0
+    for i in range(1, n+1):
+        total += i
+    return total
+
+# 调用函数
+result = sum_numbers(5)
+print(f"1到5的和是: {result}")
+
+# 条件判断
+if result > 10:
+    print(f"{result} 大于 10")
+else:
+    print(f"{result} 小于或等于 10")`;
+                updateLineCount();
+                output.textContent = '等待执行...';
+                executionStatusEl.textContent = '状态: 未执行';
+                executionTimeEl.textContent = '执行时间: --';
+            });
+            
+            clearBtn.addEventListener('click', () => {
+                output.textContent = '已清空输出';
+            });
+            
+            sampleSelect.addEventListener('change', () => {
+                const sampleKey = sampleSelect.value;
+                if (sampleKey && samples[sampleKey]) {
+                    editor.value = samples[sampleKey];
+                    updateLineCount();
+                }
+            });
+            
+            editor.addEventListener('input', updateLineCount);
+            
+            // 快捷键支持
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    runCode();
+                }
+            });
+            
+            // 初始化
+            updateLineCount();
+        });
+    </script>
+</body>
+</html>
