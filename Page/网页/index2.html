@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Candy导航</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 引入SheetJS库用于读取Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            candy: {
+              pink: '#FF6B8B',
+              purple: '#A777E3',
+              blue: '#6BBBF7',
+              green: '#6BDE98',
+              yellow: '#FFD166',
+              orange: '#FF9F45',
+              red: '#EF476F',
+              dark: '#4A4A68',
+              navy: '#1E3A8A',
+              teal: '#14B8A6'
+            }
+          },
+          fontFamily: {
+            candy: ['"Nunito"', 'system-ui', 'sans-serif'],
+            round: ['"Comic Neue"', 'cursive', 'sans-serif'],
+            modern: ['"Inter"', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .card-hover {
+        @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+      }
+      .category-active {
+        @apply bg-candy-purple/10 text-candy-purple font-medium border-l-4 border-candy-purple;
+      }
+      .dark .category-active {
+        @apply bg-candy-purple/20 text-candy-purple font-medium border-l-4 border-candy-purple;
+      }
+      
+      /* 主题样式 */
+      .theme-candy {
+        --bg-from: #FDF2F8;
+        --bg-to: #F5F3FF;
+        --header-bg: rgba(255, 255, 255, 0.9);
+        --card-bg: #FFFFFF;
+        --text-primary: #4A4A68;
+        --text-secondary: #6B7280;
+        --border-color: rgba(156, 163, 175, 0.3);
+      }
+      
+      .theme-dark {
+        --bg-from: #1F2937;
+        --bg-to: #111827;
+        --header-bg: rgba(31, 41, 55, 0.9);
+        --card-bg: #374151;
+        --text-primary: #F9FAFB;
+        --text-secondary: #D1D5DB;
+        --border-color: rgba(75, 85, 99, 0.5);
+      }
+      
+      .theme-ocean {
+        --bg-from: #E0F2FE;
+        --bg-to: #CFFAFE;
+        --header-bg: rgba(255, 255, 255, 0.9);
+        --card-bg: #FFFFFF;
+        --text-primary: #0C4A6E;
+        --text-secondary: #0369A1;
+        --border-color: rgba(14, 165, 233, 0.3);
+      }
+      
+      .theme-nature {
+        --bg-from: #F0FDF4;
+        --bg-to: #ECFDF5;
+        --header-bg: rgba(255, 255, 255, 0.9);
+        --card-bg: #FFFFFF;
+        --text-primary: #166534;
+        --text-secondary: #059669;
+        --border-color: rgba(5, 150, 105, 0.3);
+      }
+      
+      .theme-sunset {
+        --bg-from: #FEF3C7;
+        --bg-to: #FDE68A;
+        --header-bg: rgba(255, 255, 255, 0.9);
+        --card-bg: #FFFFFF;
+        --text-primary: #92400E;
+        --text-secondary: #D97706;
+        --border-color: rgba(251, 191, 36, 0.3);
+      }
+      
+      .theme-cyber {
+        --bg-from: #0F172A;
+        --bg-to: #1E293B;
+        --header-bg: rgba(15, 23, 42, 0.9);
+        --card-bg: #334155;
+        --text-primary: #E2E8F0;
+        --text-secondary: #94A3B8;
+        --border-color: rgba(71, 85, 105, 0.5);
+      }
+    }
+  </style>
+  
+  <!-- 导入字体 -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Comic+Neue:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="font-candy theme-candy min-h-screen transition-all duration-300"
+      style="background: linear-gradient(135deg, var(--bg-from) 0%, var(--bg-to) 100%); color: var(--text-primary);">
+  
+  <!-- 主题选择器 -->
+  <div id="theme-selector" class="fixed bottom-4 left-4 z-40 hidden md:flex flex-col items-center space-y-2">
+    <button id="theme-toggle-btn" class="p-3 rounded-full bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 dark:bg-gray-800/90">
+      <i class="fa fa-palette text-candy-purple text-lg"></i>
+    </button>
+    <div id="theme-options" class="bg-white/90 backdrop-blur-sm rounded-xl p-2 shadow-lg flex flex-col space-y-2 hidden dark:bg-gray-800/90">
+      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="candy">
+        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-candy-pink to-candy-purple"></div>
+      </button>
+      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="dark">
+        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-gray-800 to-gray-900"></div>
+      </button>
+      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="ocean">
+        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-blue-300 to-cyan-300"></div>
+      </button>
+      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="nature">
+        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-green-300 to-emerald-300"></div>
+      </button>
+      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="sunset">
+        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-amber-300 to-orange-300"></div>
+      </button>
+      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="cyber">
+        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-indigo-900 to-slate-800"></div>
+      </button>
+    </div>
+  </div>
+  
+  <!-- 移动端主题选择器 -->
+  <div id="mobile-theme-selector" class="md:hidden fixed bottom-4 right-4 z-40">
+    <button id="mobile-theme-toggle-btn" class="p-3 rounded-full bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800/90">
+      <i class="fa fa-palette text-candy-purple text-lg"></i>
+    </button>
+  </div>
+
+  <!-- 页面标题 -->
+  <header class="backdrop-blur-sm shadow-md sticky top-0 z-50 transition-all duration-300"
+          style="background-color: var(--header-bg);">
+    <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-candy-cane text-candy-pink text-2xl transform rotate-12 animate-pulse"></i>
+        <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold bg-gradient-to-r from-candy-pink to-candy-purple bg-clip-text text-transparent">Candy导航</h1>
+      </div>
+      <div class="hidden md:flex items-center space-x-4">
+        <div class="relative">
+          <input type="text" id="search-input" placeholder="搜索网站..." 
+                 class="pl-10 pr-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-candy-purple/50 focus:border-transparent transition-all w-64"
+                 style="background-color: var(--card-bg); color: var(--text-primary); border-color: var(--border-color);">
+          <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2" style="color: var(--text-secondary);"></i>
+        </div>
+        <button id="favorites-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative">
+          <i class="fa fa-star-o text-candy-yellow"></i>
+          <span id="favorites-count" class="absolute -top-1 -right-1 bg-candy-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
+        </button>
+        <button id="font-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="切换字体">
+          <i class="fa fa-font text-candy-blue"></i>
+        </button>
+      </div>
+      <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+        <i class="fa fa-bars text-candy-dark dark:text-gray-300 text-xl"></i>
+      </button>
+    </div>
+    <!-- 移动端搜索框 -->
+    <div class="md:hidden px-4 pb-4 hidden" id="mobile-search">
+      <div class="relative">
+        <input type="text" id="mobile-search-input" placeholder="搜索网站..." 
+               class="w-full pl-10 pr-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-candy-purple/50 focus:border-transparent"
+               style="background-color: var(--card-bg); color: var(--text-primary); border-color: var(--border-color);">
+        <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2" style="color: var(--text-secondary);"></i>
+      </div>
+      <div class="flex justify-end mt-2 space-x-2">
+        <button id="mobile-favorites-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative">
+          <i class="fa fa-star-o text-candy-yellow"></i>
+          <span id="mobile-favorites-count" class="absolute -top-1 -right-1 bg-candy-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
+        </button>
+        <button id="mobile-font-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <i class="fa fa-font text-candy-blue"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-6">
+    <div class="flex flex-col md:flex-row gap-6">
+      <!-- 左侧分类导航 -->
+      <aside class="md:w-1/4 lg:w-1/5">
+        <div class="rounded-2xl shadow-md p-4 sticky top-24 transition-all duration-300"
+             style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold flex items-center" style="color: var(--text-primary);">
+              <i class="fa fa-th-list mr-2 text-candy-pink"></i>网站分类
+            </h2>
+            <button id="collapse-categories" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors md:hidden">
+              <i class="fa fa-chevron-down text-sm" style="color: var(--text-secondary);"></i>
+            </button>
+          </div>
+          <div id="category-content" class="md:block">
+            <div class="overflow-y-auto max-h-[calc(100vh-200px)] scrollbar-hide">
+              <ul id="category-list" class="space-y-1">
+                <!-- 分类将通过JS动态生成 -->
+              </ul>
+            </div>
+            
+            <!-- 分类统计 -->
+            <div class="mt-6 pt-4 border-t" style="border-color: var(--border-color);">
+              <h3 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">数据统计</h3>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span style="color: var(--text-secondary);">总网站数</span>
+                  <span id="stats-total" class="font-medium text-candy-purple">0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span style="color: var(--text-secondary);">分类数</span>
+                  <span id="stats-categories" class="font-medium text-candy-pink">0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span style="color: var(--text-secondary);">更新日期</span>
+                  <span id="stats-update" class="font-medium text-candy-blue">今天</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 快捷操作 -->
+            <div class="mt-4 pt-4 border-t" style="border-color: var(--border-color);">
+              <h3 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">快捷操作</h3>
+              <div class="space-y-2">
+                <button id="refresh-data" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center">
+                  <i class="fa fa-refresh mr-2 text-candy-blue"></i>
+                  刷新数据
+                </button>
+                <button id="export-favorites" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm flex items-center">
+                  <i class="fa fa-download mr-2 text-candy-green"></i>
+                  导出收藏
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+      
+      <!-- 右侧网站列表 -->
+      <section class="md:w-3/4 lg:w-4/5">
+        <div class="rounded-2xl shadow-md p-6 transition-all duration-300"
+             style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h2 id="category-title" class="text-xl font-bold" style="color: var(--text-primary);">
+              <i class="fa fa-globe mr-2 text-candy-purple"></i>所有网站
+            </h2>
+            <div class="flex flex-wrap items-center gap-4">
+              <div class="text-sm" style="color: var(--text-secondary);">
+                共 <span id="total-count" class="font-medium text-candy-purple">0</span> 个网站
+              </div>
+              <div class="flex items-center space-x-2">
+                <div class="relative">
+                  <select id="sort-select" class="appearance-none rounded-lg px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-candy-purple"
+                          style="background-color: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color);">
+                    <option value="name-asc">按名称排序</option>
+                    <option value="name-desc">按名称倒序</option>
+                    <option value="type-asc">按分类排序</option>
+                    <option value="random">随机排序</option>
+                  </select>
+                  <i class="fa fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style="color: var(--text-secondary);"></i>
+                </div>
+                <div class="relative">
+                  <select id="view-select" class="appearance-none rounded-lg px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-candy-purple"
+                          style="background-color: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color);">
+                    <option value="grid">网格视图</option>
+                    <option value="list">列表视图</option>
+                    <option value="compact">紧凑视图</option>
+                  </select>
+                  <i class="fa fa-eye absolute right-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style="color: var(--text-secondary);"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 网站列表 -->
+          <div id="website-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- 网站卡片将通过JS动态生成 -->
+            <div class="col-span-full flex justify-center items-center py-16">
+              <div class="text-center">
+                <i class="fa fa-spinner fa-spin text-4xl text-candy-purple/50 mb-4"></i>
+                <p style="color: var(--text-secondary);">加载中...</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 分页 -->
+          <div id="pagination" class="mt-8 pt-6 border-t hidden" style="border-color: var(--border-color);">
+            <div class="flex justify-between items-center">
+              <button id="prev-page" class="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa fa-chevron-left mr-2"></i>
+                上一页
+              </button>
+              <div class="text-sm" style="color: var(--text-secondary);">
+                第 <span id="current-page">1</span> 页 / 共 <span id="total-pages">1</span> 页
+              </div>
+              <button id="next-page" class="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                下一页
+                <i class="fa fa-chevron-right ml-2"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 收藏夹模态框 -->
+  <div id="favorites-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col transform scale-95 transition-transform duration-300"
+         style="background-color: var(--card-bg); color: var(--text-primary);">
+      <div class="p-6 border-b" style="border-color: var(--border-color);">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xl font-bold flex items-center">
+            <i class="fa fa-star text-candy-yellow mr-2"></i>我的收藏
+          </h3>
+          <button id="close-favorites" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <i class="fa fa-times" style="color: var(--text-secondary);"></i>
+          </button>
+        </div>
+        <div class="mt-2 text-sm" style="color: var(--text-secondary);">
+          已收藏 <span id="favorites-modal-count">0</span> 个网站
+        </div>
+      </div>
+      <div id="favorites-container" class="p-6 overflow-y-auto flex-grow">
+        <!-- 收藏内容将通过JS动态生成 -->
+        <div class="text-center py-12">
+          <i class="fa fa-star-o text-4xl mb-4" style="color: var(--text-secondary); opacity: 0.5;"></i>
+          <p style="color: var(--text-secondary);">您还没有收藏任何网站</p>
+          <p class="text-sm mt-2" style="color: var(--text-secondary); opacity: 0.7;">点击网站卡片上的星星图标添加收藏</p>
+        </div>
+      </div>
+      <div class="p-4 border-t text-center text-sm" style="border-color: var(--border-color); color: var(--text-secondary);">
+        <button id="clear-favorites" class="px-4 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors">
+          <i class="fa fa-trash mr-2"></i>清空收藏夹
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-12 shadow-inner py-6 transition-all duration-300" style="background-color: var(--header-bg); border-top: 1px solid var(--border-color);">
+    <div class="container mx-auto px-4 text-center text-sm" style="color: var(--text-secondary);">
+      <div class="flex items-center justify-center space-x-2 mb-2">
+        <i class="fa fa-candy-cane text-candy-pink transform rotate-12"></i>
+        <p>Candy导航 &copy; 2023</p>
+      </div>
+      <p class="mb-2">一个甜美的网址导航网站</p>
+      <p class="text-xs opacity-75">数据来源：网站导航.xlsx | 最后更新：<span id="footer-update">今天</span></p>
+    </div>
+  </footer>
+
+  <script>
+    // 全局变量
+    let allWebsites = [];
+    let filteredWebsites = [];
+    let currentCategory = 'all';
+    let favorites = JSON.parse(localStorage.getItem('candyFavorites')) || [];
+    let currentTheme = localStorage.getItem('candyTheme') || 'candy';
+    let currentFont = localStorage.getItem('candyFont') || 'candy';
+    let currentView = localStorage.getItem('candyView') || 'grid';
+    let currentPage = 1;
+    let itemsPerPage = 12;
+    let categorizedIcons = {};
+    
+    // DOM元素
+    const categoryListEl = document.getElementById('category-list');
+    const websiteContainerEl = document.getElementById('website-container');
+    const categoryTitleEl = document.getElementById('category-title');
+    const totalCountEl = document.getElementById('total-count');
+    const searchInputEl = document.getElementById('search-input');
+    const mobileSearchInputEl = document.getElementById('mobile-search-input');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileSearchEl = document.getElementById('mobile-search');
+    const favoritesBtn = document.getElementById('favorites-btn');
+    const mobileFavoritesBtn = document.getElementById('mobile-favorites-btn');
+    const favoritesCountEl = document.getElementById('favorites-count');
+    const mobileFavoritesCountEl = document.getElementById('mobile-favorites-count');
+    const favoritesModal = document.getElementById('favorites-modal');
+    const favoritesContainer = document.getElementById('favorites-container');
+    const closeFavoritesBtn = document.getElementById('close-favorites');
+    const favoritesModalCount = document.getElementById('favorites-modal-count');
+    const clearFavoritesBtn = document.getElementById('clear-favorites');
+    const sortSelectEl = document.getElementById('sort-select');
+    const viewSelectEl = document.getElementById('view-select');
+    const statsTotalEl = document.getElementById('stats-total');
+    const statsCategoriesEl = document.getElementById('stats-categories');
+    const statsUpdateEl = document.getElementById('stats-update');
+    const footerUpdateEl = document.getElementById('footer-update');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const mobileThemeToggleBtn = document.getElementById('mobile-theme-toggle-btn');
+    const themeOptions = document.getElementById('theme-options');
+    const fontToggleBtn = document.getElementById('font-toggle');
+    const mobileFontToggleBtn = document.getElementById('mobile-font-toggle');
+    const collapseCategoriesBtn = document.getElementById('collapse-categories');
+    const categoryContent = document.getElementById('category-content');
+    const refreshDataBtn = document.getElementById('refresh-data');
+    const exportFavoritesBtn = document.getElementById('export-favorites');
+    const paginationEl = document.getElementById('pagination');
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
+    const currentPageEl = document.getElementById('current-page');
+    const totalPagesEl = document.getElementById('total-pages');
+    
+    // 图标池 - 随机分配
+    const iconPool = [
+      'fa-robot', 'fa-microchip', 'fa-code', 'fa-laptop-code', 'fa-desktop',
+      'fa-cloud', 'fa-graduation-cap', 'fa-book-open', 'fa-brain', 'fa-university',
+      'fa-file-alt', 'fa-sticky-note', 'fa-wrench', 'fa-bolt', 'fa-tools',
+      'fa-exchange-alt', 'fa-paint-brush', 'fa-image', 'fa-film', 'fa-music',
+      'fa-gamepad', 'fa-tv', 'fa-broadcast-tower', 'fa-book', 'fa-book-reader',
+      'fa-newspaper', 'fa-blog', 'fa-comments', 'fa-search', 'fa-compass',
+      'fa-map', 'fa-plane', 'fa-home', 'fa-shopping-cart', 'fa-store',
+      'fa-utensils', 'fa-heartbeat', 'fa-hospital', 'fa-users', 'fa-comment-dots',
+      'fa-envelope', 'fa-video', 'fa-link', 'fa-question-circle', 'fa-ellipsis-h',
+      'fa-star', 'fa-heart', 'fa-lightbulb', 'fa-flag', 'fa-camera',
+      'fa-chart-bar', 'fa-calendar', 'fa-clock', 'fa-database', 'fa-download',
+      'fa-upload', 'fa-share-alt', 'fa-lock', 'fa-unlock', 'fa-shield',
+      'fa-bell', 'fa-inbox', 'fa-paper-plane', 'fa-phone', 'fa-mobile',
+      'fa-tablet', 'fa-headphones', 'fa-keyboard', 'fa-mouse-pointer'
+    ];
+    
+    // 糖果颜色池
+    const colorPool = ['candy-pink', 'candy-purple', 'candy-blue', 'candy-green', 'candy-yellow', 'candy-orange', 'candy-red'];
+    
+    // 字体池
+    const fontPool = [
+      { name: 'candy', label: '糖果字体', class: 'font-candy' },
+      { name: 'round', label: '圆润字体', class: 'font-round' },
+      { name: 'modern', label: '现代字体', class: 'font-modern' }
+    ];
+    
+    // 初始化
+    async function init() {
+      try {
+        // 应用主题
+        applyTheme(currentTheme);
+        applyFont(currentFont);
+        
+        // 加载Excel数据
+        await loadExcelData();
+        
+        // 应用视图
+        viewSelectEl.value = currentView;
+        applyView(currentView);
+        
+        // 更新收藏计数
+        updateFavoritesCount();
+        
+        // 添加事件监听
+        addEventListeners();
+        
+      } catch (error) {
+        console.error('初始化失败:', error);
+        showError('初始化失败，请检查网络连接或文件格式');
+      }
+    }
+    
+    // 加载Excel数据
+    async function loadExcelData() {
+      try {
+        websiteContainerEl.innerHTML = `
+          <div class="col-span-full flex justify-center items-center py-16">
+            <div class="text-center">
+              <i class="fa fa-spinner fa-spin text-4xl text-candy-purple/50 mb-4"></i>
+              <p style="color: var(--text-secondary);">正在加载数据...</p>
+            </div>
+          </div>
+        `;
+        
+        const response = await fetch('网站导航.xlsx');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP错误: ${response.status} - 请确保"网站导航.xlsx"文件存在`);
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        // 获取第一个工作表
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // 将工作表转换为JSON
+        const excelData = XLSX.utils.sheet_to_json(worksheet);
+        
+        // 处理Excel数据，转换为与原来JSON相同的格式
+        allWebsites = excelData.map(row => {
+          // 尝试多种可能的列名
+          const name = row['名称'] || row['网站名称'] || row['name'] || row['网站'] || '';
+          const web = row['网址'] || row['网站链接'] || row['url'] || row['web'] || row['链接'] || '';
+          const type = row['分类'] || row['类别'] || row['type'] || row['category'] || '未分类';
+          const remark = row['备注'] || row['描述'] || row['remark'] || row['description'] || row['介绍'] || '';
+          
+          return { name, web, type, remark };
+        }).filter(item => item.name && item.web); // 过滤掉无效数据
+        
+        if (allWebsites.length === 0) {
+          throw new Error('Excel文件中没有有效数据，请确保列名正确且有数据');
+        }
+        
+        // 为每个分类随机分配图标
+        assignRandomIconsToCategories();
+        
+        filteredWebsites = [...allWebsites];
+        
+        // 提取所有分类（动态生成）
+        const categories = ['all', ...new Set(allWebsites.map(item => item.type))];
+        
+        // 渲染分类列表
+        renderCategories(categories);
+        
+        // 筛选并渲染网站
+        filterAndRenderWebsites();
+        
+        // 更新统计数据
+        updateStats();
+        
+        // 显示成功提示
+        showToast(`成功加载 ${allWebsites.length} 个网站，${categories.length - 1} 个分类`);
+        
+      } catch (error) {
+        console.error('加载Excel数据失败:', error);
+        
+        // 显示错误信息
+        let errorMessage = error.message || '加载失败，请检查"网站导航.xlsx"文件是否存在且格式正确';
+        
+        websiteContainerEl.innerHTML = `
+          <div class="col-span-full flex justify-center items-center py-16">
+            <div class="text-center">
+              <i class="fa fa-exclamation-triangle text-4xl text-candy-orange mb-4"></i>
+              <p style="color: var(--text-secondary);" class="mb-2">${errorMessage}</p>
+              <p class="text-sm mb-4" style="color: var(--text-secondary); opacity: 0.7;">
+                请确保Excel文件包含以下列：名称、网址、分类、备注
+              </p>
+              <button id="retry-load" class="mt-4 px-4 py-2 bg-candy-purple text-white rounded-lg hover:bg-candy-purple/90 transition-colors">
+                重试加载
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // 添加重试按钮事件
+        document.getElementById('retry-load').addEventListener('click', () => {
+          loadExcelData();
+        });
+      }
+    }
+    
+    // 为分类随机分配图标
+    function assignRandomIconsToCategories() {
+      const categories = new Set(allWebsites.map(item => item.type));
+      categorizedIcons = {};
+      
+      categories.forEach(category => {
+        // 为每个分类随机选择一个图标
+        const randomIcon = iconPool[Math.floor(Math.random() * iconPool.length)];
+        categorizedIcons[category] = randomIcon;
+      });
+      
+      // 确保"未分类"和"所有网站"有默认图标
+      categorizedIcons['未分类'] = 'fa-question-circle';
+      categorizedIcons['all'] = 'fa-globe';
+    }
+    
+    // 获取分类图标
+    function getCategoryIcon(category) {
+      return categorizedIcons[category] || categorizedIcons['未分类'] || 'fa-link';
+    }
+    
+    // 渲染分类列表
+    function renderCategories(categories) {
+      categoryListEl.innerHTML = '';
+      
+      categories.forEach(category => {
+        const li = document.createElement('li');
+        li.className = `category-item px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+          currentCategory === category ? 'category-active' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+        }`;
+        
+        const icon = getCategoryIcon(category);
+        
+        li.innerHTML = `
+          <i class="fa ${icon} mr-2 text-sm"></i>
+          <span>${category === 'all' ? '所有网站' : category}</span>
+        `;
+        
+        li.addEventListener('click', () => {
+          // 移除所有分类的active状态
+          document.querySelectorAll('.category-item').forEach(item => {
+            item.classList.remove('category-active');
+            item.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+          });
+          
+          // 添加当前分类的active状态
+          li.classList.add('category-active');
+          li.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+          
+          // 更新当前分类
+          currentCategory = category;
+          
+          // 更新分类标题
+          categoryTitleEl.innerHTML = `
+            <i class="fa ${icon} mr-2 text-candy-purple"></i>${category === 'all' ? '所有网站' : category}
+          `;
+          
+          // 重置到第一页
+          currentPage = 1;
+          
+          // 筛选并渲染网站
+          filterAndRenderWebsites();
+          
+          // 在移动设备上点击分类后收起搜索框
+          if (window.innerWidth < 768) {
+            mobileSearchEl.classList.add('hidden');
+            categoryContent.classList.add('hidden');
+          }
+        });
+        
+        categoryListEl.appendChild(li);
+      });
+    }
+    
+    // 渲染网站列表
+    function renderWebsites(websites) {
+      if (websites.length === 0) {
+        websiteContainerEl.innerHTML = `
+          <div class="col-span-full flex justify-center items-center py-16">
+            <div class="text-center">
+              <i class="fa fa-search text-4xl mb-4" style="color: var(--text-secondary); opacity: 0.5;"></i>
+              <p style="color: var(--text-secondary);">没有找到匹配的网站</p>
+              <button id="clear-filters" class="mt-4 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                清除筛选条件
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // 添加清除筛选按钮事件
+        document.getElementById('clear-filters').addEventListener('click', () => {
+          currentCategory = 'all';
+          searchInputEl.value = '';
+          mobileSearchInputEl.value = '';
+          
+          // 重新提取分类
+          const categories = ['all', ...new Set(allWebsites.map(item => item.type))];
+          renderCategories(categories);
+          
+          // 重置分类标题
+          categoryTitleEl.innerHTML = `<i class="fa fa-globe mr-2 text-candy-purple"></i>所有网站`;
+          
+          // 重置分页
+          currentPage = 1;
+          
+          filterAndRenderWebsites();
+        });
+        
+        // 隐藏分页
+        paginationEl.classList.add('hidden');
+        return;
+      }
+      
+      // 计算分页
+      const totalPages = Math.ceil(websites.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const pagedWebsites = websites.slice(startIndex, endIndex);
+      
+      // 更新分页信息
+      if (websites.length > itemsPerPage) {
+        paginationEl.classList.remove('hidden');
+        currentPageEl.textContent = currentPage;
+        totalPagesEl.textContent = totalPages;
+        
+        // 更新按钮状态
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage === totalPages;
+      } else {
+        paginationEl.classList.add('hidden');
+      }
+      
+      // 清空容器
+      websiteContainerEl.innerHTML = '';
+      
+      // 根据当前视图渲染网站
+      pagedWebsites.forEach(website => {
+        const card = createWebsiteCard(website);
+        websiteContainerEl.appendChild(card);
+      });
+    }
+    
+    // 创建网站卡片
+    function createWebsiteCard(website) {
+      // 检查是否为收藏
+      const isFavorite = favorites.some(fav => fav.web === website.web);
+      
+      // 随机选择颜色和图标
+      const randomColor = colorPool[Math.floor(Math.random() * colorPool.length)];
+      const categoryIcon = getCategoryIcon(website.type);
+      
+      const card = document.createElement('div');
+      
+      // 根据视图模式设置卡片样式
+      let cardClass = '';
+      if (currentView === 'grid') {
+        cardClass = `bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden card-hover`;
+      } else if (currentView === 'list') {
+        cardClass = `bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden card-hover col-span-full`;
+      } else if (currentView === 'compact') {
+        cardClass = `bg-white dark:bg-gray-800 rounded-lg border shadow-sm overflow-hidden card-hover`;
+      }
+      
+      card.className = cardClass;
+      card.style.borderColor = 'var(--border-color)';
+      
+      // 提取域名作为显示
+      let domain = '';
+      try {
+        // 确保网址有协议前缀
+        let urlStr = website.web;
+        if (!urlStr.startsWith('http://') && !urlStr.startsWith('https://')) {
+          urlStr = 'https://' + urlStr;
+        }
+        const url = new URL(urlStr);
+        domain = url.hostname.replace('www.', '');
+      } catch (e) {
+        domain = website.web;
+      }
+      
+      // 根据视图模式设置不同的HTML结构
+      let cardHTML = '';
+      if (currentView === 'list') {
+        cardHTML = `
+          <div class="p-4">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center flex-1">
+                <div class="w-10 h-10 rounded-lg bg-${randomColor}/10 flex items-center justify-center mr-4">
+                  <i class="fa ${categoryIcon} text-${randomColor}"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center">
+                    <h3 class="font-semibold text-lg hover:text-candy-purple transition-colors mr-3">
+                      <a href="${website.web}" target="_blank" rel="noopener noreferrer">${website.name}</a>
+                    </h3>
+                    <span class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">${website.type}</span>
+                  </div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${domain}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-1">
+                    ${website.remark?.trim() || '无描述信息'}
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3 ml-4">
+                <a href="${website.web}" target="_blank" rel="noopener noreferrer" 
+                   class="px-4 py-2 bg-candy-purple text-white rounded-lg hover:bg-candy-purple/90 transition-colors text-sm">
+                  访问
+                </a>
+                <button class="favorite-btn p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isFavorite ? 'text-candy-yellow' : 'text-gray-400 hover:text-candy-yellow'}"
+                        data-name="${website.name}" 
+                        data-web="${website.web}"
+                        data-type="${website.type}"
+                        data-remark="${website.remark || ''}">
+                  <i class="fa ${isFavorite ? 'fa-star' : 'fa-star-o'}"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // 网格视图和紧凑视图
+        cardHTML = `
+          <div class="p-4">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-lg bg-${randomColor}/10 flex items-center justify-center mr-3">
+                  <i class="fa ${categoryIcon} text-${randomColor}"></i>
+                </div>
+                <h3 class="font-semibold hover:text-candy-purple transition-colors">
+                  <a href="${website.web}" target="_blank" rel="noopener noreferrer">${website.name}</a>
+                </h3>
+              </div>
+              <div class="flex items-center">
+                <span class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 mr-2">${website.type}</span>
+                <button class="favorite-btn p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isFavorite ? 'text-candy-yellow' : 'text-gray-400 hover:text-candy-yellow'}"
+                        data-name="${website.name}" 
+                        data-web="${website.web}"
+                        data-type="${website.type}"
+                        data-remark="${website.remark || ''}">
+                  <i class="fa ${isFavorite ? 'fa-star' : 'fa-star-o'}"></i>
+                </button>
+              </div>
+            </div>
+            
+            <p class="text-xs text-gray-400 dark:text-gray-500 mb-2">${domain}</p>
+            
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
+              ${website.remark?.trim() || '无描述信息'}
+            </p>
+            
+            <a href="${website.web}" target="_blank" rel="noopener noreferrer" 
+               class="inline-flex items-center text-sm text-candy-purple hover:text-candy-pink transition-colors">
+              访问网站
+              <i class="fa fa-external-link ml-1 text-xs"></i>
+            </a>
+          </div>
+        `;
+      }
+      
+      card.innerHTML = cardHTML;
+      
+      // 添加收藏按钮事件
+      card.querySelector('.favorite-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const btn = e.currentTarget;
+        const websiteData = {
+          name: btn.dataset.name,
+          web: btn.dataset.web,
+          type: btn.dataset.type,
+          remark: btn.dataset.remark
+        };
+        
+        toggleFavorite(websiteData, btn);
+      });
+      
+      return card;
+    }
+    
+    // 切换收藏状态
+    function toggleFavorite(website, btn) {
+      const index = favorites.findIndex(fav => fav.web === website.web);
+      
+      if (index === -1) {
+        // 添加收藏
+        favorites.push(website);
+        btn.innerHTML = '<i class="fa fa-star"></i>';
+        btn.classList.remove('text-gray-400');
+        btn.classList.add('text-candy-yellow');
+        
+        // 显示添加成功提示
+        showToast(`<i class="fa fa-star mr-1"></i> ${website.name} 已添加到收藏`);
+      } else {
+        // 移除收藏
+        favorites.splice(index, 1);
+        btn.innerHTML = '<i class="fa fa-star-o"></i>';
+        btn.classList.remove('text-candy-yellow');
+        btn.classList.add('text-gray-400', 'hover:text-candy-yellow');
+        
+        // 显示移除成功提示
+        showToast(`<i class="fa fa-star-o mr-1"></i> ${website.name} 已从收藏移除`);
+      }
+      
+      // 保存到本地存储
+      localStorage.setItem('candyFavorites', JSON.stringify(favorites));
+      
+      // 更新收藏计数
+      updateFavoritesCount();
+      
+      // 如果当前在收藏夹页面，重新渲染
+      if (favoritesModal.classList.contains('flex')) {
+        renderFavorites();
+      }
+    }
+    
+    // 更新收藏计数
+    function updateFavoritesCount() {
+      const count = favorites.length;
+      favoritesCountEl.textContent = count;
+      mobileFavoritesCountEl.textContent = count;
+      favoritesModalCount.textContent = count;
+      
+      // 隐藏或显示计数
+      if (count === 0) {
+        favoritesCountEl.classList.add('opacity-0');
+        mobileFavoritesCountEl.classList.add('opacity-0');
+      } else {
+        favoritesCountEl.classList.remove('opacity-0');
+        mobileFavoritesCountEl.classList.remove('opacity-0');
+      }
+    }
+    
+    // 渲染收藏列表
+    function renderFavorites() {
+      if (favorites.length === 0) {
+        favoritesContainer.innerHTML = `
+          <div class="text-center py-12">
+            <i class="fa fa-star-o text-4xl mb-4" style="color: var(--text-secondary); opacity: 0.5;"></i>
+            <p style="color: var(--text-secondary);">您还没有收藏任何网站</p>
+            <p class="text-sm mt-2" style="color: var(--text-secondary); opacity: 0.7;">点击网站卡片上的星星图标添加收藏</p>
+          </div>
+        `;
+        return;
+      }
+      
+      favoritesContainer.innerHTML = `
+        <div class="grid grid-cols-1 ${favorites.length > 1 ? 'sm:grid-cols-2' : ''} gap-4">
+          ${favorites.map(website => {
+            // 随机选择颜色和图标
+            const randomColor = colorPool[Math.floor(Math.random() * colorPool.length)];
+            const categoryIcon = getCategoryIcon(website.type);
+            
+            // 提取域名作为显示
+            let domain = '';
+            try {
+              let urlStr = website.web;
+              if (!urlStr.startsWith('http://') && !urlStr.startsWith('https://')) {
+                urlStr = 'https://' + urlStr;
+              }
+              const url = new URL(urlStr);
+              domain = url.hostname.replace('www.', '');
+            } catch (e) {
+              domain = website.web;
+            }
+            
+            return `
+              <div class="bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden card-hover" style="border-color: var(--border-color);">
+                <div class="p-4">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center">
+                      <div class="w-8 h-8 rounded-lg bg-${randomColor}/10 flex items-center justify-center mr-3">
+                        <i class="fa ${categoryIcon} text-${randomColor}"></i>
+                      </div>
+                      <h3 class="font-semibold hover:text-candy-purple transition-colors">
+                        <a href="${website.web}" target="_blank" rel="noopener noreferrer">${website.name}</a>
+                      </h3>
+                    </div>
+                    <div class="flex items-center">
+                      <span class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 mr-2">${website.type}</span>
+                      <button class="favorite-btn p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-candy-red hover:text-red-700"
+                              data-name="${website.name}" 
+                              data-web="${website.web}"
+                              data-type="${website.type}"
+                              data-remark="${website.remark}">
+                        <i class="fa fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <p class="text-xs text-gray-400 dark:text-gray-500 mb-2">${domain}</p>
+                  
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
+                    ${website.remark || '无描述信息'}
+                  </p>
+                  
+                  <div class="flex justify-between items-center">
+                    <a href="${website.web}" target="_blank" rel="noopener noreferrer" 
+                       class="inline-flex items-center text-sm text-candy-purple hover:text-candy-pink transition-colors">
+                      访问网站
+                      <i class="fa fa-external-link ml-1 text-xs"></i>
+                    </a>
+                    <span class="text-xs text-gray-400">点击×移除</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      
+      // 为收藏夹中的删除按钮添加事件
+      document.querySelectorAll('#favorites-container .favorite-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const websiteData = {
+            name: btn.dataset.name,
+            web: btn.dataset.web,
+            type: btn.dataset.type,
+            remark: btn.dataset.remark
+          };
+          
+          // 从收藏夹中移除
+          const index = favorites.findIndex(fav => fav.web === websiteData.web);
+          if (index !== -1) {
+            favorites.splice(index, 1);
+            localStorage.setItem('candyFavorites', JSON.stringify(favorites));
+            updateFavoritesCount();
+            renderFavorites();
+            
+            // 更新主页面中的收藏按钮状态
+            updateFavoriteButtonsOnPage(websiteData.web, false);
+            
+            showToast(`<i class="fa fa-star-o mr-1"></i> ${websiteData.name} 已从收藏移除`);
+          }
+        });
+      });
+    }
+    
+    // 更新页面中的收藏按钮状态
+    function updateFavoriteButtonsOnPage(web, isFavorite) {
+      document.querySelectorAll('.favorite-btn').forEach(btn => {
+        if (btn.dataset.web === web) {
+          btn.innerHTML = isFavorite ? '<i class="fa fa-star"></i>' : '<i class="fa fa-star-o"></i>';
+          if (isFavorite) {
+            btn.classList.remove('text-gray-400');
+            btn.classList.add('text-candy-yellow');
+          } else {
+            btn.classList.remove('text-candy-yellow');
+            btn.classList.add('text-gray-400', 'hover:text-candy-yellow');
+          }
+        }
+      });
+    }
+    
+    // 筛选并渲染网站
+    function filterAndRenderWebsites() {
+      let result = [...allWebsites];
+      
+      // 按分类筛选
+      if (currentCategory !== 'all') {
+        result = result.filter(website => website.type === currentCategory);
+      }
+      
+      // 按搜索词筛选
+      const searchTerm = searchInputEl.value.trim().toLowerCase() || mobileSearchInputEl.value.trim().toLowerCase();
+      if (searchTerm) {
+        result = result.filter(website => 
+          website.name.toLowerCase().includes(searchTerm) || 
+          website.remark?.toLowerCase().includes(searchTerm) ||
+          website.type.toLowerCase().includes(searchTerm) ||
+          website.web.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // 按排序方式排序
+      const sortBy = sortSelectEl.value;
+      if (sortBy === 'name-asc') {
+        result.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortBy === 'name-desc') {
+        result.sort((a, b) => b.name.localeCompare(a.name));
+      } else if (sortBy === 'type-asc') {
+        result.sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
+      } else if (sortBy === 'random') {
+        result = shuffleArray(result);
+      }
+      
+      // 更新筛选结果
+      filteredWebsites = result;
+      
+      // 更新总数
+      totalCountEl.textContent = result.length;
+      
+      // 渲染筛选后的网站
+      renderWebsites(result);
+    }
+    
+    // 随机打乱数组
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+    
+    // 应用主题
+    function applyTheme(theme) {
+      // 移除所有主题类
+      document.body.classList.remove('theme-candy', 'theme-dark', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-cyber');
+      
+      // 添加新主题类
+      document.body.classList.add(`theme-${theme}`);
+      
+      // 更新当前主题
+      currentTheme = theme;
+      localStorage.setItem('candyTheme', theme);
+    }
+    
+    // 应用字体
+    function applyFont(font) {
+      // 移除所有字体类
+      document.body.classList.remove('font-candy', 'font-round', 'font-modern');
+      
+      // 添加新字体类
+      const fontObj = fontPool.find(f => f.name === font) || fontPool[0];
+      document.body.classList.add(fontObj.class);
+      
+      // 更新当前字体
+      currentFont = font;
+      localStorage.setItem('candyFont', font);
+    }
+    
+    // 应用视图
+    function applyView(view) {
+      currentView = view;
+      localStorage.setItem('candyView', view);
+      
+      // 更新网站容器的类
+      websiteContainerEl.className = '';
+      if (view === 'grid') {
+        websiteContainerEl.classList.add('grid', 'grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3', 'gap-4');
+      } else if (view === 'list') {
+        websiteContainerEl.classList.add('grid', 'grid-cols-1', 'gap-3');
+      } else if (view === 'compact') {
+        websiteContainerEl.classList.add('grid', 'grid-cols-2', 'sm:grid-cols-3', 'lg:grid-cols-4', 'gap-3');
+      }
+      
+      // 重新渲染当前页面
+      if (filteredWebsites.length > 0) {
+        renderWebsites(filteredWebsites);
+      }
+    }
+    
+    // 更新统计数据
+    function updateStats() {
+      const categories = new Set(allWebsites.map(item => item.type));
+      const now = new Date();
+      const updateDate = `${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      statsTotalEl.textContent = allWebsites.length;
+      statsCategoriesEl.textContent = categories.size;
+      statsUpdateEl.textContent = updateDate;
+      footerUpdateEl.textContent = updateDate;
+    }
+    
+    // 显示提示消息
+    function showToast(message) {
+      // 检查是否已有toast，有则移除
+      const existingToast = document.querySelector('.toast-notification');
+      if (existingToast) {
+        existingToast.remove();
+      }
+      
+      // 创建toast元素
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 dark:bg-gray-700 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center translate-y-10 opacity-0 transition-all duration-300';
+      toast.innerHTML = message;
+      
+      // 添加到页面
+      document.body.appendChild(toast);
+      
+      // 显示toast
+      setTimeout(() => {
+        toast.classList.remove('translate-y-10', 'opacity-0');
+      }, 10);
+      
+      // 3秒后隐藏
+      setTimeout(() => {
+        toast.classList.add('translate-y-10', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+    
+    // 显示错误消息
+    function showError(message) {
+      websiteContainerEl.innerHTML = `
+        <div class="col-span-full flex justify-center items-center py-16">
+          <div class="text-center">
+            <i class="fa fa-exclamation-circle text-4xl text-candy-red mb-4"></i>
+            <p style="color: var(--text-secondary);" class="mb-2">${message}</p>
+            <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-candy-purple text-white rounded-lg hover:bg-candy-purple/90 transition-colors">
+              重新加载
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    
+    // 打开收藏夹
+    function openFavorites() {
+      renderFavorites();
+      favoritesModal.classList.remove('hidden');
+      
+      // 触发动画
+      setTimeout(() => {
+        favoritesModal.classList.add('opacity-100');
+        favoritesModal.querySelector('div').classList.remove('scale-95');
+        favoritesModal.querySelector('div').classList.add('scale-100');
+      }, 10);
+      
+      // 阻止背景滚动
+      document.body.style.overflow = 'hidden';
+    }
+    
+    // 关闭收藏夹
+    function closeFavorites() {
+      favoritesModal.classList.remove('opacity-100');
+      favoritesModal.querySelector('div').classList.remove('scale-100');
+      favoritesModal.querySelector('div').classList.add('scale-95');
+      
+      // 动画结束后隐藏
+      setTimeout(() => {
+        favoritesModal.classList.add('hidden');
+        document.body.style.overflow = ''; // 恢复背景滚动
+      }, 300);
+    }
+    
+    // 添加事件监听
+    function addEventListeners() {
+      // 搜索框事件
+      searchInputEl.addEventListener('input', () => {
+        currentPage = 1;
+        filterAndRenderWebsites();
+      });
+      mobileSearchInputEl.addEventListener('input', () => {
+        currentPage = 1;
+        filterAndRenderWebsites();
+      });
+      
+      // 移动端菜单按钮
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileSearchEl.classList.toggle('hidden');
+      });
+      
+      // 排序选择事件
+      sortSelectEl.addEventListener('change', () => {
+        currentPage = 1;
+        filterAndRenderWebsites();
+      });
+      
+      // 视图选择事件
+      viewSelectEl.addEventListener('change', () => {
+        applyView(viewSelectEl.value);
+      });
+      
+      // 分页按钮事件
+      prevPageBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderWebsites(filteredWebsites);
+        }
+      });
+      
+      nextPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredWebsites.length / itemsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderWebsites(filteredWebsites);
+        }
+      });
+      
+      // 主题切换
+      themeToggleBtn.addEventListener('click', () => {
+        themeOptions.classList.toggle('hidden');
+      });
+      
+      mobileThemeToggleBtn.addEventListener('click', () => {
+        // 移动端直接切换到下一个主题
+        const themes = ['candy', 'dark', 'ocean', 'nature', 'sunset', 'cyber'];
+        const currentIndex = themes.indexOf(currentTheme);
+        const nextIndex = (currentIndex + 1) % themes.length;
+        applyTheme(themes[nextIndex]);
+        showToast(`切换至${themes[nextIndex]}主题`);
+      });
+      
+      // 主题选项点击事件
+      document.querySelectorAll('.theme-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const theme = btn.dataset.theme;
+          applyTheme(theme);
+          showToast(`切换至${theme}主题`);
+          themeOptions.classList.add('hidden');
+        });
+      });
+      
+      // 字体切换
+      fontToggleBtn.addEventListener('click', () => {
+        const currentIndex = fontPool.findIndex(f => f.name === currentFont);
+        const nextIndex = (currentIndex + 1) % fontPool.length;
+        const nextFont = fontPool[nextIndex];
+        applyFont(nextFont.name);
+        showToast(`切换至${nextFont.label}`);
+      });
+      
+      mobileFontToggleBtn.addEventListener('click', () => {
+        const currentIndex = fontPool.findIndex(f => f.name === currentFont);
+        const nextIndex = (currentIndex + 1) % fontPool.length;
+        const nextFont = fontPool[nextIndex];
+        applyFont(nextFont.name);
+        showToast(`切换至${nextFont.label}`);
+      });
+      
+      // 分类折叠按钮
+      collapseCategoriesBtn.addEventListener('click', () => {
+        categoryContent.classList.toggle('hidden');
+        const icon = collapseCategoriesBtn.querySelector('i');
+        if (categoryContent.classList.contains('hidden')) {
+          icon.classList.remove('fa-chevron-down');
+          icon.classList.add('fa-chevron-up');
+        } else {
+          icon.classList.remove('fa-chevron-up');
+          icon.classList.add('fa-chevron-down');
+        }
+      });
+      
+      // 刷新数据按钮
+      refreshDataBtn.addEventListener('click', () => {
+        showToast('正在刷新数据...');
+        loadExcelData();
+      });
+      
+      // 导出收藏按钮
+      exportFavoritesBtn.addEventListener('click', () => {
+        if (favorites.length === 0) {
+          showToast('暂无收藏可导出');
+          return;
+        }
+        
+        // 将收藏转换为CSV格式
+        const csvContent = "data:text/csv;charset=utf-8," 
+          + ["名称,网址,分类,备注", ...favorites.map(f => `"${f.name}","${f.web}","${f.type}","${f.remark || ''}"`)].join("\n");
+        
+        // 创建下载链接
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `candy_navigation_favorites_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast(`成功导出 ${favorites.length} 个收藏`);
+      });
+      
+      // 清空收藏夹按钮
+      clearFavoritesBtn.addEventListener('click', () => {
+        if (favorites.length === 0) {
+          showToast('收藏夹已为空');
+          return;
+        }
+        
+        if (confirm(`确定要清空 ${favorites.length} 个收藏吗？`)) {
+          favorites = [];
+          localStorage.setItem('candyFavorites', JSON.stringify(favorites));
+          updateFavoritesCount();
+          renderFavorites();
+          
+          // 更新页面中的收藏按钮状态
+          document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.innerHTML = '<i class="fa fa-star-o"></i>';
+            btn.classList.remove('text-candy-yellow');
+            btn.classList.add('text-gray-400', 'hover:text-candy-yellow');
+          });
+          
+          showToast('收藏夹已清空');
+        }
+      });
+      
+      // 收藏夹相关事件
+      favoritesBtn.addEventListener('click', openFavorites);
+      mobileFavoritesBtn.addEventListener('click', openFavorites);
+      closeFavoritesBtn.addEventListener('click', closeFavorites);
+      
+      // 点击模态框背景关闭
+      favoritesModal.addEventListener('click', (e) => {
+        if (e.target === favoritesModal) {
+          closeFavorites();
+        }
+      });
+      
+      // 按ESC键关闭收藏夹
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !favoritesModal.classList.contains('hidden')) {
+          closeFavorites();
+        }
+      });
+      
+      // 滚动时改变头部样式
+      window.addEventListener('scroll', () => {
+        const header = document.querySelector('header');
+        if (window.scrollY > 10) {
+          header.classList.add('py-2', 'shadow-lg');
+          header.classList.remove('py-4', 'shadow-md');
+        } else {
+          header.classList.add('py-4', 'shadow-md');
+          header.classList.remove('py-2', 'shadow-lg');
+        }
+      });
+      
+      // 窗口大小变化时重新布局
+      window.addEventListener('resize', () => {
+        if (window.innerWidth >= 768) {
+          mobileSearchEl.classList.add('hidden');
+          categoryContent.classList.remove('hidden');
+        }
+      });
+    }
+    
+    // 启动应用
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
