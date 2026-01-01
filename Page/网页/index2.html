@@ -123,6 +123,22 @@
         --text-secondary: #94A3B8;
         --border-color: rgba(71, 85, 105, 0.5);
       }
+      
+      /* 主题选择器动画 */
+      #theme-options {
+        animation: fadeIn 0.3s ease-out;
+      }
+      
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
     }
   </style>
   
@@ -133,37 +149,43 @@
 <body class="font-candy theme-candy min-h-screen transition-all duration-300"
       style="background: linear-gradient(135deg, var(--bg-from) 0%, var(--bg-to) 100%); color: var(--text-primary);">
   
-  <!-- 主题选择器 -->
-  <div id="theme-selector" class="fixed bottom-4 left-4 z-40 hidden md:flex flex-col items-center space-y-2">
-    <button id="theme-toggle-btn" class="p-3 rounded-full bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 dark:bg-gray-800/90">
-      <i class="fa fa-palette text-candy-purple text-lg"></i>
+  <!-- 主题选择器 - 桌面端 -->
+  <div id="theme-selector" class="fixed bottom-4 left-4 z-40 flex flex-col items-center space-y-2">
+    <button id="theme-toggle-btn" class="p-3 rounded-full bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 dark:bg-gray-800/90 group">
+      <i class="fa fa-palette text-candy-purple text-lg group-hover:rotate-90 transition-transform"></i>
     </button>
-    <div id="theme-options" class="bg-white/90 backdrop-blur-sm rounded-xl p-2 shadow-lg flex flex-col space-y-2 hidden dark:bg-gray-800/90">
-      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="candy">
-        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-candy-pink to-candy-purple"></div>
+    <div id="theme-options" class="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg grid grid-cols-3 gap-2 hidden dark:bg-gray-800/90">
+      <button class="theme-option p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex flex-col items-center justify-center" data-theme="candy" title="糖果主题">
+        <div class="w-6 h-6 rounded-full bg-gradient-to-r from-candy-pink to-candy-purple mb-1"></div>
+        <span class="text-xs">糖果</span>
       </button>
-      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="dark">
-        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-gray-800 to-gray-900"></div>
+      <button class="theme-option p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex flex-col items-center justify-center" data-theme="dark" title="深色主题">
+        <div class="w-6 h-6 rounded-full bg-gradient-to-r from-gray-800 to-gray-900 mb-1"></div>
+        <span class="text-xs">深色</span>
       </button>
-      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="ocean">
-        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-blue-300 to-cyan-300"></div>
+      <button class="theme-option p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex flex-col items-center justify-center" data-theme="ocean" title="海洋主题">
+        <div class="w-6 h-6 rounded-full bg-gradient-to-r from-blue-300 to-cyan-300 mb-1"></div>
+        <span class="text-xs">海洋</span>
       </button>
-      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="nature">
-        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-green-300 to-emerald-300"></div>
+      <button class="theme-option p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex flex-col items-center justify-center" data-theme="nature" title="自然主题">
+        <div class="w-6 h-6 rounded-full bg-gradient-to-r from-green-300 to-emerald-300 mb-1"></div>
+        <span class="text-xs">自然</span>
       </button>
-      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="sunset">
-        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-amber-300 to-orange-300"></div>
+      <button class="theme-option p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex flex-col items-center justify-center" data-theme="sunset" title="日落主题">
+        <div class="w-6 h-6 rounded-full bg-gradient-to-r from-amber-300 to-orange-300 mb-1"></div>
+        <span class="text-xs">日落</span>
       </button>
-      <button class="theme-option p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs flex items-center justify-center w-8 h-8" data-theme="cyber">
-        <div class="w-4 h-4 rounded-full bg-gradient-to-r from-indigo-900 to-slate-800"></div>
+      <button class="theme-option p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex flex-col items-center justify-center" data-theme="cyber" title="赛博主题">
+        <div class="w-6 h-6 rounded-full bg-gradient-to-r from-indigo-900 to-slate-800 mb-1"></div>
+        <span class="text-xs">赛博</span>
       </button>
     </div>
   </div>
   
   <!-- 移动端主题选择器 -->
   <div id="mobile-theme-selector" class="md:hidden fixed bottom-4 right-4 z-40">
-    <button id="mobile-theme-toggle-btn" class="p-3 rounded-full bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800/90">
-      <i class="fa fa-palette text-candy-purple text-lg"></i>
+    <button id="mobile-theme-toggle-btn" class="p-3 rounded-full bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800/90 group">
+      <i class="fa fa-palette text-candy-purple text-lg group-hover:rotate-90 transition-transform"></i>
     </button>
   </div>
 
@@ -377,7 +399,7 @@
     <div class="container mx-auto px-4 text-center text-sm" style="color: var(--text-secondary);">
       <div class="flex items-center justify-center space-x-2 mb-2">
         <i class="fa fa-candy-cane text-candy-pink transform rotate-12"></i>
-        <p>Candy导航 &copy; 2023</p>
+        <p>Candy导航 &copy; 2025</p>
       </div>
       <p class="mb-2">一个甜美的网址导航网站</p>
       <p class="text-xs opacity-75">数据来源：网站导航.xlsx | 最后更新：<span id="footer-update">今天</span></p>
@@ -1266,26 +1288,118 @@
         }
       });
       
-      // 主题切换
-      themeToggleBtn.addEventListener('click', () => {
+      // 主题切换按钮 - 桌面端
+      themeToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 防止事件冒泡
         themeOptions.classList.toggle('hidden');
+        
+        // 如果显示了主题选项，添加点击外部关闭的功能
+        if (!themeOptions.classList.contains('hidden')) {
+          setTimeout(() => {
+            const closeThemeOptions = (event) => {
+              if (!themeOptions.contains(event.target) && !themeToggleBtn.contains(event.target)) {
+                themeOptions.classList.add('hidden');
+                document.removeEventListener('click', closeThemeOptions);
+              }
+            };
+            document.addEventListener('click', closeThemeOptions);
+          }, 10);
+        }
       });
       
-      mobileThemeToggleBtn.addEventListener('click', () => {
-        // 移动端直接切换到下一个主题
-        const themes = ['candy', 'dark', 'ocean', 'nature', 'sunset', 'cyber'];
-        const currentIndex = themes.indexOf(currentTheme);
-        const nextIndex = (currentIndex + 1) % themes.length;
-        applyTheme(themes[nextIndex]);
-        showToast(`切换至${themes[nextIndex]}主题`);
+      // 主题切换按钮 - 移动端
+      mobileThemeToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // 移动端显示主题选择弹窗
+        const themeModal = document.createElement('div');
+        themeModal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center';
+        themeModal.innerHTML = `
+          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-bold" style="color: var(--text-primary);">
+                <i class="fa fa-palette text-candy-purple mr-2"></i>选择主题
+              </h3>
+              <button class="close-theme-modal p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              ${['candy', 'dark', 'ocean', 'nature', 'sunset', 'cyber'].map(theme => {
+                let gradient = '';
+                let name = '';
+                
+                switch(theme) {
+                  case 'candy':
+                    gradient = 'from-candy-pink to-candy-purple';
+                    name = '糖果';
+                    break;
+                  case 'dark':
+                    gradient = 'from-gray-800 to-gray-900';
+                    name = '深色';
+                    break;
+                  case 'ocean':
+                    gradient = 'from-blue-300 to-cyan-300';
+                    name = '海洋';
+                    break;
+                  case 'nature':
+                    gradient = 'from-green-300 to-emerald-300';
+                    name = '自然';
+                    break;
+                  case 'sunset':
+                    gradient = 'from-amber-300 to-orange-300';
+                    name = '日落';
+                    break;
+                  case 'cyber':
+                    gradient = 'from-indigo-900 to-slate-800';
+                    name = '赛博';
+                    break;
+                }
+                
+                return `
+                  <button class="theme-option-mobile p-4 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex flex-col items-center justify-center ${
+                    currentTheme === theme ? 'ring-2 ring-candy-purple' : ''
+                  }" data-theme="${theme}">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-r ${gradient} mb-2"></div>
+                    <span class="text-xs font-medium">${name}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(themeModal);
+        
+        // 添加主题选择事件
+        themeModal.querySelectorAll('.theme-option-mobile').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const theme = btn.dataset.theme;
+            applyTheme(theme);
+            showToast(`切换至${theme === 'candy' ? '糖果' : theme === 'dark' ? '深色' : theme === 'ocean' ? '海洋' : theme === 'nature' ? '自然' : theme === 'sunset' ? '日落' : '赛博'}主题`);
+            themeModal.remove();
+          });
+        });
+        
+        // 添加关闭按钮事件
+        themeModal.querySelector('.close-theme-modal').addEventListener('click', () => {
+          themeModal.remove();
+        });
+        
+        // 点击背景关闭
+        themeModal.addEventListener('click', (event) => {
+          if (event.target === themeModal) {
+            themeModal.remove();
+          }
+        });
       });
       
-      // 主题选项点击事件
+      // 主题选项点击事件（桌面端）
       document.querySelectorAll('.theme-option').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           const theme = btn.dataset.theme;
           applyTheme(theme);
-          showToast(`切换至${theme}主题`);
+          showToast(`切换至${btn.querySelector('span').textContent}主题`);
           themeOptions.classList.add('hidden');
         });
       });
