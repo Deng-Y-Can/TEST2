@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Candy 导航</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- 引入SheetJS库用于读取Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- 引入GSAP动画库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --neon-pink: #ff00ff;
+      --neon-blue: #00ffff;
+      --neon-green: #00ff9d;
+      --neon-yellow: #ffff00;
+      --neon-purple: #9d00ff;
+      --neon-orange: #ff6b00;
+      --dark-bg: #0a0014;
+      --card-bg: rgba(20, 5, 30, 0.7);
+      --glow-pink: 0 0 20px var(--neon-pink), 0 0 40px var(--neon-pink);
+      --glow-blue: 0 0 20px var(--neon-blue), 0 0 40px var(--neon-blue);
+      --glow-green: 0 0 20px var(--neon-green), 0 0 40px var(--neon-green);
+    }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--dark-bg);
+      min-height: 100vh;
+      color: white;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(255, 0, 255, 0.05) 0%, transparent 20%),
+        radial-gradient(circle at 90% 40%, rgba(0, 255, 255, 0.05) 0%, transparent 20%),
+        radial-gradient(circle at 50% 80%, rgba(0, 255, 157, 0.05) 0%, transparent 20%),
+        linear-gradient(45deg, rgba(10, 0, 20, 0.8), rgba(20, 0, 40, 0.8));
+    }
+    
+    /* 霓虹边框效果 */
+    .neon-border {
+      position: relative;
+      border: 2px solid transparent;
+      background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+                  linear-gradient(45deg, var(--neon-pink), var(--neon-blue), var(--neon-green)) border-box;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+    }
+    
+    .neon-border:hover {
+      box-shadow: var(--glow-pink), 0 0 30px rgba(255, 0, 255, 0.4);
+    }
+    
+    /* 霓虹文字效果 */
+    .neon-text {
+      color: white;
+      text-shadow: 
+        0 0 10px var(--neon-pink),
+        0 0 20px var(--neon-pink),
+        0 0 30px var(--neon-pink);
+      animation: neon-flicker 2s infinite alternate;
+    }
+    
+    @keyframes neon-flicker {
+      0%, 100% { opacity: 1; text-shadow: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink); }
+      50% { opacity: 0.9; text-shadow: 0 0 15px var(--neon-pink), 0 0 25px var(--neon-pink); }
+    }
+    
+    /* 糖果卡片效果 */
+    .candy-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .candy-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.7s;
+    }
+    
+    .candy-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.5),
+        0 0 25px rgba(255, 0, 255, 0.3);
+    }
+    
+    .candy-card:hover::before {
+      left: 100%;
+    }
+    
+    /* 霓虹按钮 */
+    .neon-button {
+      background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 12px 24px;
+      font-weight: bold;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+    }
+    
+    .neon-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 
+        0 0 25px rgba(255, 0, 255, 0.7),
+        0 0 40px rgba(255, 0, 255, 0.3);
+    }
+    
+    .neon-button:active {
+      transform: translateY(1px);
+    }
+    
+    /* 糖果点背景 */
+    .candy-dots {
+      background-image: 
+        radial-gradient(circle at 10px 10px, var(--neon-pink) 2px, transparent 3px),
+        radial-gradient(circle at 30px 30px, var(--neon-blue) 2px, transparent 3px),
+        radial-gradient(circle at 50px 50px, var(--neon-green) 2px, transparent 3px);
+      background-size: 60px 60px;
+      opacity: 0.1;
+    }
+    
+    /* 浮动动画 */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+    
+    @keyframes float2 {
+      0%, 100% { transform: translateX(0px) translateY(0px); }
+      33% { transform: translateX(20px) translateY(-20px); }
+      66% { transform: translateX(-20px) translateY(10px); }
+    }
+    
+    .floating {
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    .floating2 {
+      animation: float2 8s ease-in-out infinite;
+    }
+    
+    /* 进度条效果 */
+    .candy-progress {
+      height: 4px;
+      background: linear-gradient(90deg, var(--neon-pink), var(--neon-blue), var(--neon-green));
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .candy-progress::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+      animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+    
+    /* 输入框样式 */
+    .neon-input {
+      background: rgba(20, 5, 30, 0.8);
+      border: 2px solid var(--neon-pink);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: white;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
+    }
+    
+    .neon-input:focus {
+      outline: none;
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+      border-color: var(--neon-blue);
+    }
+    
+    /* 徽章样式 */
+    .candy-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      background: rgba(255, 0, 255, 0.15);
+      border: 1px solid var(--neon-pink);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--neon-pink);
+      text-shadow: 0 0 5px var(--neon-pink);
+    }
+    
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(20, 5, 30, 0.8);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(45deg, var(--neon-pink), var(--neon-blue));
+      border-radius: 4px;
+      box-shadow: 0 0 10px var(--neon-pink);
+    }
+    
+    /* 加载动画 */
+    .candy-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 4px solid var(--neon-pink);
+      border-right: 4px solid var(--neon-blue);
+      border-bottom: 4px solid var(--neon-green);
+      animation: spin 1.5s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* 糖果粒子 */
+    .candy-particle {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+      filter: blur(2px);
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .candy-card:hover {
+        transform: translateY(-3px) scale(1.01);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 糖果粒子背景 -->
+  <div id="candy-particles"></div>
+  
+  <!-- 装饰元素 -->
+  <div class="fixed inset-0 z-0 pointer-events-none">
+    <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-pink-500/10 to-blue-500/10 rounded-full blur-3xl floating"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-green-500/10 to-purple-500/10 rounded-full blur-3xl floating2"></div>
+    <div class="absolute top-3/4 left-3/4 w-48 h-48 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-full blur-3xl floating" style="animation-delay: 1s;"></div>
+  </div>
+  
+  <!-- 主容器 -->
+  <div class="container mx-auto px-4 py-8 relative z-10">
+    
+    <!-- 头部区域 -->
+    <header class="mb-12 text-center">
+      <div class="inline-block mb-8">
+        <!-- 霓虹Logo -->
+        <div class="w-24 h-24 mx-auto mb-6 relative">
+          <div class="absolute inset-0 bg-gradient-to-r from-pink-500 via-blue-500 to-green-500 rounded-full animate-pulse" style="animation-duration: 2s;"></div>
+          <div class="absolute inset-2 bg-gray-900 rounded-full flex items-center justify-center">
+            <i class="fa fa-candy-cane text-4xl neon-text"></i>
+          </div>
+          <div class="absolute -inset-2 bg-gradient-to-r from-pink-500 via-blue-500 to-green-500 rounded-full blur-xl opacity-50"></div>
+        </div>
+        
+        <h1 class="text-6xl md:text-7xl font-bold mb-4 neon-text tracking-tighter">
+          CANDY NAV
+        </h1>
+        <p class="text-2xl text-gray-300 mb-6">Candy导航 · 炫酷体验</p>
+        
+        <!-- 进度条 -->
+        <div class="max-w-2xl mx-auto mt-8">
+          <div class="candy-progress"></div>
+        </div>
+      </div>
+    </header>
+    
+    <div class="flex flex-col lg:flex-row gap-8">
+      
+      <!-- 左侧导航栏 -->
+      <aside class="lg:w-1/4">
+        <!-- 控制面板 -->
+        <div class="candy-card p-6 mb-6 neon-border">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold flex items-center">
+              <i class="fa fa-list mr-3" style="color: var(--neon-pink); text-shadow: var(--glow-pink);"></i>
+              <span class="neon-text">导航分类</span>
+            </h2>
+            <div class="flex space-x-2">
+              <button id="toggle-effects" class="candy-badge px-3 py-2 hover:bg-pink-500/30 transition-colors" title="特效开关">
+                <i class="fa fa-magic"></i>
+              </button>
+              <button id="toggle-sound" class="candy-badge px-3 py-2 hover:bg-blue-500/30 transition-colors" title="音效开关">
+                <i class="fa fa-volume-up"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- 搜索框 -->
+          <div class="relative mb-6">
+            <input type="text" id="search-input" placeholder="搜索糖果站点..." 
+                   class="neon-input w-full pl-12">
+            <i class="fa fa-search absolute left-4 top-1/2 -translate-y-1/2" style="color: var(--neon-pink); text-shadow: var(--glow-pink);"></i>
+          </div>
+          
+          <!-- 分类列表 -->
+          <div class="max-h-[400px] overflow-y-auto pr-2 mb-6">
+            <h3 class="text-sm font-bold mb-3 uppercase tracking-wider" style="color: var(--neon-blue); text-shadow: var(--glow-blue);">糖果分类</h3>
+            <ul id="category-list" class="space-y-3">
+              <!-- 分类将通过JS动态生成 -->
+            </ul>
+          </div>
+          
+          <!-- 数据统计 -->
+          <div class="candy-card p-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="text-center p-4 rounded-xl" style="background: rgba(255, 0, 255, 0.1); border: 1px solid rgba(255, 0, 255, 0.3);">
+                <div class="text-3xl font-bold mb-1" id="total-sites" style="color: var(--neon-pink); text-shadow: var(--glow-pink);">0</div>
+                <div class="text-sm" style="color: var(--neon-blue);">总站点</div>
+              </div>
+              <div class="text-center p-4 rounded-xl" style="background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3);">
+                <div class="text-3xl font-bold mb-1" id="total-categories" style="color: var(--neon-blue); text-shadow: var(--glow-blue);">0</div>
+                <div class="text-sm" style="color: var(--neon-green);">分类数</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 快捷操作 -->
+        <div class="candy-card p-6 neon-border">
+          <h3 class="text-xl font-bold mb-4 flex items-center">
+            <i class="fa fa-bolt mr-3" style="color: var(--neon-green); text-shadow: var(--glow-green);"></i>
+            <span class="neon-text">快捷操作</span>
+          </h3>
+          <div class="space-y-3">
+            <button id="refresh-btn" class="w-full neon-button">
+              <i class="fa fa-sync-alt mr-3"></i>
+              刷新数据
+            </button>
+            <button id="favorites-btn" class="w-full neon-button relative" style="background: linear-gradient(45deg, var(--neon-yellow), var(--neon-orange));">
+              <i class="fa fa-star mr-3"></i>
+              我的收藏
+              <span id="favorites-count" class="absolute -top-2 -right-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center neon-text">0</span>
+            </button>
+            <button id="random-site" class="w-full neon-button" style="background: linear-gradient(45deg, var(--neon-purple), var(--neon-pink));">
+              <i class="fa fa-random mr-3"></i>
+              随机站点
+            </button>
+          </div>
+        </div>
+      </aside>
+      
+      <!-- 右侧内容区 -->
+      <section class="lg:w-3/4">
+        <!-- 顶部控制栏 -->
+        <div class="candy-card p-6 mb-6 neon-border">
+          <div class="flex flex-wrap justify-between items-center">
+            <div>
+              <h2 id="category-title" class="text-3xl font-bold flex items-center">
+                <i class="fa fa-globe mr-3" style="color: var(--neon-blue); text-shadow: var(--glow-blue);"></i>
+                <span class="neon-text">所有糖果站点</span>
+              </h2>
+              <p class="text-gray-300 mt-2">发现 <span id="display-count" class="font-bold text-white">0</span> 个美味站点</p>
+            </div>
+            
+            <div class="flex items-center space-x-4 mt-4 lg:mt-0">
+              <!-- 排序 -->
+              <div class="relative">
+                <select id="sort-select" class="neon-input appearance-none pr-10">
+                  <option value="name-asc">🍬 名称排序</option>
+                  <option value="name-desc">🔥 名称倒序</option>
+                  <option value="random">🎲 随机排序</option>
+                </select>
+                <i class="fa fa-sort absolute right-3 top-1/2 -translate-y-1/2" style="color: var(--neon-pink);"></i>
+              </div>
+              
+              <!-- 视图切换 -->
+              <div class="flex bg-gray-900/50 rounded-xl p-1">
+                <button class="view-toggle px-3 py-2 rounded-lg transition-colors bg-gradient-to-r from-pink-500 to-purple-500" data-view="grid">
+                  <i class="fa fa-th-large"></i>
+                </button>
+                <button class="view-toggle px-3 py-2 rounded-lg transition-colors hover:bg-gray-800/50" data-view="list">
+                  <i class="fa fa-list"></i>
+                </button>
+                <button class="view-toggle px-3 py-2 rounded-lg transition-colors hover:bg-gray-800/50" data-view="compact">
+                  <i class="fa fa-th"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 网站网格 -->
+        <div id="website-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- 网站卡片将通过JS动态生成 -->
+          <div class="col-span-full flex justify-center items-center py-20">
+            <div class="text-center">
+              <div class="candy-spinner mx-auto mb-6"></div>
+              <p class="text-lg mb-2 neon-text">正在加载糖果数据...</p>
+              <p class="text-gray-400">请稍候</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 分页 -->
+        <div id="pagination" class="mt-8 flex justify-center items-center space-x-4 hidden">
+          <button id="prev-page" class="neon-button px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fa fa-chevron-left mr-2"></i>上一页
+          </button>
+          <div class="candy-card px-6 py-3 neon-border">
+            第 <span id="current-page" class="font-bold" style="color: var(--neon-pink);">1</span> / 
+            <span id="total-pages" class="font-bold" style="color: var(--neon-blue);">1</span> 页
+          </div>
+          <button id="next-page" class="neon-button px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed">
+            下一页<i class="fa fa-chevron-right ml-2"></i>
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+  <!-- 收藏夹模态框 -->
+  <div id="favorites-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeFavorites()"></div>
+    <div class="relative candy-card w-full max-w-4xl max-h-[80vh] flex flex-col transform scale-95 transition-transform duration-300 neon-border">
+      <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+        <h3 class="text-2xl font-bold flex items-center">
+          <i class="fa fa-star mr-3" style="color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow);"></i>
+          <span class="neon-text">我的糖果收藏</span>
+        </h3>
+        <button onclick="closeFavorites()" class="candy-badge px-3 py-2 hover:bg-red-500/30">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div id="favorites-container" class="p-6 overflow-y-auto flex-grow">
+        <!-- 收藏内容将通过JS动态生成 -->
+        <div class="text-center py-12">
+          <i class="fa fa-star text-6xl mb-4" style="color: rgba(255, 255, 255, 0.1);"></i>
+          <p class="text-gray-300 mb-2">还没有收藏任何糖果站点</p>
+          <p class="text-sm text-gray-400">点击网站卡片上的星星图标添加收藏</p>
+        </div>
+      </div>
+      <div class="p-4 border-t border-gray-700 text-center">
+        <button id="clear-favorites" class="neon-button px-6 py-3" style="background: linear-gradient(45deg, #ff0000, #ff6b00);">
+          <i class="fa fa-trash mr-2"></i>清空收藏夹
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 底部信息 -->
+  <footer class="mt-12 pt-8 border-t border-gray-800 text-center text-gray-300">
+    <div class="container mx-auto px-4">
+      <p class="mb-4">🍬 Candy 导航 &copy; 2025 | 霓虹糖果，美味导航</p>
+      <p class="text-sm opacity-75">数据来源：网站导航.xlsx | 霓虹特效 Powered by CSS & GSAP</p>
+    </div>
+  </footer>
+
+  <script>
+    // 全局变量
+    let allWebsites = [];
+    let filteredWebsites = [];
+    let currentCategory = 'all';
+    let favorites = JSON.parse(localStorage.getItem('candyNeonFavorites')) || [];
+    let currentPage = 1;
+    let itemsPerPage = 12;
+    let currentView = 'grid';
+    let isEffectsEnabled = true;
+    
+    // 霓虹颜色配置
+    const neonColors = [
+      '#ff00ff', // pink
+      '#00ffff', // blue
+      '#00ff9d', // green
+      '#ffff00', // yellow
+      '#9d00ff', // purple
+      '#ff6b00', // orange
+      '#ff009d', // magenta
+      '#00ffcc', // cyan
+    ];
+    
+    // DOM元素
+    const categoryListEl = document.getElementById('category-list');
+    const websiteContainerEl = document.getElementById('website-container');
+    const categoryTitleEl = document.getElementById('category-title');
+    const displayCountEl = document.getElementById('display-count');
+    const searchInputEl = document.getElementById('search-input');
+    const favoritesBtn = document.getElementById('favorites-btn');
+    const favoritesCountEl = document.getElementById('favorites-count');
+    const favoritesModal = document.getElementById('favorites-modal');
+    const favoritesContainer = document.getElementById('favorites-container');
+    const clearFavoritesBtn = document.getElementById('clear-favorites');
+    const sortSelectEl = document.getElementById('sort-select');
+    const viewToggles = document.querySelectorAll('.view-toggle');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const randomSiteBtn = document.getElementById('random-site');
+    const totalSitesEl = document.getElementById('total-sites');
+    const totalCategoriesEl = document.getElementById('total-categories');
+    const toggleEffectsBtn = document.getElementById('toggle-effects');
+    const toggleSoundBtn = document.getElementById('toggle-sound');
+    const paginationEl = document.getElementById('pagination');
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
+    const currentPageEl = document.getElementById('current-page');
+    const totalPagesEl = document.getElementById('total-pages');
+    
+    // 创建糖果粒子效果
+    function createCandyParticles() {
+      const container = document.getElementById('candy-particles');
+      const particleCount = 30;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'candy-particle';
+        
+        // 随机大小
+        const size = Math.random() * 15 + 5;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        // 随机位置
+        particle.style.left = `${Math.random() * 100}vw`;
+        particle.style.top = `${Math.random() * 100}vh`;
+        
+        // 随机颜色
+        const color1 = neonColors[Math.floor(Math.random() * neonColors.length)];
+        const color2 = neonColors[Math.floor(Math.random() * neonColors.length)];
+        particle.style.background = `radial-gradient(circle at center, ${color1}, ${color2})`;
+        
+        // 随机动画
+        const duration = Math.random() * 15 + 10;
+        const delay = Math.random() * 5;
+        particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+        particle.style.opacity = Math.random() * 0.3 + 0.1;
+        
+        container.appendChild(particle);
+      }
+    }
+    
+    // 切换特效
+    function toggleEffects() {
+      isEffectsEnabled = !isEffectsEnabled;
+      const elements = document.querySelectorAll('.neon-text, .neon-border, .neon-button');
+      
+      if (isEffectsEnabled) {
+        elements.forEach(el => {
+          el.style.animationPlayState = 'running';
+          el.style.filter = 'none';
+        });
+        showToast('🎉 霓虹特效已开启', 'success');
+        toggleEffectsBtn.innerHTML = '<i class="fa fa-magic"></i>';
+      } else {
+        elements.forEach(el => {
+          el.style.animationPlayState = 'paused';
+          el.style.filter = 'grayscale(1)';
+        });
+        showToast('💡 霓虹特效已关闭', 'info');
+        toggleEffectsBtn.innerHTML = '<i class="fa fa-ban"></i>';
+      }
+    }
+    
+    // 随机访问一个网站
+    function visitRandomSite() {
+      if (allWebsites.length === 0) return;
+      
+      const randomSite = allWebsites[Math.floor(Math.random() * allWebsites.length)];
+      showToast(`🎲 随机访问: ${randomSite.name}`, 'success');
+      
+      // 添加点击效果
+      gsap.to(randomSiteBtn, {
+        scale: 1.2,
+        rotation: 360,
+        duration: 0.5,
+        ease: 'back.out(1.7)',
+        onComplete: () => {
+          setTimeout(() => {
+            window.open(randomSite.web, '_blank');
+          }, 500);
+        }
+      });
+    }
+    
+    // 初始化
+    async function init() {
+      try {
+        // 创建糖果粒子
+        createCandyParticles();
+        
+        // 加载Excel数据
+        await loadExcelData();
+        
+        // 更新收藏计数
+        updateFavoritesCount();
+        
+        // 添加事件监听
+        addEventListeners();
+        
+        // 初始动画
+        gsap.from('header', {
+          y: -50,
+          opacity: 0,
+          duration: 1,
+          ease: 'power3.out'
+        });
+        
+        gsap.from('aside', {
+          x: -50,
+          opacity: 0,
+          duration: 1,
+          delay: 0.2,
+          ease: 'power3.out'
+        });
+        
+        gsap.from('section', {
+          x: 50,
+          opacity: 0,
+          duration: 1,
+          delay: 0.4,
+          ease: 'power3.out'
+        });
+        
+      } catch (error) {
+        console.error('初始化失败:', error);
+        showError('初始化失败，请检查网络连接或文件格式');
+      }
+    }
+    
+    // 加载Excel数据
+    async function loadExcelData() {
+      try {
+        websiteContainerEl.innerHTML = `
+          <div class="col-span-full flex justify-center items-center py-20">
+            <div class="text-center">
+              <div class="candy-spinner mx-auto mb-6"></div>
+              <p class="text-lg mb-2 neon-text">正在加载糖果数据...</p>
+              <p class="text-gray-400">请稍候</p>
+            </div>
+          </div>
+        `;
+        
+        const response = await fetch('网站导航.xlsx');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP错误: ${response.status} - 请确保"网站导航.xlsx"文件存在`);
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        // 获取第一个工作表
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // 将工作表转换为JSON
+        const excelData = XLSX.utils.sheet_to_json(worksheet);
+        
+        // 处理Excel数据
+        allWebsites = excelData.map(row => {
+          const name = row['名称'] || row['网站名称'] || row['name'] || row['网站'] || '';
+          const web = row['网址'] || row['网站链接'] || row['url'] || row['web'] || row['链接'] || '';
+          const type = row['分类'] || row['类别'] || row['type'] || row['category'] || '未分类';
+          const remark = row['备注'] || row['描述'] || row['remark'] || row['description'] || row['介绍'] || '';
+          
+          return { name, web, type, remark };
+        }).filter(item => item.name && item.web);
+        
+        if (allWebsites.length === 0) {
+          throw new Error('Excel文件中没有有效数据');
+        }
+        
+        filteredWebsites = [...allWebsites];
+        
+        // 提取所有分类
+        const categories = ['all', ...new Set(allWebsites.map(item => item.type))];
+        
+        // 渲染分类列表
+        renderCategories(categories);
+        
+        // 筛选并渲染网站
+        filterAndRenderWebsites();
+        
+        // 更新统计数据
+        updateStats();
+        
+        // 显示成功提示
+        showToast('🍬 糖果数据加载成功！', 'success');
+        
+      } catch (error) {
+        console.error('加载Excel数据失败:', error);
+        
+        websiteContainerEl.innerHTML = `
+          <div class="col-span-full flex justify-center items-center py-20">
+            <div class="text-center">
+              <i class="fa fa-exclamation-triangle text-5xl mb-4" style="color: var(--neon-pink); text-shadow: var(--glow-pink);"></i>
+              <p class="text-lg mb-2">数据加载失败</p>
+              <p class="text-gray-300 mb-6">${error.message}</p>
+              <button onclick="location.reload()" class="neon-button px-6 py-3">
+                重新加载
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    // 渲染分类列表
+    function renderCategories(categories) {
+      categoryListEl.innerHTML = '';
+      
+      categories.forEach(category => {
+        const li = document.createElement('li');
+        const isActive = currentCategory === category;
+        const color = neonColors[Math.floor(Math.random() * neonColors.length)];
+        
+        li.className = `candy-card p-4 cursor-pointer transition-all duration-300 ${
+          isActive ? 'scale-105' : ''
+        }`;
+        
+        li.innerHTML = `
+          <div class="flex items-center">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center mr-3" 
+                 style="background: ${color}30; border: 2px solid ${color}60; box-shadow: 0 0 10px ${color}40;">
+              <i class="fa ${category === 'all' ? 'fa-globe' : 'fa-folder'}" style="color: ${color}"></i>
+            </div>
+            <span class="font-bold text-lg">${category === 'all' ? '所有糖果' : category}</span>
+            ${isActive ? '<div class="ml-auto w-3 h-3 rounded-full animate-pulse" style="background: ' + color + '; box-shadow: 0 0 10px ' + color + ';"></div>' : ''}
+          </div>
+        `;
+        
+        li.addEventListener('click', () => {
+          currentCategory = category;
+          currentPage = 1;
+          
+          // 更新分类标题
+          categoryTitleEl.innerHTML = `
+            <i class="fa fa-globe mr-3" style="color: ${color}; text-shadow: 0 0 10px ${color};"></i>
+            <span class="neon-text">${category === 'all' ? '所有糖果站点' : category}</span>
+          `;
+          
+          // 更新激活状态
+          document.querySelectorAll('#category-list li').forEach(item => {
+            item.classList.remove('scale-105');
+          });
+          
+          li.classList.add('scale-105');
+          
+          // 筛选并渲染网站
+          filterAndRenderWebsites();
+          
+          // 动画效果
+          gsap.to(li, {
+            scale: 1.1,
+            duration: 0.3,
+            yoyo: true,
+            repeat: 1
+          });
+        });
+        
+        categoryListEl.appendChild(li);
+      });
+    }
+    
+    // 渲染网站列表
+    function renderWebsites(websites) {
+      if (websites.length === 0) {
+        websiteContainerEl.innerHTML = `
+          <div class="col-span-full flex justify-center items-center py-20">
+            <div class="text-center">
+              <i class="fa fa-search text-5xl mb-4" style="color: rgba(255,255,255,0.3);"></i>
+              <p class="text-lg mb-2">没有找到匹配的糖果站点</p>
+              <button id="clear-filters-btn" class="neon-button px-6 py-3 mt-4">
+                清除筛选
+              </button>
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('clear-filters-btn')?.addEventListener('click', () => {
+          currentCategory = 'all';
+          searchInputEl.value = '';
+          const categories = ['all', ...new Set(allWebsites.map(item => item.type))];
+          renderCategories(categories);
+          categoryTitleEl.innerHTML = `<i class="fa fa-globe mr-3" style="color: var(--neon-blue);"></i><span class="neon-text">所有糖果站点</span>`;
+          currentPage = 1;
+          filterAndRenderWebsites();
+        });
+        
+        paginationEl.classList.add('hidden');
+        return;
+      }
+      
+      // 计算分页
+      const totalPages = Math.ceil(websites.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const pagedWebsites = websites.slice(startIndex, endIndex);
+      
+      // 更新分页信息
+      if (websites.length > itemsPerPage) {
+        paginationEl.classList.remove('hidden');
+        currentPageEl.textContent = currentPage;
+        totalPagesEl.textContent = totalPages;
+        
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage === totalPages;
+      } else {
+        paginationEl.classList.add('hidden');
+      }
+      
+      // 清空容器
+      websiteContainerEl.innerHTML = '';
+      
+      // 根据视图模式渲染网站
+      pagedWebsites.forEach((website, index) => {
+        const card = createWebsiteCard(website, index);
+        websiteContainerEl.appendChild(card);
+      });
+      
+      // 添加卡片入场动画
+      gsap.from('.website-card', {
+        y: 50,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: 'power3.out'
+      });
+    }
+    
+    // 创建网站卡片
+    function createWebsiteCard(website, index) {
+      const isFavorite = favorites.some(fav => fav.web === website.web);
+      const color = neonColors[index % neonColors.length];
+      
+      const card = document.createElement('div');
+      card.className = `website-card candy-card neon-border ${
+        currentView === 'list' ? 'md:col-span-2' : currentView === 'compact' ? '' : ''
+      }`;
+      
+      // 提取域名
+      let domain = '';
+      try {
+        let urlStr = website.web;
+        if (!urlStr.startsWith('http://') && !urlStr.startsWith('https://')) {
+          urlStr = 'https://' + urlStr;
+        }
+        const url = new URL(urlStr);
+        domain = url.hostname.replace('www.', '');
+      } catch (e) {
+        domain = website.web;
+      }
+      
+      card.innerHTML = `
+        <div class="p-6">
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center">
+              <div class="w-14 h-14 rounded-full flex items-center justify-center mr-4" 
+                   style="background: ${color}20; border: 2px solid ${color}60; box-shadow: 0 0 15px ${color}40;">
+                <i class="fa fa-link text-xl" style="color: ${color}"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold mb-2">
+                  <a href="${website.web}" target="_blank" rel="noopener noreferrer" 
+                     class="hover:opacity-80 transition-opacity" style="color: ${color}; text-shadow: 0 0 10px ${color}">
+                    ${website.name}
+                  </a>
+                </h3>
+                <p class="text-sm" style="color: ${color}aa">${domain}</p>
+              </div>
+            </div>
+            <button class="favorite-btn candy-badge hover:scale-110 transition-transform ${
+              isFavorite ? 'animate-pulse' : ''
+            }" data-web="${website.web}" style="border-color: ${color}; background: ${color}20;">
+              <i class="fa ${isFavorite ? 'fa-star' : 'fa-star-o'}" style="color: ${isFavorite ? color : '#ffffffaa'}"></i>
+            </button>
+          </div>
+          
+          <div class="mb-4">
+            <span class="inline-block px-4 py-2 rounded-full text-sm font-bold" 
+                  style="background: ${color}15; color: ${color}; border: 1px solid ${color}40;">
+              ${website.type}
+            </span>
+          </div>
+          
+          <p class="text-gray-300 mb-6 line-clamp-2">${website.remark || '这是一个美味的糖果站点，等待您的探索...'}</p>
+          
+          <div class="flex items-center justify-between">
+            <a href="${website.web}" target="_blank" rel="noopener noreferrer" 
+               class="neon-button text-sm px-4 py-2" style="background: linear-gradient(45deg, ${color}, ${neonColors[(index + 1) % neonColors.length]})">
+              🍭 立即品尝
+            </a>
+            <div class="text-xs opacity-50 flex items-center">
+              <i class="fa fa-heart mr-1" style="color: ${color}"></i>
+              <span>糖果热度</span>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // 收藏按钮事件
+      card.querySelector('.favorite-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFavorite(website, e.target.closest('.favorite-btn'));
+      });
+      
+      return card;
+    }
+    
+    // 切换收藏状态
+    function toggleFavorite(website, btn) {
+      const index = favorites.findIndex(fav => fav.web === website.web);
+      
+      if (index === -1) {
+        // 添加收藏
+        favorites.push(website);
+        btn.innerHTML = '<i class="fa fa-star"></i>';
+        btn.className = btn.className.replace('fa-star-o', 'fa-star') + ' animate-pulse';
+        
+        // 动画效果
+        gsap.to(btn, {
+          scale: 1.3,
+          rotationY: 360,
+          duration: 0.5,
+          ease: 'back.out(1.7)'
+        });
+        
+        showToast(`⭐ 已收藏: ${website.name}`, 'success');
+      } else {
+        // 移除收藏
+        favorites.splice(index, 1);
+        btn.innerHTML = '<i class="fa fa-star-o"></i>';
+        btn.className = btn.className.replace('fa-star', 'fa-star-o').replace('animate-pulse', '');
+        
+        showToast(`💔 已取消收藏: ${website.name}`, 'info');
+      }
+      
+      // 保存到本地存储
+      localStorage.setItem('candyNeonFavorites', JSON.stringify(favorites));
+      
+      // 更新收藏计数
+      updateFavoritesCount();
+      
+      // 如果当前在收藏夹页面，重新渲染
+      if (!favoritesModal.classList.contains('hidden')) {
+        renderFavorites();
+      }
+    }
+    
+    // 更新收藏计数
+    function updateFavoritesCount() {
+      const count = favorites.length;
+      favoritesCountEl.textContent = count;
+      
+      // 动画效果
+      if (count > 0) {
+        gsap.to(favoritesCountEl, {
+          scale: 1.3,
+          duration: 0.2,
+          yoyo: true,
+          repeat: 1
+        });
+      }
+    }
+    
+    // 筛选并渲染网站
+    function filterAndRenderWebsites() {
+      let result = [...allWebsites];
+      
+      // 按分类筛选
+      if (currentCategory !== 'all') {
+        result = result.filter(website => website.type === currentCategory);
+      }
+      
+      // 按搜索词筛选
+      const searchTerm = searchInputEl.value.trim().toLowerCase();
+      if (searchTerm) {
+        result = result.filter(website => 
+          website.name.toLowerCase().includes(searchTerm) || 
+          website.remark?.toLowerCase().includes(searchTerm) ||
+          website.type.toLowerCase().includes(searchTerm) ||
+          website.web.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // 按排序方式排序
+      const sortBy = sortSelectEl.value;
+      if (sortBy === 'name-asc') {
+        result.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortBy === 'name-desc') {
+        result.sort((a, b) => b.name.localeCompare(a.name));
+      } else if (sortBy === 'random') {
+        result = shuffleArray(result);
+      }
+      
+      // 更新筛选结果
+      filteredWebsites = result;
+      
+      // 更新显示数量
+      displayCountEl.textContent = result.length;
+      
+      // 渲染筛选后的网站
+      renderWebsites(result);
+    }
+    
+    // 随机打乱数组
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+    
+    // 更新统计数据
+    function updateStats() {
+      const categories = new Set(allWebsites.map(item => item.type));
+      
+      totalSitesEl.textContent = allWebsites.length;
+      totalCategoriesEl.textContent = categories.size;
+      
+      // 数字动画
+      gsap.from([totalSitesEl, totalCategoriesEl], {
+        textContent: 0,
+        duration: 1.5,
+        ease: "power2.out",
+        snap: { textContent: 1 },
+        stagger: 0.2
+      });
+    }
+    
+    // 显示提示消息
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `fixed top-6 right-6 bg-gray-900/90 backdrop-blur-sm rounded-xl px-6 py-4 flex items-center space-x-3 z-50 transform translate-x-full transition-transform duration-300 border-l-4 ${
+        type === 'success' ? 'border-green-500' : 
+        type === 'error' ? 'border-red-500' : 
+        'border-blue-500'
+      }`;
+      
+      let icon = 'fa-info-circle';
+      let iconColor = '#00ffff';
+      
+      if (type === 'success') {
+        icon = 'fa-check-circle';
+        iconColor = '#00ff9d';
+      } else if (type === 'error') {
+        icon = 'fa-exclamation-circle';
+        iconColor = '#ff0000';
+      }
+      
+      toast.innerHTML = `
+        <i class="fa ${icon} text-xl" style="color: ${iconColor}; text-shadow: 0 0 10px ${iconColor};"></i>
+        <span>${message}</span>
+      `;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+    
+    // 添加事件监听
+    function addEventListeners() {
+      // 搜索框事件
+      searchInputEl.addEventListener('input', () => {
+        currentPage = 1;
+        filterAndRenderWebsites();
+      });
+      
+      // 排序选择事件
+      sortSelectEl.addEventListener('change', () => {
+        currentPage = 1;
+        filterAndRenderWebsites();
+      });
+      
+      // 视图切换事件
+      viewToggles.forEach(toggle => {
+        toggle.addEventListener('click', () => {
+          viewToggles.forEach(t => {
+            t.className = t.className.replace('bg-gradient-to-r from-pink-500 to-purple-500', '');
+            t.className += ' hover:bg-gray-800/50';
+          });
+          toggle.className = toggle.className.replace('hover:bg-gray-800/50', '') + ' bg-gradient-to-r from-pink-500 to-purple-500';
+          
+          currentView = toggle.dataset.view;
+          
+          // 更新网站容器类
+          websiteContainerEl.className = '';
+          if (currentView === 'grid') {
+            websiteContainerEl.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'gap-6');
+          } else if (currentView === 'list') {
+            websiteContainerEl.classList.add('grid', 'grid-cols-1', 'gap-6');
+          } else if (currentView === 'compact') {
+            websiteContainerEl.classList.add('grid', 'grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4', 'gap-4');
+          }
+          
+          // 重新渲染
+          if (filteredWebsites.length > 0) {
+            renderWebsites(filteredWebsites);
+          }
+        });
+      });
+      
+      // 分页按钮事件
+      prevPageBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderWebsites(filteredWebsites);
+        }
+      });
+      
+      nextPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredWebsites.length / itemsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderWebsites(filteredWebsites);
+        }
+      });
+      
+      // 随机站点按钮
+      randomSiteBtn.addEventListener('click', visitRandomSite);
+      
+      // 特效开关
+      toggleEffectsBtn.addEventListener('click', toggleEffects);
+      
+      // 刷新按钮事件
+      refreshBtn.addEventListener('click', () => {
+        showToast('正在刷新糖果数据...', 'info');
+        loadExcelData();
+      });
+    }
+    
+    // 启动应用
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
