@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy书签导航转换工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                        accent: '#EC4899',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+
+            .glass-effect {
+                @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-md;
+            }
+
+            .pulse-animation {
+                animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% {
+                    opacity: 1;
+                }
+
+                50% {
+                    opacity: 0.5;
+                }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col">
+    <!-- 顶部导航 -->
+    <header class="glass-effect shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center mb-4 md:mb-0">
+                <i class="fa fa-compass text-primary text-3xl mr-3"></i>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">书签导航工具</h1>
+            </div>
+            <div class="flex space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fa fa-moon-o"></i>
+                </button>
+                <button id="help-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fa fa-question-circle"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- 工具介绍 -->
+        <div class="glass-effect rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2"></i>工具功能
+            </h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-6">
+                自动识别多种中文编码（UTF-8、GBK、GB2312、GB18030），解决中文乱码问题。支持将浏览器书签转换为美观的导航网页，也可将导航网页转回书签文件。
+            </p>
+        </div>
+
+        <!-- 上传区域 -->
+        <div id="upload-section" class="glass-effect rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-6 flex items-center">
+                <i class="fa fa-upload text-primary mr-2"></i>上传文件
+            </h2>
+
+            <div id="drop-area" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-10 text-center hover:border-primary transition-colors cursor-pointer mb-6">
+                <i class="fa fa-file-text-o text-5xl text-gray-400 mb-4"></i>
+                <p class="mb-2">拖放文件到这里，或者</p>
+                <button id="browse-btn" class="bg-primary hover:bg-primary/90 text-white py-2 px-6 rounded-lg transition-colors">
+                    选择文件
+                </button>
+                <input type="file" id="file-input" accept=".html" class="hidden">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">支持格式：HTML书签文件 / 本工具生成的导航页</p>
+
+                <!-- 扩展编码选择 -->
+                <div class="mt-6">
+                    <label class="text-sm text-gray-600 dark:text-gray-300 mr-2">手动选择编码（自动识别失败时使用）：</label>
+                    <select id="encoding-select" class="text-sm px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800">
+                        <option value="auto">自动检测（推荐）</option>
+                        <option value="utf-8">UTF-8（含BOM）</option>
+                        <option value="gbk">GBK（常见中文编码）</option>
+                        <option value="gb2312">GB2312（旧版中文编码）</option>
+                        <option value="gb18030">GB18030（扩展中文编码）</option>
+                    </select>
+                </div>
+
+                <!-- 编码检测状态 -->
+                <div id="encoding-status" class="hidden mt-4 text-sm text-gray-600 dark:text-gray-400">
+                    <i class="fa fa-spinner fa-spin mr-1"></i>
+                    <span>正在检测编码...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航预览区域 -->
+        <div id="nav-preview-section" class="hidden">
+            <div class="glass-effect rounded-xl shadow-md p-6 mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <h2 class="text-xl font-semibold mb-4 md:mb-0 flex items-center">
+                        <i class="fa fa-desktop text-primary mr-2"></i>导航网页预览
+                    </h2>
+                    <div class="flex flex-wrap gap-3">
+                        <button id="save-nav-btn" class="bg-secondary hover:bg-secondary/90 text-white py-2 px-4 rounded-lg transition-colors flex items-center">
+                            <i class="fa fa-download mr-2"></i>保存导航网页
+                        </button>
+                        <button id="export-bookmark-btn" class="bg-accent hover:bg-accent/90 text-white py-2 px-4 rounded-lg transition-colors flex items-center">
+                            <i class="fa fa-bookmark mr-2"></i>导出为书签文件
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <span id="nav-stats" class="font-medium"></span>
+                            <span id="encoding-info" class="ml-3 text-green-600 dark:text-green-400 text-xs"></span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label for="search-bookmarks" class="text-sm text-gray-500 dark:text-gray-400">搜索:</label>
+                            <input type="text" id="search-bookmarks" placeholder="输入关键词..."
+                                   class="text-sm px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        </div>
+                    </div>
+
+                    <div id="nav-preview-container" class="bg-white dark:bg-gray-800 rounded-lg shadow-inner p-4 min-h-[400px]">
+                        <div id="nav-header" class="mb-6 text-center">
+                            <h1 id="nav-title" class="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">我的导航页</h1>
+                            <p id="nav-description" class="text-gray-500 dark:text-gray-400">收藏我的常用网站</p>
+                        </div>
+
+                        <div id="categories-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- 分类内容将在这里生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 错误提示 -->
+        <div id="error-section" class="hidden glass-effect rounded-xl shadow-md p-6 mb-8 border border-red-100 dark:border-red-900/30">
+            <div class="flex items-start">
+                <i class="fa fa-exclamation-circle text-red-500 text-xl mt-0.5 mr-3"></i>
+                <div>
+                    <h3 class="font-semibold text-red-800 dark:text-red-400 mb-1">处理失败</h3>
+                    <p id="error-message" class="text-red-700 dark:text-red-300"></p>
+                    <div class="mt-3">
+                        <button id="retry-btn" class="text-red-600 dark:text-red-400 hover:text-red-700 font-medium mr-4">
+                            重试 <i class="fa fa-refresh ml-1"></i>
+                        </button>
+                        <button id="force-gbk-btn" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 font-medium">
+                            强制用GB18030解码 <i class="fa fa-magic ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 帮助模态框 -->
+    <div id="help-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold">使用帮助</h3>
+                    <button id="close-help" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="mb-6">
+                    <h4 class="font-semibold text-lg mb-3 text-primary">解决编码错误</h4>
+                    <p class="text-gray-600 dark:text-gray-300 mb-3">若提示编码错误或乱码，按以下步骤操作：</p>
+                    <ol class="list-decimal pl-5 text-gray-600 dark:text-gray-300 space-y-2">
+                        <li>在上传区编码选择框中，依次尝试"GB18030"→"GB2312"→"UTF-8"</li>
+                        <li>若仍失败，点击错误提示中的「强制用GB18030解码」</li>
+                        <li>终极方案：用记事本打开书签文件→「另存为」→编码选择"UTF-8"→重新上传</li>
+                    </ol>
+                </div>
+                <div class="mb-6">
+                    <h4 class="font-semibold text-lg mb-3 text-primary">使用流程</h4>
+                    <ol class="list-decimal pl-5 text-gray-600 dark:text-gray-300 space-y-2">
+                        <li>从浏览器导出书签（通常在浏览器设置→书签→导出书签）</li>
+                        <li>上传导出的HTML书签文件</li>
+                        <li>系统自动识别编码并生成导航页</li>
+                        <li>点击"保存导航网页"，生成可直接使用的导航HTML</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="glass-effect py-6 mt-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0 text-sm text-gray-600 dark:text-gray-400">
+                    <p>书签导航工具 © 2025</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 全局变量
+        let bookmarkData = null;
+        let darkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        let currentFile = null; // 保存当前文件，用于重试解码
+
+        // DOM 元素
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const uploadSection = document.getElementById('upload-section');
+        const navPreviewSection = document.getElementById('nav-preview-section');
+        const errorSection = document.getElementById('error-section');
+        const errorMessage = document.getElementById('error-message');
+        const navStats = document.getElementById('nav-stats');
+        const saveNavBtn = document.getElementById('save-nav-btn');
+        const exportBookmarkBtn = document.getElementById('export-bookmark-btn');
+        const retryBtn = document.getElementById('retry-btn');
+        const themeToggle = document.getElementById('theme-toggle');
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelp = document.getElementById('close-help');
+        const searchInput = document.getElementById('search-bookmarks');
+        const categoriesContainer = document.getElementById('categories-container');
+        const navTitle = document.getElementById('nav-title');
+        const encodingSelect = document.getElementById('encoding-select');
+        const encodingInfo = document.getElementById('encoding-info');
+        const encodingStatus = document.getElementById('encoding-status');
+        const forceGbkBtn = document.getElementById('force-gbk-btn');
+
+        // 初始化事件监听
+        function initEventListeners() {
+            browseBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            dropArea.addEventListener('dragover', handleDragOver);
+            dropArea.addEventListener('dragleave', handleDragLeave);
+            dropArea.addEventListener('drop', handleDrop);
+            saveNavBtn.addEventListener('click', saveNavigationPage);
+            exportBookmarkBtn.addEventListener('click', exportToBookmarkFile);
+            retryBtn.addEventListener('click', showUploadSection);
+            searchInput.addEventListener('input', handleSearch);
+            themeToggle.addEventListener('click', toggleTheme);
+            helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+            closeHelp.addEventListener('click', () => helpModal.classList.add('hidden'));
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) helpModal.classList.add('hidden');
+            });
+
+            // 强制解码按钮事件
+            forceGbkBtn.addEventListener('click', () => {
+                if (currentFile) {
+                    showEncodingStatus();
+                    processFileWithEncoding(currentFile, 'gb18030');
+                }
+            });
+
+            applyTheme();
+        }
+
+        // 文件处理函数
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                currentFile = file;
+                const selectedEncoding = encodingSelect.value;
+                showEncodingStatus();
+
+                if (selectedEncoding === 'auto') {
+                    // 自动检测：依次尝试多种编码
+                    const encodingsToTry = ['utf-8', 'gbk', 'gb2312', 'gb18030'];
+                    tryEncodingsInOrder(file, encodingsToTry);
+                } else {
+                    // 手动选择编码
+                    processFileWithEncoding(file, selectedEncoding);
+                }
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropArea.classList.add('border-primary', 'bg-primary/5');
+        }
+
+        function handleDragLeave() {
+            dropArea.classList.remove('border-primary', 'bg-primary/5');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            dropArea.classList.remove('border-primary', 'bg-primary/5');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                currentFile = file;
+                const selectedEncoding = encodingSelect.value;
+                showEncodingStatus();
+
+                if (selectedEncoding === 'auto') {
+                    const encodingsToTry = ['utf-8', 'gbk', 'gb2312', 'gb18030'];
+                    tryEncodingsInOrder(file, encodingsToTry);
+                } else {
+                    processFileWithEncoding(file, selectedEncoding);
+                }
+            }
+        }
+
+        // 显示编码检测状态
+        function showEncodingStatus() {
+            encodingStatus.classList.remove('hidden');
+            uploadSection.classList.remove('hidden');
+            navPreviewSection.classList.add('hidden');
+            errorSection.classList.add('hidden');
+        }
+
+        // 隐藏编码检测状态
+        function hideEncodingStatus() {
+            encodingStatus.classList.add('hidden');
+        }
+
+        // 依次尝试多个编码，直到成功
+        function tryEncodingsInOrder(file, encodings) {
+            if (encodings.length === 0) {
+                // 所有编码尝试失败
+                hideEncodingStatus();
+                showError(`所有编码均解析失败，请尝试：<br>
+                               1. 在编码选择框手动选择其他编码<br>
+                               2. 点击"强制用GB18030解码"<br>
+                               3. 用记事本打开文件→另存为UTF-8→重新上传`);
+                return;
+            }
+
+            const currentEncoding = encodings.shift();
+            // 更新状态显示
+            encodingStatus.querySelector('span').textContent = `正在尝试编码：${currentEncoding}...`;
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                try {
+                    const uint8Array = new Uint8Array(e.target.result);
+                    // 使用fatal: true确保解码错误时抛出异常
+                    const decoder = new TextDecoder(currentEncoding, { fatal: true });
+                    let content = decoder.decode(uint8Array);
+
+                    // 移除UTF-8 BOM（如果存在）
+                    if (currentEncoding === 'utf-8' && content.charCodeAt(0) === 0xFEFF) {
+                        content = content.substring(1);
+                    }
+
+                    // 检测是否仍有乱码（排除正常中文）
+                    if (!hasGarbledText(content)) {
+                        // 解码成功
+                        hideEncodingStatus();
+                        encodingInfo.textContent = `✅ 自动识别编码：${currentEncoding}`;
+                        parseAndRender(content);
+                    } else {
+                        // 仍有乱码，尝试下一个编码
+                        tryEncodingsInOrder(file, encodings);
+                    }
+                } catch (error) {
+                    // 解码失败，尝试下一个编码
+                    tryEncodingsInOrder(file, encodings);
+                }
+            };
+
+            reader.onerror = function () {
+                // 读取错误，尝试下一个编码
+                tryEncodingsInOrder(file, encodings);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 指定编码处理文件
+        function processFileWithEncoding(file, encoding) {
+            encodingStatus.querySelector('span').textContent = `使用${encoding}编码解析...`;
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                try {
+                    const uint8Array = new Uint8Array(e.target.result);
+                    const decoder = new TextDecoder(encoding, { fatal: true });
+                    let content = decoder.decode(uint8Array);
+
+                    // 移除UTF-8 BOM（如果存在）
+                    if (encoding === 'utf-8' && content.charCodeAt(0) === 0xFEFF) {
+                        content = content.substring(1);
+                    }
+
+                    if (hasGarbledText(content)) {
+                        throw new Error(`使用${encoding}编码解析仍存在乱码`);
+                    }
+
+                    hideEncodingStatus();
+                    encodingInfo.textContent = `✅ 使用编码：${encoding}`;
+                    parseAndRender(content);
+                } catch (error) {
+                    hideEncodingStatus();
+                    showError(`使用${encoding}编码解析失败：${error.message}<br>
+                                   请尝试其他编码或用记事本将文件另存为UTF-8`);
+                    console.error('编码解析错误:', error);
+                }
+            };
+
+            reader.onerror = function () {
+                hideEncodingStatus();
+                showError(`读取文件时出错: ${reader.error.message}`);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 解析内容并渲染
+        function parseAndRender(content) {
+            try {
+                if (content.includes('<!-- Generated by Bookmark Navigator Tool -->')) {
+                    parseNavigationPage(content);
+                } else {
+                    parseBookmarkHTML(content);
+                }
+
+                renderNavigationPreview();
+                showNavPreviewSection();
+            } catch (error) {
+                showError(`解析文件内容失败: ${error.message}`);
+                console.error('内容解析错误:', error);
+            }
+        }
+
+        // 检测GBK编码特征
+        function detectGbkEncoding(uint8Array) {
+            const gbkRanges = [
+                [0x81, 0xFE], // 高字节范围
+                [0x40, 0x7E], // 低字节范围1
+                [0x80, 0xFE]  // 低字节范围2
+            ];
+
+            let gbkBytePairs = 0;
+            let otherHighBytes = 0;
+            let i = 0;
+
+            while (i < uint8Array.length) {
+                const byte = uint8Array[i];
+
+                // ASCII字符，继续下一个
+                if (byte <= 0x7F) {
+                    i++;
+                    continue;
+                }
+
+                // 检查是否符合GBK双字节模式
+                if (byte >= gbkRanges[0][0] && byte <= gbkRanges[0][1] && i + 1 < uint8Array.length) {
+                    const nextByte = uint8Array[i + 1];
+                    if ((nextByte >= gbkRanges[1][0] && nextByte <= gbkRanges[1][1]) ||
+                        (nextByte >= gbkRanges[2][0] && nextByte <= gbkRanges[2][1])) {
+                        gbkBytePairs++;
+                        i += 2; // 跳过下一个字节
+                        continue;
+                    }
+                }
+
+                // 不符合GBK编码规则的高字节
+                otherHighBytes++;
+                i++;
+            }
+
+            return gbkBytePairs > otherHighBytes;
+        }
+
+        // 检测常见的乱码模式
+        function hasGarbledText(content) {
+            // 常见的GBK被当作UTF-8解码的乱码特征
+            const garbledPatterns = [
+                /涔︾/, /鏍￠噸/, /鐧惧害/, /缃戠珯/, /鍒嗙被/,
+                /娴忚鍣�/, /娣诲姞/
+            ];
+
+            // 检测是否包含乱码模式
+            for (const pattern of garbledPatterns) {
+                if (pattern.test(content)) {
+                    return true;
+                }
+            }
+
+            // 检测不可打印字符的比例
+            let unprintableCount = 0;
+            for (let i = 0; i < content.length; i++) {
+                const code = content.charCodeAt(i);
+                if (code < 32 && code !== 9 && code !== 10 && code !== 13) {
+                    unprintableCount++;
+                }
+            }
+
+            return unprintableCount / content.length > 0.05;
+        }
+
+        // 解析函数
+        function parseBookmarkHTML(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const bookmarkNodes = doc.querySelectorAll('a, h3');
+
+            if (bookmarkNodes.length === 0) {
+                throw new Error('未找到书签数据，请确保上传有效的书签文件');
+            }
+
+            bookmarkData = {
+                title: doc.title || '我的导航页',
+                categories: [],
+                totalItems: 0
+            };
+
+            let currentCategory = null;
+            let currentFolderStack = [];
+
+            bookmarkNodes.forEach(node => {
+                if (node.tagName === 'H3') {
+                    const folderName = node.textContent.trim();
+                    const indent = parseInt(node.getAttribute('INDENT') || 0);
+
+                    if (indent === 0) {
+                        currentCategory = { name: folderName, items: [] };
+                        bookmarkData.categories.push(currentCategory);
+                        currentFolderStack = [currentCategory];
+                    } else {
+                        while (currentFolderStack.length > indent) {
+                            currentFolderStack.pop();
+                        }
+
+                        const parentFolder = currentFolderStack[currentFolderStack.length - 1];
+                        const subFolder = { name: folderName, items: [], isFolder: true };
+                        parentFolder.items.push(subFolder);
+                        currentFolderStack.push(subFolder);
+                    }
+                } else if (node.tagName === 'A' && currentFolderStack.length > 0) {
+                    currentFolderStack[currentFolderStack.length - 1].items.push({
+                        name: node.textContent.trim(),
+                        url: node.href,
+                        addDate: node.getAttribute('ADD_DATE'),
+                        isFolder: false
+                    });
+                    bookmarkData.totalItems++;
+                }
+            });
+
+            // 处理无分类情况
+            if (bookmarkData.categories.length === 0 && bookmarkData.totalItems > 0) {
+                bookmarkData.categories.push({ name: '默认分类', items: [] });
+                bookmarkNodes.forEach(node => {
+                    if (node.tagName === 'A') {
+                        bookmarkData.categories[0].items.push({
+                            name: node.textContent.trim(),
+                            url: node.href,
+                            isFolder: false
+                        });
+                    }
+                });
+            }
+        }
+
+        function parseNavigationPage(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const titleElement = doc.querySelector('#nav-title');
+            const title = titleElement ? titleElement.textContent : '我的导航页';
+
+            bookmarkData = { title, categories: [], totalItems: 0 };
+
+            const categoryElements = doc.querySelectorAll('.category-card');
+            categoryElements.forEach(categoryEl => {
+                const categoryName = categoryEl.querySelector('.category-title')?.textContent || '未命名分类';
+                const category = { name: categoryName, items: [] };
+
+                const linkElements = categoryEl.querySelectorAll('.bookmark-link');
+                linkElements.forEach(linkEl => {
+                    category.items.push({
+                        name: linkEl.textContent.trim(),
+                        url: linkEl.href,
+                        isFolder: false
+                    });
+                    bookmarkData.totalItems++;
+                });
+
+                bookmarkData.categories.push(category);
+            });
+
+            if (bookmarkData.totalItems === 0) {
+                throw new Error('未找到书签数据，请确保上传的是本工具生成的导航网页');
+            }
+        }
+
+        // 渲染预览
+        function renderNavigationPreview() {
+            if (!bookmarkData) return;
+
+            // 更新标题和统计信息
+            navTitle.textContent = bookmarkData.title;
+            navStats.textContent = `共 ${bookmarkData.categories.length} 个分类，${bookmarkData.totalItems} 个网站`;
+
+            // 清空容器
+            categoriesContainer.innerHTML = '';
+
+            // 如果没有分类
+            if (bookmarkData.categories.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'col-span-full text-center py-10 text-gray-500';
+
+                const icon = document.createElement('i');
+                icon.className = 'fa fa-folder-open-o text-4xl mb-3';
+                emptyDiv.appendChild(icon);
+
+                const text = document.createElement('p');
+                text.textContent = '没有找到分类数据';
+                emptyDiv.appendChild(text);
+
+                categoriesContainer.appendChild(emptyDiv);
+                return;
+            }
+
+            // 渲染所有分类
+            bookmarkData.categories.forEach(category => {
+                const categoryCard = createCategoryCard(category);
+                categoriesContainer.appendChild(categoryCard);
+            });
+        }
+
+        // 创建分类卡片
+        function createCategoryCard(category) {
+            const card = document.createElement('div');
+            card.className = 'category-card bg-gray-50 dark:bg-gray-700/50 rounded-lg shadow-sm overflow-hidden card-hover';
+
+            // 创建分类标题部分
+            const header = document.createElement('div');
+            header.className = 'category-header bg-primary/10 px-4 py-3 border-b border-gray-200 dark:border-gray-600';
+
+            const title = document.createElement('h3');
+            title.className = 'category-title font-semibold flex items-center';
+
+            const icon = document.createElement('i');
+            icon.className = 'fa fa-folder text-primary mr-2';
+
+            const titleText = document.createTextNode(category.name);
+
+            title.appendChild(icon);
+            title.appendChild(titleText);
+            header.appendChild(title);
+            card.appendChild(header);
+
+            // 创建分类内容部分
+            const content = document.createElement('div');
+            content.className = 'category-content p-3';
+
+            // 添加分类项目
+            if (category.items && category.items.length > 0) {
+                category.items.forEach(item => {
+                    const itemElement = createCategoryItem(item);
+                    if (itemElement) content.appendChild(itemElement);
+                });
+            } else {
+                // 空分类提示
+                const emptyText = document.createElement('div');
+                emptyText.className = 'text-center py-4 text-gray-500 dark:text-gray-400 text-sm';
+                emptyText.textContent = '该分类中没有内容';
+                content.appendChild(emptyText);
+            }
+
+            card.appendChild(content);
+            return card;
+        }
+
+        // 创建分类项目
+        function createCategoryItem(item) {
+            // 如果是文件夹且有子项目
+            if (item.isFolder && item.items && item.items.length > 0) {
+                const folderDiv = document.createElement('div');
+                folderDiv.className = 'mb-3';
+
+                // 文件夹标题
+                const folderTitle = document.createElement('div');
+                folderTitle.className = 'font-medium text-sm text-gray-700 dark:text-gray-300 mb-2 pl-1';
+
+                const folderIcon = document.createElement('i');
+                folderIcon.className = 'fa fa-folder-o text-yellow-500 mr-1';
+
+                const folderText = document.createTextNode(item.name);
+
+                folderTitle.appendChild(folderIcon);
+                folderTitle.appendChild(folderText);
+                folderDiv.appendChild(folderTitle);
+
+                // 子项目容器
+                const subItemsContainer = document.createElement('div');
+                subItemsContainer.className = 'pl-4 border-l-2 border-gray-200 dark:border-gray-600';
+
+                // 添加子项目
+                item.items.forEach(subItem => {
+                    const subItemElement = createCategoryItem(subItem);
+                    if (subItemElement) subItemsContainer.appendChild(subItemElement);
+                });
+
+                folderDiv.appendChild(subItemsContainer);
+                return folderDiv;
+            }
+            // 如果是书签链接
+            else if (!item.isFolder) {
+                const link = document.createElement('a');
+                link.className = 'bookmark-link flex items-center py-2 px-3 rounded hover:bg-white dark:hover:bg-gray-600/50 text-sm transition-colors';
+                link.target = '_blank';
+                link.href = item.url;
+
+                // 网站图标
+                const favicon = document.createElement('img');
+                favicon.className = 'w-5 h-5 mr-2 rounded opacity-80';
+                favicon.alt = '网站图标';
+
+                // 设置图标URL
+                let faviconUrl = 'https://picsum.photos/20/20?random=' + Math.random();
+                try {
+                    const url = new URL(item.url);
+                    faviconUrl = `${url.protocol}//${url.hostname}/favicon.ico`;
+                } catch (e) { /* 保留默认图标 */ }
+
+                favicon.src = faviconUrl;
+                favicon.onerror = function () {
+                    this.src = 'https://picsum.photos/20/20?random=' + Math.random();
+                };
+
+                // 链接文本
+                const linkText = document.createTextNode(item.name);
+
+                link.appendChild(favicon);
+                link.appendChild(linkText);
+                return link;
+            }
+
+            return null;
+        }
+
+        // 保存导航网页
+        function saveNavigationPage() {
+            if (!bookmarkData) return;
+
+            // 创建一个完整的HTML文档
+            const doc = document.implementation.createHTMLDocument(bookmarkData.title);
+
+            // 添加meta标签，明确指定UTF-8编码
+            const meta = doc.createElement('meta');
+            meta.charset = 'UTF-8';
+            doc.head.appendChild(meta);
+
+            const metaHttp = doc.createElement('meta');
+            metaHttp.httpEquiv = 'Content-Type';
+            metaHttp.content = 'text/html; charset=UTF-8';
+            doc.head.appendChild(metaHttp);
+
+            const viewport = doc.createElement('meta');
+            viewport.name = 'viewport';
+            viewport.content = 'width=device-width, initial-scale=1.0';
+            doc.head.appendChild(viewport);
+
+            // 添加标题
+            doc.title = bookmarkData.title;
+
+            // 添加外部资源
+            const tailwind = doc.createElement('script');
+            tailwind.src = 'https://cdn.tailwindcss.com';
+            doc.head.appendChild(tailwind);
+
+            const fontAwesome = doc.createElement('link');
+            fontAwesome.rel = 'stylesheet';
+            fontAwesome.href = 'https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css';
+            doc.head.appendChild(fontAwesome);
+
+            // 添加Tailwind配置
+            const tailwindConfig = doc.createElement('script');
+            tailwindConfig.textContent = `
+                    tailwind.config = {
+                        theme: {
+                            extend: {
+                                colors: {
+                                    primary: '#4F46E5',
+                                    secondary: '#10B981',
+                                    accent: '#EC4899',
+                                }
+                            }
+                        }
+                    }
+                `;
+            doc.head.appendChild(tailwindConfig);
+
+            // 添加自定义样式
+            const style = doc.createElement('style');
+            style.type = 'text/tailwindcss';
+            style.textContent = `
+                    @layer utilities {
+                        .card-hover {
+                            @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+                        }
+                    }
+                `;
+            doc.head.appendChild(style);
+
+            // 设置body样式
+            doc.body.className = 'bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100 min-h-screen';
+
+            // 添加标识注释
+            const comment = doc.createComment(' Generated by Bookmark Navigator Tool ');
+            doc.body.appendChild(comment);
+
+            // 创建头部
+            const header = doc.createElement('header');
+            header.className = 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm sticky top-0 z-50';
+
+            const headerContainer = doc.createElement('div');
+            headerContainer.className = 'container mx-auto px-4 py-4 flex justify-between items-center';
+
+            const headerTitle = doc.createElement('div');
+            headerTitle.className = 'flex items-center';
+
+            const headerIcon = doc.createElement('i');
+            headerIcon.className = 'fa fa-compass text-primary text-2xl mr-2';
+
+            const titleHeading = doc.createElement('h1');
+            titleHeading.className = 'text-xl font-bold';
+            titleHeading.textContent = bookmarkData.title;
+
+            headerTitle.appendChild(headerIcon);
+            headerTitle.appendChild(titleHeading);
+
+            // 搜索和主题切换
+            const headerActions = doc.createElement('div');
+            headerActions.className = 'flex items-center space-x-3';
+
+            const searchContainer = doc.createElement('div');
+            searchContainer.className = 'relative';
+
+            const searchInput = doc.createElement('input');
+            searchInput.type = 'text';
+            searchInput.id = 'search';
+            searchInput.placeholder = '搜索网站...';
+            searchInput.className = 'text-sm px-3 py-2 pr-8 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/50 w-40 md:w-64';
+
+            const searchIcon = doc.createElement('i');
+            searchIcon.className = 'fa fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400';
+
+            searchContainer.appendChild(searchInput);
+            searchContainer.appendChild(searchIcon);
+
+            const themeBtn = doc.createElement('button');
+            themeBtn.id = 'theme-toggle';
+            themeBtn.className = 'p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors';
+
+            const themeIcon = doc.createElement('i');
+            themeIcon.className = 'fa fa-moon-o';
+            themeBtn.appendChild(themeIcon);
+
+            headerActions.appendChild(searchContainer);
+            headerActions.appendChild(themeBtn);
+            headerContainer.appendChild(headerTitle);
+            headerContainer.appendChild(headerActions);
+            header.appendChild(headerContainer);
+            doc.body.appendChild(header);
+
+            // 创建主内容区
+            const main = doc.createElement('main');
+            main.className = 'container mx-auto px-4 py-8';
+
+            const categoriesContainer = doc.createElement('div');
+            categoriesContainer.id = 'categories-container';
+            categoriesContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+
+            // 添加所有分类卡片
+            bookmarkData.categories.forEach(category => {
+                const categoryCard = createCategoryCard(category);
+                categoriesContainer.appendChild(categoryCard);
+            });
+
+            main.appendChild(categoriesContainer);
+            doc.body.appendChild(main);
+
+            // 创建页脚
+            const footer = doc.createElement('footer');
+            footer.className = 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md py-4 mt-8';
+
+            const footerContainer = doc.createElement('div');
+            footerContainer.className = 'container mx-auto px-4 text-center text-sm text-gray-600 dark:text-gray-400';
+
+            const footerText = doc.createElement('p');
+            footerText.textContent = '导航页由书签导航工具生成';
+
+            footerContainer.appendChild(footerText);
+            footer.appendChild(footerContainer);
+            doc.body.appendChild(footer);
+
+            // 添加交互脚本
+            const script = doc.createElement('script');
+            script.textContent = `
+                    // 搜索功能
+                    document.getElementById('search').addEventListener('input', function(e) {
+                        const searchTerm = e.target.value.toLowerCase();
+                        const allLinks = document.querySelectorAll('.bookmark-link');
+
+                        allLinks.forEach(link => {
+                            const text = link.textContent.toLowerCase();
+                            link.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+                        });
+
+                        document.querySelectorAll('.category-card').forEach(card => {
+                            const visibleLinks = card.querySelectorAll('.bookmark-link[style="display: flex;"]');
+                            const hasVisibleItems = visibleLinks.length > 0;
+                            card.style.display = hasVisibleItems ? 'block' : 'none';
+                        });
+                    });
+
+                    // 主题切换
+                    const themeToggle = document.getElementById('theme-toggle');
+                    let darkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                    function applyTheme() {
+                        document.body.classList.toggle('dark', darkMode);
+                        themeToggle.querySelector('i').className = darkMode ? 'fa fa-sun-o' : 'fa fa-moon-o';
+                    }
+
+                    applyTheme();
+                    themeToggle.addEventListener('click', () => {
+                        darkMode = !darkMode;
+                        applyTheme();
+                    });
+                `;
+            doc.body.appendChild(script);
+
+            // 序列化文档并下载
+            const serializer = new XMLSerializer();
+            let htmlContent = serializer.serializeToString(doc);
+
+            // 添加DOCTYPE声明
+            htmlContent = '<!DOCTYPE html>\n' + htmlContent;
+
+            // 下载文件 - 确保包含UTF-8 BOM
+            downloadFile(htmlContent, `${escapeFileName(bookmarkData.title)}_导航页.html`);
+        }
+
+        // 导出为书签文件
+        function exportToBookmarkFile() {
+            if (!bookmarkData) return;
+
+            // 创建书签文档
+            const doc = document.implementation.createHTMLDocument(bookmarkData.title);
+
+            // 添加元数据，明确指定UTF-8编码
+            const meta = doc.createElement('meta');
+            meta.httpEquiv = 'Content-Type';
+            meta.content = 'text/html; charset=UTF-8';
+            doc.head.appendChild(meta);
+
+            // 添加标题
+            const title = doc.createElement('title');
+            title.textContent = bookmarkData.title;
+            doc.head.appendChild(title);
+
+            // 创建书签主体
+            const body = doc.body;
+
+            const heading = doc.createElement('h1');
+            heading.textContent = bookmarkData.title;
+            body.appendChild(heading);
+
+            // 添加所有分类
+            bookmarkData.categories.forEach(category => {
+                addCategoryToBookmarkDoc(category, body, 0, doc);
+            });
+
+            // 序列化文档
+            const serializer = new XMLSerializer();
+            let htmlContent = serializer.serializeToString(doc);
+
+            // 添加DOCTYPE声明
+            htmlContent = '<!DOCTYPE NETSCAPE-Bookmark-file-1>\n' + htmlContent;
+
+            // 下载文件
+            downloadFile(htmlContent, 'bookmarks.html');
+        }
+
+        // 递归添加分类到书签文档
+        function addCategoryToBookmarkDoc(category, parentElement, indentLevel, doc) {
+            const currentTime = Math.floor(Date.now() / 1000);
+
+            // 创建文件夹标题
+            const folderTitle = doc.createElement('h3');
+            folderTitle.textContent = category.name;
+            folderTitle.setAttribute('INDENT', indentLevel);
+            folderTitle.setAttribute('ADD_DATE', currentTime);
+
+            const dt = doc.createElement('dt');
+            dt.appendChild(folderTitle);
+            parentElement.appendChild(dt);
+
+            // 创建列表容器
+            const dl = doc.createElement('dl');
+            const p = doc.createElement('p');
+            dl.appendChild(p);
+            parentElement.appendChild(dl);
+
+            // 添加子项目
+            if (category.items && category.items.length > 0) {
+                category.items.forEach(item => {
+                    if (item.isFolder && item.items) {
+                        // 递归添加子文件夹
+                        addCategoryToBookmarkDoc(item, p, indentLevel + 1, doc);
+                    } else if (!item.isFolder) {
+                        // 添加书签链接
+                        const link = doc.createElement('a');
+                        link.textContent = item.name;
+                        link.href = item.url;
+                        link.setAttribute('ADD_DATE', item.addDate || currentTime);
+
+                        const linkDt = doc.createElement('dt');
+                        linkDt.appendChild(link);
+                        p.appendChild(linkDt);
+                    }
+                });
+            }
+        }
+
+        // 下载文件辅助函数
+        function downloadFile(content, fileName) {
+            // 添加UTF-8 BOM头，确保中文正确显示
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const textEncoder = new TextEncoder('utf-8');
+            const contentBytes = textEncoder.encode(content);
+            const combined = new Uint8Array(bom.length + contentBytes.length);
+
+            combined.set(bom, 0);
+            combined.set(contentBytes, bom.length);
+
+            const blob = new Blob([combined], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 其他辅助函数
+        function handleSearch(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const allLinks = document.querySelectorAll('.bookmark-link');
+
+            allLinks.forEach(link => {
+                const text = link.textContent.toLowerCase();
+                link.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+            });
+
+            document.querySelectorAll('.category-card').forEach(card => {
+                const visibleLinks = card.querySelectorAll('.bookmark-link[style="display: flex;"]');
+                card.style.display = visibleLinks.length > 0 ? 'block' : 'none';
+            });
+        }
+
+        function showError(message) {
+            errorMessage.innerHTML = message;
+            uploadSection.classList.add('hidden');
+            navPreviewSection.classList.add('hidden');
+            errorSection.classList.remove('hidden');
+        }
+
+        function showUploadSection() {
+            uploadSection.classList.remove('hidden');
+            navPreviewSection.classList.add('hidden');
+            errorSection.classList.add('hidden');
+            fileInput.value = '';
+        }
+
+        function showNavPreviewSection() {
+            uploadSection.classList.add('hidden');
+            navPreviewSection.classList.remove('hidden');
+            errorSection.classList.add('hidden');
+        }
+
+        function toggleTheme() {
+            darkMode = !darkMode;
+            applyTheme();
+        }
+
+        function applyTheme() {
+            document.body.classList.toggle('dark', darkMode);
+            themeToggle.querySelector('i').className = darkMode ? 'fa fa-sun-o' : 'fa fa-moon-o';
+        }
+
+        function escapeFileName(name) {
+            if (!name) return '导航页';
+            return name.replace(/[\/:*?"<>|]/g, '_').replace(/\s+/g, '_');
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', initEventListeners);
+    </script>
+</body>
+</html>

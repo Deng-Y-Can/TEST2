@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Candy导航</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            candy: {
+              pink: '#FF6B8B',
+              purple: '#A777E3',
+              blue: '#6BBBF7',
+              green: '#6BDE98',
+              yellow: '#FFD166',
+              orange: '#FF9F45',
+              red: '#EF476F',
+              dark: '#4A4A68'
+            }
+          },
+          fontFamily: {
+            candy: ['"Nunito"', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .card-hover {
+        @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+      }
+      .category-active {
+        @apply bg-candy-purple/10 text-candy-purple font-medium border-l-4 border-candy-purple;
+      }
+    }
+  </style>
+  
+  <!-- 导入字体 -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="font-candy bg-gradient-to-br from-pink-50 to-purple-50 min-h-screen text-gray-800 transition-colors duration-300">
+  <!-- 页面标题 -->
+  <header class="bg-white/90 backdrop-blur-sm shadow-md sticky top-0 z-50 transition-all duration-300">
+    <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-candy-cane text-candy-pink text-2xl transform rotate-12 animate-pulse"></i>
+        <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold bg-gradient-to-r from-candy-pink to-candy-purple bg-clip-text text-transparent">Candy导航</h1>
+      </div>
+      <div class="hidden md:flex items-center space-x-4">
+        <div class="relative">
+          <input type="text" id="search-input" placeholder="搜索网站..." 
+                 class="pl-10 pr-4 py-2 rounded-full border border-purple-200 focus:outline-none focus:ring-2 focus:ring-candy-purple/50 focus:border-transparent transition-all w-64">
+          <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        </div>
+        <button id="favorites-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors relative">
+          <i class="fa fa-star-o text-candy-yellow"></i>
+          <span id="favorites-count" class="absolute -top-1 -right-1 bg-candy-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
+        </button>
+        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <i class="fa fa-moon-o text-candy-dark"></i>
+        </button>
+      </div>
+      <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+        <i class="fa fa-bars text-candy-dark text-xl"></i>
+      </button>
+    </div>
+    <!-- 移动端搜索框 -->
+    <div class="md:hidden px-4 pb-4 hidden" id="mobile-search">
+      <div class="relative">
+        <input type="text" id="mobile-search-input" placeholder="搜索网站..." 
+               class="w-full pl-10 pr-4 py-2 rounded-full border border-purple-200 focus:outline-none focus:ring-2 focus:ring-candy-purple/50 focus:border-transparent">
+        <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+      </div>
+      <div class="flex justify-end mt-2">
+        <button id="mobile-favorites-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors relative">
+          <i class="fa fa-star-o text-candy-yellow"></i>
+          <span id="mobile-favorites-count" class="absolute -top-1 -right-1 bg-candy-red text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-6">
+    <div class="flex flex-col md:flex-row gap-6">
+      <!-- 左侧分类导航 -->
+      <aside class="md:w-1/4 lg:w-1/5">
+        <div class="bg-white rounded-2xl shadow-md p-4 sticky top-24 transition-all duration-300">
+          <h2 class="text-lg font-semibold mb-4 text-candy-dark flex items-center">
+            <i class="fa fa-th-list mr-2 text-candy-pink"></i>网站分类
+          </h2>
+          <div class="overflow-y-auto max-h-[calc(100vh-200px)] scrollbar-hide">
+            <ul id="category-list" class="space-y-1">
+              <!-- 分类将通过JS动态生成 -->
+            </ul>
+          </div>
+          
+          <div class="mt-6 pt-4 border-t border-gray-100">
+            <h3 class="text-sm font-medium text-gray-500 mb-3">数据统计</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-600">总网站数</span>
+                <span id="stats-total" class="font-medium text-candy-purple">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">分类数</span>
+                <span id="stats-categories" class="font-medium text-candy-pink">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+      
+      <!-- 右侧网站列表 -->
+      <section class="md:w-3/4 lg:w-4/5">
+        <div class="bg-white rounded-2xl shadow-md p-6 transition-all duration-300">
+          <div class="flex justify-between items-center mb-6">
+            <h2 id="category-title" class="text-xl font-bold text-candy-dark">
+              <i class="fa fa-globe mr-2 text-candy-purple"></i>所有网站
+            </h2>
+            <div class="flex items-center space-x-4">
+              <div class="text-sm text-gray-500">
+                共 <span id="total-count" class="font-medium text-candy-purple">0</span> 个网站
+              </div>
+              <div class="relative">
+                <select id="sort-select" class="appearance-none bg-gray-100 border-0 rounded-lg px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-candy-purple">
+                  <option value="name-asc">按名称排序</option>
+                  <option value="name-desc">按名称倒序</option>
+                </select>
+                <i class="fa fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none"></i>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 网站列表 -->
+          <div id="website-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- 网站卡片将通过JS动态生成 -->
+            <div class="col-span-full flex justify-center items-center py-16">
+              <div class="text-center">
+                <i class="fa fa-spinner fa-spin text-4xl text-candy-purple/50 mb-4"></i>
+                <p class="text-gray-500">加载中...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 收藏夹模态框 -->
+  <div id="favorites-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col transform scale-95 transition-transform duration-300">
+      <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="text-xl font-bold text-candy-dark flex items-center">
+          <i class="fa fa-star text-candy-yellow mr-2"></i>我的收藏
+        </h3>
+        <button id="close-favorites" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <i class="fa fa-times text-gray-500"></i>
+        </button>
+      </div>
+      <div id="favorites-container" class="p-6 overflow-y-auto flex-grow">
+        <!-- 收藏内容将通过JS动态生成 -->
+        <div class="text-center py-12">
+          <i class="fa fa-star-o text-4xl text-gray-300 mb-4"></i>
+          <p class="text-gray-500">您还没有收藏任何网站</p>
+        </div>
+      </div>
+      <div class="p-4 border-t border-gray-100 text-center text-sm text-gray-500">
+        点击网站卡片上的星星图标添加收藏
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-12 bg-white shadow-inner py-6 transition-all duration-300">
+    <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+      <div class="flex items-center justify-center space-x-2 mb-2">
+        <i class="fa fa-candy-cane text-candy-pink transform rotate-12"></i>
+        <p>Candy导航 &copy; 2023</p>
+      </div>
+      <p>一个甜美的网址导航网站</p>
+    </div>
+  </footer>
+
+  <script>
+    // 全局变量
+    let allWebsites = [];
+    let filteredWebsites = [];
+    let currentCategory = 'all';
+    let favorites = JSON.parse(localStorage.getItem('candyFavorites')) || [];
+    
+    // DOM元素
+    const categoryListEl = document.getElementById('category-list');
+    const websiteContainerEl = document.getElementById('website-container');
+    const categoryTitleEl = document.getElementById('category-title');
+    const totalCountEl = document.getElementById('total-count');
+    const searchInputEl = document.getElementById('search-input');
+    const mobileSearchInputEl = document.getElementById('mobile-search-input');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileSearchEl = document.getElementById('mobile-search');
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const favoritesBtn = document.getElementById('favorites-btn');
+    const mobileFavoritesBtn = document.getElementById('mobile-favorites-btn');
+    const favoritesCountEl = document.getElementById('favorites-count');
+    const mobileFavoritesCountEl = document.getElementById('mobile-favorites-count');
+    const favoritesModal = document.getElementById('favorites-modal');
+    const favoritesContainer = document.getElementById('favorites-container');
+    const closeFavoritesBtn = document.getElementById('close-favorites');
+    const sortSelectEl = document.getElementById('sort-select');
+    const statsTotalEl = document.getElementById('stats-total');
+    const statsCategoriesEl = document.getElementById('stats-categories');
+    
+    // 初始化
+    async function init() {
+      try {
+        // 读取JSON文件，添加超时处理
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+        
+        const response = await fetch('data.json', { signal: controller.signal });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP错误: ${response.status}`);
+        }
+        
+        clearTimeout(timeoutId);
+        allWebsites = await response.json();
+        
+        // 验证数据格式
+        if (!Array.isArray(allWebsites) || allWebsites.some(item => !item.name || !item.web || !item.type)) {
+          throw new Error('数据格式不正确，需要包含name, web和type字段');
+        }
+        
+        filteredWebsites = [...allWebsites];
+        
+        // 提取所有分类
+        const categories = ['all', ...new Set(allWebsites.map(item => item.type))];
+        
+        // 更新统计数据
+        statsTotalEl.textContent = allWebsites.length;
+        statsCategoriesEl.textContent = categories.length - 1; // 减去all
+        
+        // 渲染分类列表
+        renderCategories(categories);
+        
+        // 渲染网站列表
+        renderWebsites(allWebsites);
+        
+        // 更新总数
+        totalCountEl.textContent = allWebsites.length;
+        
+        // 更新收藏计数
+        updateFavoritesCount();
+        
+      } catch (error) {
+        console.error('加载数据失败:', error);
+        
+        // 根据错误类型显示不同的提示
+        let errorMessage = '加载失败，请检查data.json文件是否存在且格式正确';
+        if (error.name === 'AbortError') {
+          errorMessage = '加载超时，请稍后重试';
+        } else if (error.message.includes('数据格式不正确')) {
+          errorMessage = error.message;
+        }
+        
+        websiteContainerEl.innerHTML = `
+          <div class="col-span-full flex justify-center items-center py-16">
+            <div class="text-center">
+              <i class="fa fa-exclamation-triangle text-4xl text-candy-orange mb-4"></i>
+              <p class="text-gray-500">${errorMessage}</p>
+              <button id="retry-load" class="mt-4 px-4 py-2 bg-candy-purple text-white rounded-lg hover:bg-candy-purple/90 transition-colors">
+                重试
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // 添加重试按钮事件
+        document.getElementById('retry-load').addEventListener('click', () => {
+          websiteContainerEl.innerHTML = `
+            <div class="col-span-full flex justify-center items-center py-16">
+              <div class="text-center">
+                <i class="fa fa-spinner fa-spin text-4xl text-candy-purple/50 mb-4"></i>
+                <p class="text-gray-500">重新加载中...</p>
+              </div>
+            </div>
+          `;
+          init();
+        });
+      }
+      
+      // 添加事件监听
+      addEventListeners();
+    }
+    
+    // 渲染分类列表
+    function renderCategories(categories) {
+      categoryListEl.innerHTML = '';
+      
+      categories.forEach(category => {
+        const li = document.createElement('li');
+        li.className = `category-item px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+          currentCategory === category ? 'category-active' : 'hover:bg-gray-100'
+        }`;
+        
+        // 为不同分类添加不同图标
+        let icon = 'fa-link';
+        if (category.includes('AI')) icon = 'fa-robot';
+        else if (category.includes('学习')) icon = 'fa-graduation-cap';
+        else if (category.includes('程序员')) icon = 'fa-code';
+        else if (category.includes('工具')) icon = 'fa-wrench';
+        else if (category.includes('影视')) icon = 'fa-film';
+        else if (category.includes('书籍')) icon = 'fa-book';
+        else if (category.includes('搜索')) icon = 'fa-search';
+        else if (category === 'all') icon = 'fa-globe';
+        
+        li.innerHTML = `
+          <i class="fa ${icon} mr-2 text-sm"></i>
+          <span>${category === 'all' ? '所有网站' : category}</span>
+        `;
+        
+        li.addEventListener('click', () => {
+          // 移除所有分类的active状态
+          document.querySelectorAll('.category-item').forEach(item => {
+            item.classList.remove('category-active');
+            item.classList.add('hover:bg-gray-100');
+          });
+          
+          // 添加当前分类的active状态
+          li.classList.add('category-active');
+          li.classList.remove('hover:bg-gray-100');
+          
+          // 更新当前分类
+          currentCategory = category;
+          
+          // 更新分类标题
+          categoryTitleEl.innerHTML = `
+            <i class="fa ${icon} mr-2 text-candy-purple"></i>${category === 'all' ? '所有网站' : category}
+          `;
+          
+          // 筛选并渲染网站
+          filterAndRenderWebsites();
+          
+          // 在移动设备上点击分类后收起搜索框
+          if (window.innerWidth < 768) {
+            mobileSearchEl.classList.add('hidden');
+          }
+        });
+        
+        categoryListEl.appendChild(li);
+      });
+    }
+    
+    // 渲染网站列表
+    function renderWebsites(websites) {
+      if (websites.length === 0) {
+        websiteContainerEl.innerHTML = `
+          <div class="col-span-full flex justify-center items-center py-16">
+            <div class="text-center">
+              <i class="fa fa-search text-4xl text-gray-300 mb-4"></i>
+              <p class="text-gray-500">没有找到匹配的网站</p>
+              <button id="clear-filters" class="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                清除筛选条件
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // 添加清除筛选按钮事件
+        document.getElementById('clear-filters').addEventListener('click', () => {
+          currentCategory = 'all';
+          searchInputEl.value = '';
+          mobileSearchInputEl.value = '';
+          renderCategories(['all', ...new Set(allWebsites.map(item => item.type))]);
+          categoryTitleEl.innerHTML = `<i class="fa fa-globe mr-2 text-candy-purple"></i>所有网站`;
+          filterAndRenderWebsites();
+        });
+        
+        return;
+      }
+      
+      websiteContainerEl.innerHTML = '';
+      
+      websites.forEach(website => {
+        // 检查是否为收藏
+        const isFavorite = favorites.some(fav => fav.web === website.web);
+        
+        // 生成随机糖果色
+        const colors = ['candy-pink', 'candy-purple', 'candy-blue', 'candy-green', 'candy-yellow', 'candy-orange'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden card-hover`;
+        
+        // 提取域名作为显示
+        let domain = '';
+        try {
+          const url = new URL(website.web);
+          domain = url.hostname.replace('www.', '');
+        } catch (e) {
+          domain = website.web;
+        }
+        
+        card.innerHTML = `
+          <div class="p-4">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-lg bg-${randomColor}/10 flex items-center justify-center mr-3">
+                  <i class="fa fa-globe text-${randomColor}"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 hover:text-candy-purple transition-colors">
+                  <a href="${website.web}" target="_blank" rel="noopener noreferrer">${website.name}</a>
+                </h3>
+              </div>
+              <div class="flex items-center">
+                <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 mr-2">${website.type}</span>
+                <button class="favorite-btn p-1.5 rounded-full hover:bg-gray-100 transition-colors ${isFavorite ? 'text-candy-yellow' : 'text-gray-400 hover:text-candy-yellow'}"
+                        data-name="${website.name}" 
+                        data-web="${website.web}"
+                        data-type="${website.type}"
+                        data-remark="${website.remark || ''}">
+                  <i class="fa ${isFavorite ? 'fa-star' : 'fa-star-o'}"></i>
+                </button>
+              </div>
+            </div>
+            
+            <p class="text-xs text-gray-400 mb-2">${domain}</p>
+            
+            <p class="text-sm text-gray-500 mb-3 line-clamp-2">
+              ${website.remark?.trim() || '无描述信息'}
+            </p>
+            
+            <a href="${website.web}" target="_blank" rel="noopener noreferrer" 
+               class="inline-flex items-center text-sm text-candy-purple hover:text-candy-pink transition-colors">
+              访问网站
+              <i class="fa fa-external-link ml-1 text-xs"></i>
+            </a>
+          </div>
+        `;
+        
+        // 添加收藏按钮事件
+        card.querySelector('.favorite-btn').addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const btn = e.currentTarget;
+          const websiteData = {
+            name: btn.dataset.name,
+            web: btn.dataset.web,
+            type: btn.dataset.type,
+            remark: btn.dataset.remark
+          };
+          
+          toggleFavorite(websiteData, btn);
+        });
+        
+        websiteContainerEl.appendChild(card);
+      });
+    }
+    
+    // 切换收藏状态
+    function toggleFavorite(website, btn) {
+      const index = favorites.findIndex(fav => fav.web === website.web);
+      
+      if (index === -1) {
+        // 添加收藏
+        favorites.push(website);
+        btn.innerHTML = '<i class="fa fa-star"></i>';
+        btn.classList.remove('text-gray-400');
+        btn.classList.add('text-candy-yellow');
+        
+        // 显示添加成功提示
+        showToast(`${website.name} 已添加到收藏`);
+      } else {
+        // 移除收藏
+        favorites.splice(index, 1);
+        btn.innerHTML = '<i class="fa fa-star-o"></i>';
+        btn.classList.remove('text-candy-yellow');
+        btn.classList.add('text-gray-400', 'hover:text-candy-yellow');
+        
+        // 显示移除成功提示
+        showToast(`${website.name} 已从收藏移除`);
+      }
+      
+      // 保存到本地存储
+      localStorage.setItem('candyFavorites', JSON.stringify(favorites));
+      
+      // 更新收藏计数
+      updateFavoritesCount();
+      
+      // 如果当前在收藏夹页面，重新渲染
+      if (favoritesModal.classList.contains('flex')) {
+        renderFavorites();
+      }
+    }
+    
+    // 更新收藏计数
+    function updateFavoritesCount() {
+      const count = favorites.length;
+      favoritesCountEl.textContent = count;
+      mobileFavoritesCountEl.textContent = count;
+      
+      // 隐藏或显示计数
+      if (count === 0) {
+        favoritesCountEl.classList.add('opacity-0');
+        mobileFavoritesCountEl.classList.add('opacity-0');
+      } else {
+        favoritesCountEl.classList.remove('opacity-0');
+        mobileFavoritesCountEl.classList.remove('opacity-0');
+      }
+    }
+    
+    // 渲染收藏列表
+    function renderFavorites() {
+      if (favorites.length === 0) {
+        favoritesContainer.innerHTML = `
+          <div class="text-center py-12">
+            <i class="fa fa-star-o text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500">您还没有收藏任何网站</p>
+          </div>
+        `;
+        return;
+      }
+      
+      favoritesContainer.innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          ${favorites.map(website => {
+            // 生成随机糖果色
+            const colors = ['candy-pink', 'candy-purple', 'candy-blue', 'candy-green', 'candy-yellow', 'candy-orange'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            // 提取域名作为显示
+            let domain = '';
+            try {
+              const url = new URL(website.web);
+              domain = url.hostname.replace('www.', '');
+            } catch (e) {
+              domain = website.web;
+            }
+            
+            return `
+              <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden card-hover">
+                <div class="p-4">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center">
+                      <div class="w-8 h-8 rounded-lg bg-${randomColor}/10 flex items-center justify-center mr-3">
+                        <i class="fa fa-globe text-${randomColor}"></i>
+                      </div>
+                      <h3 class="font-semibold text-gray-800 hover:text-candy-purple transition-colors">
+                        <a href="${website.web}" target="_blank" rel="noopener noreferrer">${website.name}</a>
+                      </h3>
+                    </div>
+                    <div class="flex items-center">
+                      <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 mr-2">${website.type}</span>
+                      <button class="favorite-btn p-1.5 rounded-full hover:bg-gray-100 transition-colors text-candy-red"
+                              data-name="${website.name}" 
+                              data-web="${website.web}"
+                              data-type="${website.type}"
+                              data-remark="${website.remark}">
+                        <i class="fa fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <p class="text-xs text-gray-400 mb-2">${domain}</p>
+                  
+                  <p class="text-sm text-gray-500 mb-3 line-clamp-2">
+                    ${website.remark || '无描述信息'}
+                  </p>
+                  
+                  <a href="${website.web}" target="_blank" rel="noopener noreferrer" 
+                     class="inline-flex items-center text-sm text-candy-purple hover:text-candy-pink transition-colors">
+                    访问网站
+                    <i class="fa fa-external-link ml-1 text-xs"></i>
+                  </a>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      
+      // 为收藏夹中的删除按钮添加事件
+      document.querySelectorAll('#favorites-container .favorite-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const websiteData = {
+            name: btn.dataset.name,
+            web: btn.dataset.web,
+            type: btn.dataset.type,
+            remark: btn.dataset.remark
+          };
+          
+          toggleFavorite(websiteData, btn);
+        });
+      });
+    }
+    
+    // 筛选并渲染网站
+    function filterAndRenderWebsites() {
+      let result = [...allWebsites];
+      
+      // 按分类筛选
+      if (currentCategory !== 'all') {
+        result = result.filter(website => website.type === currentCategory);
+      }
+      
+      // 按搜索词筛选
+      const searchTerm = searchInputEl.value.trim().toLowerCase() || mobileSearchInputEl.value.trim().toLowerCase();
+      if (searchTerm) {
+        result = result.filter(website => 
+          website.name.toLowerCase().includes(searchTerm) || 
+          website.remark?.toLowerCase().includes(searchTerm) ||
+          website.type.toLowerCase().includes(searchTerm) ||
+          website.web.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // 按排序方式排序
+      const sortBy = sortSelectEl.value;
+      if (sortBy === 'name-asc') {
+        result.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortBy === 'name-desc') {
+        result.sort((a, b) => b.name.localeCompare(a.name));
+      }
+      
+      // 更新筛选结果
+      filteredWebsites = result;
+      
+      // 更新总数
+      totalCountEl.textContent = result.length;
+      
+      // 渲染筛选后的网站
+      renderWebsites(result);
+    }
+    
+    // 显示提示消息
+    function showToast(message) {
+      // 检查是否已有toast，有则移除
+      const existingToast = document.querySelector('.toast-notification');
+      if (existingToast) {
+        existingToast.remove();
+      }
+      
+      // 创建toast元素
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform translate-y-10 opacity-0 transition-all duration-300';
+      toast.textContent = message;
+      
+      // 添加到页面
+      document.body.appendChild(toast);
+      
+      // 显示toast
+      setTimeout(() => {
+        toast.classList.remove('translate-y-10', 'opacity-0');
+      }, 10);
+      
+      // 3秒后隐藏
+      setTimeout(() => {
+        toast.classList.add('translate-y-10', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+    
+    // 打开收藏夹
+    function openFavorites() {
+      renderFavorites();
+      favoritesModal.classList.remove('hidden');
+      
+      // 触发动画
+      setTimeout(() => {
+        favoritesModal.classList.add('opacity-100');
+        favoritesModal.querySelector('div').classList.remove('scale-95');
+        favoritesModal.querySelector('div').classList.add('scale-100');
+      }, 10);
+      
+      // 阻止背景滚动
+      document.body.style.overflow = 'hidden';
+    }
+    
+    // 关闭收藏夹
+    function closeFavorites() {
+      favoritesModal.classList.remove('opacity-100');
+      favoritesModal.querySelector('div').classList.remove('scale-100');
+      favoritesModal.querySelector('div').classList.add('scale-95');
+      
+      // 动画结束后隐藏
+      setTimeout(() => {
+        favoritesModal.classList.add('hidden');
+        document.body.style.overflow = ''; // 恢复背景滚动
+      }, 300);
+    }
+    
+    // 添加事件监听
+    function addEventListeners() {
+      // 搜索框事件
+      searchInputEl.addEventListener('input', filterAndRenderWebsites);
+      mobileSearchInputEl.addEventListener('input', filterAndRenderWebsites);
+      
+      // 移动端菜单按钮
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileSearchEl.classList.toggle('hidden');
+      });
+      
+      // 排序选择事件
+      sortSelectEl.addEventListener('change', filterAndRenderWebsites);
+      
+      // 主题切换
+      let isDarkMode = false;
+      themeToggleBtn.addEventListener('click', () => {
+        isDarkMode = !isDarkMode;
+        const body = document.body;
+        const header = document.querySelector('header');
+        const footer = document.querySelector('footer');
+        const cards = document.querySelectorAll('.bg-white');
+        
+        // 切换深色/浅色模式类
+        body.classList.toggle('bg-gray-900', isDarkMode);
+        body.classList.toggle('from-pink-50', !isDarkMode);
+        body.classList.toggle('to-purple-50', !isDarkMode);
+        body.classList.toggle('text-gray-200', isDarkMode);
+        body.classList.toggle('text-gray-800', !isDarkMode);
+        
+        header.classList.toggle('bg-gray-800/90', isDarkMode);
+        header.classList.toggle('bg-white/90', !isDarkMode);
+        
+        footer.classList.toggle('bg-gray-800', isDarkMode);
+        footer.classList.toggle('bg-white', !isDarkMode);
+        footer.classList.toggle('text-gray-400', isDarkMode);
+        footer.classList.toggle('text-gray-500', !isDarkMode);
+        
+        cards.forEach(card => {
+          card.classList.toggle('bg-gray-800', isDarkMode);
+          card.classList.toggle('bg-white', !isDarkMode);
+          card.classList.toggle('border-gray-700', isDarkMode);
+          card.classList.toggle('border-gray-100', !isDarkMode);
+        });
+        
+        // 切换图标
+        const themeIcon = themeToggleBtn.querySelector('i');
+        if (isDarkMode) {
+          themeIcon.classList.remove('fa-moon-o', 'text-candy-dark');
+          themeIcon.classList.add('fa-sun-o', 'text-yellow-400');
+        } else {
+          themeIcon.classList.remove('fa-sun-o', 'text-yellow-400');
+          themeIcon.classList.add('fa-moon-o', 'text-candy-dark');
+        }
+      });
+      
+      // 收藏夹相关事件
+      favoritesBtn.addEventListener('click', openFavorites);
+      mobileFavoritesBtn.addEventListener('click', openFavorites);
+      closeFavoritesBtn.addEventListener('click', closeFavorites);
+      
+      // 点击模态框背景关闭
+      favoritesModal.addEventListener('click', (e) => {
+        if (e.target === favoritesModal) {
+          closeFavorites();
+        }
+      });
+      
+      // 按ESC键关闭收藏夹
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !favoritesModal.classList.contains('hidden')) {
+          closeFavorites();
+        }
+      });
+      
+      // 滚动时改变头部样式
+      window.addEventListener('scroll', () => {
+        const header = document.querySelector('header');
+        if (window.scrollY > 10) {
+          header.classList.add('py-2', 'shadow');
+          header.classList.remove('py-4', 'shadow-md');
+        } else {
+          header.classList.add('py-4', 'shadow-md');
+          header.classList.remove('py-2', 'shadow');
+        }
+      });
+      
+      // 窗口大小变化时重新布局
+      window.addEventListener('resize', () => {
+        if (window.innerWidth >= 768) {
+          mobileSearchEl.classList.add('hidden');
+        }
+      });
+    }
+    
+    // 启动应用
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

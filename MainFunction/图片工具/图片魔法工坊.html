@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy图片魔法工坊 - 专业图片效果处理工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#8B5CF6',
+                        accent: '#EC4899',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+
+                .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                }
+
+            .effect-card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+
+            .btn-primary {
+                @apply bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg;
+            }
+
+            .btn-secondary {
+                @apply bg-white border border-gray-300 hover:bg-gray-50 text-dark font-medium py-2 px-4 rounded-lg transition-all duration-300 shadow-sm hover:shadow;
+            }
+
+            .active-effect {
+                @apply ring-2 ring-primary bg-primary/5;
+            }
+
+            .tab-item {
+                @apply px-3 py-2 whitespace-nowrap font-medium transition-colors;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-magic text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">图片魔法工坊</h1>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="#" class="font-medium text-primary border-b-2 border-primary">首页</a>
+                <a href="#" class="font-medium text-gray-600 hover:text-primary transition-colors">教程</a>
+                <a href="#" class="font-medium text-gray-600 hover:text-primary transition-colors">关于</a>
+            </nav>
+
+            <div class="flex items-center space-x-3">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-moon-o text-gray-600"></i>
+                </button>
+                <button class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-bars text-gray-600"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow pt-20 pb-16 container mx-auto px-4">
+        <!-- 初始状态提示 -->
+        <div id="initial-state" class="flex flex-col items-center justify-center min-h-[70vh] text-center">
+            <div class="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                <i class="fa fa-upload text-primary text-4xl"></i>
+            </div>
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">上传图片开始编辑</h2>
+            <p class="text-gray-500 max-w-lg mb-8">支持JPG、PNG、WEBP等格式，上传后可应用多种摄影和艺术效果</p>
+
+            <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                <label for="file-upload" class="btn-primary cursor-pointer flex items-center justify-center">
+                    <i class="fa fa-picture-o mr-2"></i>选择图片
+                </label>
+                <input id="file-upload" type="file" accept="image/*" class="hidden" />
+
+                <button id="paste-btn" class="btn-secondary flex items-center justify-center">
+                    <i class="fa fa-clipboard mr-2"></i>粘贴图片
+                </button>
+            </div>
+
+            <p class="text-sm text-gray-400">或直接将图片拖放到此处</p>
+            <div id="drop-area" class="mt-4 w-full max-w-2xl border-2 border-dashed border-gray-300 rounded-xl p-12 hover:border-primary transition-colors cursor-pointer">
+                <i class="fa fa-arrow-down text-gray-400 text-2xl mb-2"></i>
+                <p class="text-gray-500">拖放图片到这里</p>
+            </div>
+        </div>
+
+        <!-- 编辑状态界面 -->
+        <div id="editor-state" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- 左侧工具栏 -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- 图片信息 -->
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <h3 class="font-semibold mb-3 flex items-center">
+                        <i class="fa fa-info-circle text-primary mr-2"></i>图片信息
+                    </h3>
+                    <div id="image-info" class="space-y-2 text-sm text-gray-600">
+                        <p><span class="font-medium">名称:</span> <span id="image-name">-</span></p>
+                        <p><span class="font-medium">格式:</span> <span id="image-format">-</span></p>
+                        <p><span class="font-medium">尺寸:</span> <span id="image-dimensions">-</span></p>
+                        <p><span class="font-medium">大小:</span> <span id="image-size">-</span></p>
+                    </div>
+                </div>
+
+                <!-- 效果分类 -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-100">
+                        <h3 class="font-semibold flex items-center">
+                            <i class="fa fa-magic text-primary mr-2"></i>效果处理
+                        </h3>
+                    </div>
+
+                    <!-- 效果标签页 - 优化了宽度和间距 -->
+                    <div class="border-b border-gray-100 overflow-x-auto scrollbar-hide">
+                        <div class="flex">
+                            <button class="effect-tab active tab-item text-primary border-b-2 border-primary" data-tab="photography">
+                                摄影效果
+                            </button>
+                            <button class="effect-tab tab-item text-gray-500 hover:text-gray-700" data-tab="artistic">
+                                艺术效果
+                            </button>
+                            <button class="effect-tab tab-item text-gray-500 hover:text-gray-700" data-tab="filters">
+                                滤镜
+                            </button>
+                            <button class="effect-tab tab-item text-gray-500 hover:text-gray-700" data-tab="adjustments">
+                                调整
+                            </button>
+                            <button class="effect-tab tab-item text-gray-500 hover:text-gray-700" data-tab="special">
+                                特殊效果
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 摄影效果 -->
+                    <div class="effect-content p-4" id="photography-content">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="hdr">
+                                <i class="fa fa-sun-o text-yellow-500 text-xl mb-2"></i>
+                                <span class="text-xs">HDR效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="portrait">
+                                <i class="fa fa-user text-blue-400 text-xl mb-2"></i>
+                                <span class="text-xs">人像模式</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="landscape">
+                                <i class="fa fa-tree text-green-600 text-xl mb-2"></i>
+                                <span class="text-xs">风景增强</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="night">
+                                <i class="fa fa-moon-o text-indigo-500 text-xl mb-2"></i>
+                                <span class="text-xs">夜景模式</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="macro">
+                                <i class="fa fa-search-plus text-purple-400 text-xl mb-2"></i>
+                                <span class="text-xs">微距效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="panorama">
+                                <i class="fa fa-arrows-h text-gray-500 text-xl mb-2"></i>
+                                <span class="text-xs">全景效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="action">
+                                <i class="fa fa-bolt text-orange-500 text-xl mb-2"></i>
+                                <span class="text-xs">动态效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="food">
+                                <i class="fa fa-cutlery text-red-500 text-xl mb-2"></i>
+                                <span class="text-xs">美食模式</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 艺术效果 -->
+                    <div class="effect-content p-4 hidden" id="artistic-content">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="painting">
+                                <i class="fa fa-paint-brush text-red-500 text-xl mb-2"></i>
+                                <span class="text-xs">油画效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="sketch">
+                                <i class="fa fa-pencil text-gray-700 text-xl mb-2"></i>
+                                <span class="text-xs">素描效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="comic">
+                                <i class="fa fa-book text-yellow-600 text-xl mb-2"></i>
+                                <span class="text-xs">漫画风格</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="mosaic">
+                                <i class="fa fa-th text-blue-600 text-xl mb-2"></i>
+                                <span class="text-xs">马赛克</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="stencil">
+                                <i class="fa fa-object-group text-gray-600 text-xl mb-2"></i>
+                                <span class="text-xs">模板效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="glitch">
+                                <i class="fa fa-bolt text-pink-500 text-xl mb-2"></i>
+                                <span class="text-xs">故障艺术</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="watercolor">
+                                <i class="fa fa-tint text-blue-400 text-xl mb-2"></i>
+                                <span class="text-xs">水彩效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="impressionist">
+                                <i class="fa fa-leaf text-green-500 text-xl mb-2"></i>
+                                <span class="text-xs">印象派</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 滤镜 -->
+                    <div class="effect-content p-4 hidden" id="filters-content">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="vintage">
+                                <i class="fa fa-hourglass-half text-yellow-700 text-xl mb-2"></i>
+                                <span class="text-xs">复古</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="blackwhite">
+                                <i class="fa fa-adjust text-gray-500 text-xl mb-2"></i>
+                                <span class="text-xs">黑白</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="sepia">
+                                <i class="fa fa-coffee text-amber-700 text-xl mb-2"></i>
+                                <span class="text-xs">怀旧</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="vibrant">
+                                <i class="fa fa-tint text-cyan-500 text-xl mb-2"></i>
+                                <span class="text-xs">鲜艳</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="pastel">
+                                <i class="fa fa-leaf text-green-300 text-xl mb-2"></i>
+                                <span class="text-xs">马卡龙</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="cinematic">
+                                <i class="fa fa-film text-red-600 text-xl mb-2"></i>
+                                <span class="text-xs">电影感</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="cool">
+                                <i class="fa fa-snowflake-o text-blue-300 text-xl mb-2"></i>
+                                <span class="text-xs">冷色调</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="warm">
+                                <i class="fa fa-sun-o text-orange-500 text-xl mb-2"></i>
+                                <span class="text-xs">暖色调</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 调整 -->
+                    <div class="effect-content p-4 hidden" id="adjustments-content">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">亮度</label>
+                                <input type="range" min="-100" max="100" value="0" class="adjustment-slider w-full accent-primary" data-adjustment="brightness">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">对比度</label>
+                                <input type="range" min="-100" max="100" value="0" class="adjustment-slider w-full accent-primary" data-adjustment="contrast">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">饱和度</label>
+                                <input type="range" min="-100" max="200" value="0" class="adjustment-slider w-full accent-primary" data-adjustment="saturation">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">色温</label>
+                                <input type="range" min="-100" max="100" value="0" class="adjustment-slider w-full accent-primary" data-adjustment="temperature">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">锐度</label>
+                                <input type="range" min="-100" max="100" value="0" class="adjustment-slider w-full accent-primary" data-adjustment="sharpness">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">模糊</label>
+                                <input type="range" min="0" max="50" value="0" class="adjustment-slider w-full accent-primary" data-adjustment="blur">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">曝光</label>
+                                <input type="range" min="-100" max="100" value="0" class="adjustment-slider w-full accent-primary" data-adjustment="exposure">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">色调</label>
+                                <input type="range" min="-180" max="180" value="0" class="adjustment-slider w-full accent-primary" data-adjustment="hue">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 特殊效果 -->
+                    <div class="effect-content p-4 hidden" id="special-content">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="tiltshift">
+                                <i class="fa fa-arrows-v text-purple-500 text-xl mb-2"></i>
+                                <span class="text-xs">移轴效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="lensflare">
+                                <i class="fa fa-star text-yellow-400 text-xl mb-2"></i>
+                                <span class="text-xs">镜头光晕</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="vignette">
+                                <i class="fa fa-circle-o text-gray-500 text-xl mb-2"></i>
+                                <span class="text-xs">暗角效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="motionblur">
+                                <i class="fa fa-exchange text-blue-500 text-xl mb-2"></i>
+                                <span class="text-xs">动态模糊</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="pixelate">
+                                <i class="fa fa-th-large text-green-600 text-xl mb-2"></i>
+                                <span class="text-xs">像素化</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="reflection">
+                                <i class="fa fa-clone text-cyan-400 text-xl mb-2"></i>
+                                <span class="text-xs">倒影效果</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="polaroid">
+                                <i class="fa fa-camera text-red-500 text-xl mb-2"></i>
+                                <span class="text-xs">宝丽来</span>
+                            </button>
+                            <button class="effect-btn effect-card-hover bg-white border border-gray-200 rounded-lg p-3 flex flex-col items-center text-center" data-effect="dreamy">
+                                <i class="fa fa-cloud text-pink-400 text-xl mb-2"></i>
+                                <span class="text-xs">梦幻效果</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="flex flex-col gap-3">
+                    <button id="reset-btn" class="btn-secondary flex items-center justify-center">
+                        <i class="fa fa-refresh mr-2"></i>重置效果
+                    </button>
+                    <button id="undo-btn" class="btn-secondary flex items-center justify-center">
+                        <i class="fa fa-undo mr-2"></i>撤销
+                    </button>
+                    <button id="redo-btn" class="btn-secondary flex items-center justify-center">
+                        <i class="fa fa-repeat mr-2"></i>重做
+                    </button>
+                    <button id="new-image-btn" class="btn-secondary flex items-center justify-center">
+                        <i class="fa fa-plus mr-2"></i>新图片
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧预览和下载 -->
+            <div class="lg:col-span-3 flex flex-col">
+                <!-- 预览区域 -->
+                <div class="bg-white rounded-xl shadow-sm p-4 flex-grow mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold flex items-center">
+                            <i class="fa fa-eye text-primary mr-2"></i>预览效果
+                        </h3>
+                        <div class="text-sm text-gray-500">
+                            <span id="zoom-level">100%</span>
+                        </div>
+                    </div>
+
+                    <div class="preview-container bg-gray-100 rounded-lg flex items-center justify-center min-h-[400px] overflow-hidden relative">
+                        <div id="preview-placeholder" class="text-center p-8">
+                            <i class="fa fa-image text-gray-300 text-5xl mb-3"></i>
+                            <p class="text-gray-400">图片将在这里显示</p>
+                        </div>
+                        <div class="preview-wrapper relative hidden">
+                            <canvas id="canvas" class="max-w-full max-h-[600px] object-contain"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex justify-center space-x-3">
+                        <button id="zoom-out" class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                            <i class="fa fa-search-minus text-gray-600"></i>
+                        </button>
+                        <button id="zoom-reset" class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                            <i class="fa fa-home text-gray-600"></i>
+                        </button>
+                        <button id="zoom-in" class="p-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                            <i class="fa fa-search-plus text-gray-600"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 历史记录和下载 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- 历史记录 -->
+                    <div class="md:col-span-2 bg-white rounded-xl shadow-sm p-4">
+                        <h3 class="font-semibold mb-3 flex items-center">
+                            <i class="fa fa-history text-primary mr-2"></i>效果历史
+                        </h3>
+                        <div id="history-list" class="space-y-2 max-h-32 overflow-y-auto scrollbar-hide">
+                            <p class="text-sm text-gray-400 italic text-center">尚未应用任何效果</p>
+                        </div>
+                    </div>
+
+                    <!-- 下载选项 -->
+                    <div class="bg-white rounded-xl shadow-sm p-4">
+                        <h3 class="font-semibold mb-3 flex items-center">
+                            <i class="fa fa-download text-primary mr-2"></i>下载图片
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">格式</label>
+                                <select id="download-format" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                    <option value="png">PNG</option>
+                                    <option value="jpeg">JPEG</option>
+                                    <option value="webp">WebP</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">质量</label>
+                                <input type="range" min="1" max="100" value="90" class="w-full accent-primary" id="quality-slider">
+                                <div class="flex justify-between text-xs text-gray-500">
+                                    <span>低</span>
+                                    <span>高</span>
+                                </div>
+                            </div>
+                            <button id="download-btn" class="btn-primary w-full flex items-center justify-center">
+                                <i class="fa fa-download mr-2"></i>保存图片
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-2 mb-4 md:mb-0">
+                    <i class="fa fa-magic text-primary"></i>
+                    <span class="font-bold">Candy图片魔法工坊</span>
+                </div>
+                <div class="text-sm text-gray-500">
+                    © 2025 Candy图片魔法工坊 - 免费在线图片处理工具
+                </div>
+                <div class="flex space-x-4 mt-4 md:mt-0">
+                    <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+                        <i class="fa fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+                        <i class="fa fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-500 hover:text-primary transition-colors">
+                        <i class="fa fa-instagram text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 通知提示 -->
+    <div id="notification" class="fixed bottom-6 right-6 bg-dark text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center">
+        <i id="notification-icon" class="fa fa-check-circle mr-2"></i>
+        <span id="notification-message"></span>
+    </div>
+
+    <script>
+        // 全局变量
+        let originalImage = null;
+        let canvas = null;
+        let ctx = null;
+        let history = [];
+        let historyIndex = -1;
+        let zoomLevel = 100;
+        let currentEffects = {
+            filters: [],
+            adjustments: {
+                brightness: 0,
+                contrast: 0,
+                saturation: 0,
+                temperature: 0,
+                sharpness: 0,
+                blur: 0,
+                exposure: 0,
+                hue: 0
+            }
+        };
+
+        // DOM 元素
+        const initialState = document.getElementById('initial-state');
+        const editorState = document.getElementById('editor-state');
+        const fileUpload = document.getElementById('file-upload');
+        const dropArea = document.getElementById('drop-area');
+        const pasteBtn = document.getElementById('paste-btn');
+        const previewPlaceholder = document.getElementById('preview-placeholder');
+        const previewWrapper = document.querySelector('.preview-wrapper');
+        const canvasElement = document.getElementById('canvas');
+        const imageInfo = {
+            name: document.getElementById('image-name'),
+            format: document.getElementById('image-format'),
+            dimensions: document.getElementById('image-dimensions'),
+            size: document.getElementById('image-size')
+        };
+        const effectTabs = document.querySelectorAll('.effect-tab');
+        const effectContents = document.querySelectorAll('.effect-content');
+        const effectBtns = document.querySelectorAll('.effect-btn');
+        const adjustmentSliders = document.querySelectorAll('.adjustment-slider');
+        const resetBtn = document.getElementById('reset-btn');
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+        const newImageBtn = document.getElementById('new-image-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const downloadFormat = document.getElementById('download-format');
+        const qualitySlider = document.getElementById('quality-slider');
+        const historyList = document.getElementById('history-list');
+        const zoomIn = document.getElementById('zoom-in');
+        const zoomOut = document.getElementById('zoom-out');
+        const zoomReset = document.getElementById('zoom-reset');
+        const zoomLevelDisplay = document.getElementById('zoom-level');
+        const notification = document.getElementById('notification');
+        const notificationIcon = document.getElementById('notification-icon');
+        const notificationMessage = document.getElementById('notification-message');
+        const themeToggle = document.getElementById('theme-toggle');
+
+        // 初始化
+        function init() {
+            canvas = canvasElement;
+            ctx = canvas.getContext('2d');
+
+            // 事件监听
+            fileUpload.addEventListener('change', handleFileUpload);
+            dropArea.addEventListener('dragover', handleDragOver);
+            dropArea.addEventListener('drop', handleDrop);
+            pasteBtn.addEventListener('click', handlePaste);
+            effectTabs.forEach(tab => tab.addEventListener('click', switchEffectTab));
+            effectBtns.forEach(btn => btn.addEventListener('click', applyEffect));
+            adjustmentSliders.forEach(slider => slider.addEventListener('input', applyAdjustment));
+            resetBtn.addEventListener('click', resetEffects);
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            newImageBtn.addEventListener('click', startNewImage);
+            downloadBtn.addEventListener('click', downloadImage);
+            zoomIn.addEventListener('click', () => changeZoom(10));
+            zoomOut.addEventListener('click', () => changeZoom(-10));
+            zoomReset.addEventListener('click', resetZoom);
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // 阻止文档默认拖放行为
+            document.addEventListener('dragover', (e) => e.preventDefault());
+            document.addEventListener('drop', (e) => e.preventDefault());
+        }
+
+        // 处理文件上传
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processImageFile(file);
+            }
+        }
+
+        // 处理拖放
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropArea.classList.add('border-primary');
+            dropArea.classList.add('bg-primary/5');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            dropArea.classList.remove('border-primary');
+            dropArea.classList.remove('bg-primary/5');
+
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                processImageFile(file);
+            } else {
+                showNotification('请上传图片文件', 'error');
+            }
+        }
+
+        // 处理粘贴图片
+        function handlePaste() {
+            navigator.clipboard.read().then(items => {
+                for (const item of items) {
+                    if (item.types.includes('image/png')) {
+                        const blob = item.getAsFile();
+                        processImageFile(blob);
+                        return;
+                    }
+                }
+                showNotification('剪贴板中没有图片', 'error');
+            }).catch(err => {
+                console.error('无法读取剪贴板内容:', err);
+                showNotification('无法访问剪贴板', 'error');
+            });
+        }
+
+        // 处理图片文件
+        function processImageFile(file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    // 隐藏初始状态，显示编辑状态
+                    initialState.classList.add('hidden');
+                    editorState.classList.remove('hidden');
+
+                    // 设置原始图片
+                    originalImage = img;
+
+                    // 初始化画布
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    // 显示预览图片
+                    previewPlaceholder.classList.add('hidden');
+                    previewWrapper.classList.remove('hidden');
+
+                    // 更新图片信息
+                    updateImageInfo(file, img);
+
+                    // 初始化历史记录和效果
+                    resetEffects(true);
+
+                    showNotification('图片已加载', 'success');
+                };
+                img.src = e.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // 更新图片信息
+        function updateImageInfo(file, img) {
+            const fileName = file.name ? file.name.split('.').slice(0, -1).join('.') : '未知图片';
+            const fileExtension = file.name ? file.name.split('.').pop().toUpperCase() : '未知格式';
+            const fileSize = file.size ? (file.size / (1024 * 1024)).toFixed(2) : '未知';
+            const dimensions = `${img.width} × ${img.height}`;
+
+            imageInfo.name.textContent = fileName;
+            imageInfo.format.textContent = fileExtension;
+            imageInfo.dimensions.textContent = dimensions;
+            imageInfo.size.textContent = `${fileSize} MB`;
+        }
+
+        // 切换效果标签页
+        function switchEffectTab(e) {
+            const tabId = e.target.dataset.tab;
+
+            // 更新标签状态
+            effectTabs.forEach(tab => {
+                tab.classList.remove('active', 'text-primary', 'border-b-2', 'border-primary');
+                tab.classList.add('text-gray-500', 'hover:text-gray-700');
+            });
+
+            e.target.classList.add('active', 'text-primary', 'border-b-2', 'border-primary');
+            e.target.classList.remove('text-gray-500', 'hover:text-gray-700');
+
+            // 显示对应内容
+            effectContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            document.getElementById(`${tabId}-content`).classList.remove('hidden');
+        }
+
+        // 应用效果
+        function applyEffect(e) {
+            if (!originalImage) return;
+
+            const btn = e.target.closest('.effect-btn');
+            const effect = btn.dataset.effect;
+
+            // 检查效果是否已应用
+            const effectIndex = currentEffects.filters.indexOf(effect);
+
+            if (effectIndex > -1) {
+                // 移除效果
+                currentEffects.filters.splice(effectIndex, 1);
+                btn.classList.remove('active-effect');
+                const effectName = getEffectName(effect);
+                addToHistory(`移除: ${effectName}`);
+                showNotification(`已移除 ${effectName}`, 'info');
+            } else {
+                // 添加效果
+                // 对于互斥效果，先移除冲突效果
+                const mutuallyExclusive = ['blackwhite', 'vintage', 'sepia', 'cool', 'warm'];
+                if (mutuallyExclusive.includes(effect)) {
+                    currentEffects.filters = currentEffects.filters.filter(f => !mutuallyExclusive.includes(f));
+                    effectBtns.forEach(b => {
+                        if (mutuallyExclusive.includes(b.dataset.effect)) {
+                            b.classList.remove('active-effect');
+                        }
+                    });
+                }
+
+                currentEffects.filters.push(effect);
+                btn.classList.add('active-effect');
+
+                // 获取效果名称
+                const effectName = getEffectName(effect);
+                addToHistory(`应用: ${effectName}`);
+                showNotification(`已应用 ${effectName}`, 'success');
+            }
+
+            // 应用所有效果
+            applyAllEffects();
+        }
+
+        // 应用调整
+        function applyAdjustment(e) {
+            if (!originalImage) return;
+
+            const adjustment = e.target.dataset.adjustment;
+            const value = parseInt(e.target.value);
+
+            // 更新当前调整值
+            currentEffects.adjustments[adjustment] = value;
+
+            // 应用所有效果
+            applyAllEffects();
+
+            // 获取调整名称
+            const adjustmentName = getAdjustmentName(adjustment);
+
+            // 更新历史记录
+            updateLastHistory(`调整 ${adjustmentName}: ${value}`);
+        }
+
+        // 应用所有效果和调整 - 完全重构以解决不出图问题
+        function applyAllEffects() {
+            if (!originalImage) return;
+
+            try {
+                // 保存当前画布尺寸
+                const currentWidth = canvas.width;
+                const currentHeight = canvas.height;
+
+                // 清除画布
+                ctx.clearRect(0, 0, currentWidth, currentHeight);
+
+                // 保存原始图像尺寸
+                const imgWidth = originalImage.width;
+                const imgHeight = originalImage.height;
+
+                // 确保画布尺寸与原始图像一致（除非有需要改变尺寸的效果）
+                const hasSizeChangingEffect = currentEffects.filters.includes('reflection');
+                if (!hasSizeChangingEffect && (canvas.width !== imgWidth || canvas.height !== imgHeight)) {
+                    canvas.width = imgWidth;
+                    canvas.height = imgHeight;
+                }
+
+                // 构建滤镜字符串
+                let filter = '';
+
+                // 添加滤镜效果
+                currentEffects.filters.forEach(effect => {
+                    switch (effect) {
+                        case 'hdr':
+                            filter += 'contrast(1.5) brightness(1.1) saturate(1.2) ';
+                            break;
+                        case 'portrait':
+                            filter += 'contrast(1.1) saturate(1.1) blur(0.5px) ';
+                            break;
+                        case 'landscape':
+                            filter += 'saturate(1.3) contrast(1.2) brightness(1.05) ';
+                            break;
+                        case 'night':
+                            filter += 'brightness(1.2) contrast(1.3) saturate(0.8) ';
+                            break;
+                        case 'blackwhite':
+                            filter += 'grayscale(1) ';
+                            break;
+                        case 'vintage':
+                            filter += 'sepia(0.6) contrast(1.2) brightness(0.9) ';
+                            break;
+                        case 'sepia':
+                            filter += 'sepia(0.8) ';
+                            break;
+                        case 'sketch':
+                            filter += 'grayscale(1) contrast(2) invert(1) blur(1px) ';
+                            break;
+                        case 'comic':
+                            filter += 'saturate(1.5) contrast(1.2) ';
+                            break;
+                        case 'mosaic':
+                            filter += 'contrast(1.2) saturate(1.2) ';
+                            break;
+                        case 'glitch':
+                            filter += 'hue-rotate(180deg) saturate(1.5) ';
+                            break;
+                        case 'tiltshift':
+                            filter += 'blur(2px) contrast(1.1) ';
+                            break;
+                        case 'dreamy':
+                            filter += 'blur(1px) brightness(1.05) saturate(0.9) ';
+                            break;
+                        case 'cool':
+                            filter += 'color-matrix(1 0 0 0 0, 0 1 0 0 0, 0 0 1.2 0 0, 0 0 0 1 0) ';
+                            break;
+                        case 'warm':
+                            filter += 'color-matrix(1 0 0 0 0, 0 1.1 0 0 0, 0 0 0.9 0 0, 0 0 0 1 0) ';
+                            break;
+                        case 'motionblur':
+                            filter += 'blur(3px) ';
+                            break;
+                        case 'pixelate':
+                            // 像素化效果将在绘制后处理
+                            break;
+                        case 'polaroid':
+                            // 宝丽来效果将在绘制后处理
+                            break;
+                    }
+                });
+
+                // 添加调整效果
+                const adj = currentEffects.adjustments;
+                filter += `brightness(${1 + adj.brightness / 100}) `;
+                filter += `contrast(${1 + adj.contrast / 100}) `;
+                filter += `saturate(${1 + adj.saturation / 100}) `;
+                filter += `blur(${adj.blur / 10}px) `;
+                filter += `hue-rotate(${adj.hue}deg) `;
+
+                // 应用滤镜并绘制图像
+                ctx.filter = filter;
+                ctx.drawImage(originalImage, 0, 0);
+                ctx.filter = 'none'; // 重置滤镜
+
+                // 处理特殊效果（需要在绘制基础图像后应用）
+                if (currentEffects.filters.includes('vignette')) {
+                    applyVignette();
+                }
+
+                if (currentEffects.filters.includes('lensflare')) {
+                    applyLensFlare();
+                }
+
+                if (currentEffects.filters.includes('reflection')) {
+                    applyReflection();
+                }
+
+                if (currentEffects.filters.includes('pixelate')) {
+                    applyPixelate();
+                }
+
+                if (currentEffects.filters.includes('polaroid')) {
+                    applyPolaroid();
+                }
+
+            } catch (error) {
+                console.error('应用效果时出错:', error);
+                showNotification('效果应用失败，请重试', 'error');
+                // 出错时恢复原始图像
+                if (originalImage) {
+                    canvas.width = originalImage.width;
+                    canvas.height = originalImage.height;
+                    ctx.drawImage(originalImage, 0, 0);
+                }
+            }
+        }
+
+        // 应用暗角效果
+        function applyVignette() {
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2,
+                Math.min(canvas.width, canvas.height) * 0.1,
+                canvas.width / 2, canvas.height / 2,
+                Math.max(canvas.width, canvas.height) * 0.8
+            );
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
+
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // 应用镜头光晕效果
+        function applyLensFlare() {
+            const centerX = canvas.width * 0.2;
+            const centerY = canvas.height * 0.2;
+            const maxRadius = Math.min(canvas.width, canvas.height) * 0.15;
+
+            // 创建光晕
+            for (let i = 0; i < 5; i++) {
+                const radius = maxRadius * (1 - i * 0.2);
+                const alpha = 0.2 - i * 0.04;
+
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, 0,
+                    centerX, centerY, radius
+                );
+                gradient.addColorStop(0, `rgba(255, 255, 220, ${alpha})`);
+                gradient.addColorStop(1, 'rgba(255, 255, 220, 0)');
+
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // 应用倒影效果
+        function applyReflection() {
+            // 只在第一次应用时调整画布大小
+            if (canvas.height === originalImage.height) {
+                const reflectionHeight = Math.floor(originalImage.height * 0.3);
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = originalImage.width;
+                tempCanvas.height = originalImage.height;
+                tempCtx.drawImage(canvas, 0, 0);
+
+                // 调整画布大小
+                canvas.width = originalImage.width;
+                canvas.height = originalImage.height + reflectionHeight;
+
+                // 重新绘制原始图像
+                ctx.drawImage(tempCanvas, 0, 0);
+            }
+
+            const reflectionHeight = canvas.height - originalImage.height;
+
+            // 绘制倒影
+            ctx.save();
+            ctx.translate(0, originalImage.height + reflectionHeight);
+            ctx.scale(1, -1);
+            ctx.drawImage(originalImage, 0, -originalImage.height, originalImage.width, reflectionHeight);
+            ctx.restore();
+
+            // 添加渐变遮罩
+            const gradient = ctx.createLinearGradient(0, originalImage.height, 0, canvas.height);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 1)');
+
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, originalImage.height, canvas.width, reflectionHeight);
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // 应用像素化效果
+        function applyPixelate() {
+            const pixelSize = 8; // 像素大小
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // 保存当前画布内容
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            tempCtx.drawImage(canvas, 0, 0);
+
+            // 清除画布
+            ctx.clearRect(0, 0, width, height);
+
+            // 绘制像素化效果
+            for (let y = 0; y < height; y += pixelSize) {
+                for (let x = 0; x < width; x += pixelSize) {
+                    // 获取该区域的像素颜色
+                    const pixel = tempCtx.getImageData(x, y, pixelSize, pixelSize);
+                    const data = pixel.data;
+
+                    // 计算平均颜色
+                    let r = 0, g = 0, b = 0, a = 0;
+                    for (let i = 0; i < data.length; i += 4) {
+                        r += data[i];
+                        g += data[i + 1];
+                        b += data[i + 2];
+                        a += data[i + 3];
+                    }
+                    const pixelCount = (data.length / 4);
+                    r = Math.floor(r / pixelCount);
+                    g = Math.floor(g / pixelCount);
+                    b = Math.floor(b / pixelCount);
+                    a = Math.floor(a / pixelCount);
+
+                    // 绘制像素块
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+                    ctx.fillRect(x, y, pixelSize, pixelSize);
+                }
+            }
+        }
+
+        // 应用宝丽来效果
+        function applyPolaroid() {
+            // 保存当前画布内容
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+
+            // 计算宝丽来照片的尺寸（带白边）
+            const polaroidWidth = imgWidth * 1.1;
+            const polaroidHeight = imgHeight * 1.3;
+            const border = (polaroidWidth - imgWidth) / 2;
+
+            // 调整画布大小
+            tempCanvas.width = polaroidWidth;
+            tempCanvas.height = polaroidHeight;
+
+            // 绘制白色背景
+            tempCanvas.fillStyle = '#fff';
+            tempCanvas.fillRect(0, 0, polaroidWidth, polaroidHeight);
+
+            // 绘制轻微阴影
+            tempCtx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+            tempCtx.shadowBlur = 5;
+            tempCtx.shadowOffsetX = 2;
+            tempCtx.shadowOffsetY = 2;
+
+            // 绘制图片
+            tempCtx.drawImage(canvas, border, border, imgWidth, imgHeight);
+
+            // 绘制底部白边
+            tempCtx.fillStyle = '#fff';
+            tempCtx.fillRect(0, imgHeight + border, polaroidWidth, polaroidHeight - (imgHeight + border));
+
+            // 恢复画布
+            canvas.width = polaroidWidth;
+            canvas.height = polaroidHeight;
+            ctx.drawImage(tempCanvas, 0, 0);
+        }
+
+        // 获取效果名称
+        function getEffectName(effect) {
+            const effectNames = {
+                'hdr': 'HDR效果',
+                'portrait': '人像模式',
+                'landscape': '风景增强',
+                'night': '夜景模式',
+                'macro': '微距效果',
+                'panorama': '全景效果',
+                'action': '动态效果',
+                'food': '美食模式',
+                'painting': '油画效果',
+                'sketch': '素描效果',
+                'comic': '漫画风格',
+                'mosaic': '马赛克',
+                'stencil': '模板效果',
+                'glitch': '故障艺术',
+                'watercolor': '水彩效果',
+                'impressionist': '印象派',
+                'vintage': '复古滤镜',
+                'blackwhite': '黑白滤镜',
+                'sepia': '怀旧滤镜',
+                'vibrant': '鲜艳滤镜',
+                'pastel': '马卡龙滤镜',
+                'cinematic': '电影感滤镜',
+                'cool': '冷色调',
+                'warm': '暖色调',
+                'tiltshift': '移轴效果',
+                'lensflare': '镜头光晕',
+                'vignette': '暗角效果',
+                'motionblur': '动态模糊',
+                'pixelate': '像素化',
+                'reflection': '倒影效果',
+                'polaroid': '宝丽来',
+                'dreamy': '梦幻效果'
+            };
+
+            return effectNames[effect] || effect;
+        }
+
+        // 获取调整名称
+        function getAdjustmentName(adjustment) {
+            const adjustmentNames = {
+                'brightness': '亮度',
+                'contrast': '对比度',
+                'saturation': '饱和度',
+                'temperature': '色温',
+                'sharpness': '锐度',
+                'blur': '模糊',
+                'exposure': '曝光',
+                'hue': '色调'
+            };
+
+            return adjustmentNames[adjustment] || adjustment;
+        }
+
+        // 添加到历史记录
+        function addToHistory(action) {
+            // 如果不是在历史记录末尾，清除后面的记录
+            if (historyIndex < history.length - 1) {
+                history = history.slice(0, historyIndex + 1);
+            }
+
+            // 保存当前状态的深拷贝
+            const stateCopy = {
+                filters: [...currentEffects.filters],
+                adjustments: { ...currentEffects.adjustments }
+            };
+
+            // 保存当前状态
+            const state = {
+                action: action,
+                state: stateCopy,
+                dataUrl: canvas.toDataURL()
+            };
+
+            history.push(state);
+            historyIndex = history.length - 1;
+
+            // 更新历史记录UI
+            updateHistoryUI();
+        }
+
+        // 更新最后一条历史记录
+        function updateLastHistory(action) {
+            if (history.length === 0) {
+                addToHistory(action);
+                return;
+            }
+
+            // 更新最后一条记录的操作描述和数据
+            history[historyIndex].action = action;
+            history[historyIndex].state = {
+                filters: [...currentEffects.filters],
+                adjustments: { ...currentEffects.adjustments }
+            };
+            history[historyIndex].dataUrl = canvas.toDataURL();
+
+            // 更新历史记录UI
+            updateHistoryUI();
+        }
+
+        // 更新历史记录UI
+        function updateHistoryUI() {
+            if (history.length === 0) {
+                historyList.innerHTML = '<p class="text-sm text-gray-400 italic text-center">尚未应用任何效果</p>';
+                return;
+            }
+
+            historyList.innerHTML = '';
+
+            history.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = `text-sm p-2 rounded ${index === historyIndex ? 'bg-primary/10 text-primary' : 'hover:bg-gray-100'}`;
+                historyItem.textContent = item.action;
+                historyItem.addEventListener('click', () => jumpToHistory(index));
+                historyList.appendChild(historyItem);
+            });
+
+            // 滚动到最新记录
+            historyList.scrollTop = historyList.scrollHeight;
+        }
+
+        // 跳转到特定历史记录
+        function jumpToHistory(index) {
+            if (index >= 0 && index < history.length) {
+                historyIndex = index;
+
+                // 恢复历史状态
+                currentEffects = {
+                    filters: [...history[index].state.filters],
+                    adjustments: { ...history[index].state.adjustments }
+                };
+
+                // 更新调整滑块
+                adjustmentSliders.forEach(slider => {
+                    const adj = slider.dataset.adjustment;
+                    slider.value = currentEffects.adjustments[adj] || 0;
+                });
+
+                // 更新效果按钮状态
+                effectBtns.forEach(btn => {
+                    const effect = btn.dataset.effect;
+                    if (currentEffects.filters.includes(effect)) {
+                        btn.classList.add('active-effect');
+                    } else {
+                        btn.classList.remove('active-effect');
+                    }
+                });
+
+                // 重新应用所有效果
+                applyAllEffects();
+
+                // 更新UI
+                updateHistoryUI();
+            }
+        }
+
+        // 撤销
+        function undo() {
+            if (historyIndex > 0) {
+                jumpToHistory(historyIndex - 1);
+                showNotification('已撤销', 'info');
+            } else {
+                showNotification('没有可撤销的操作', 'warning');
+            }
+        }
+
+        // 重做
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                jumpToHistory(historyIndex + 1);
+                showNotification('已重做', 'info');
+            } else {
+                showNotification('没有可重做的操作', 'warning');
+            }
+        }
+
+        // 重置效果
+        function resetEffects(skipHistory = false) {
+            if (!originalImage) return;
+
+            // 重置效果和调整
+            currentEffects = {
+                filters: [],
+                adjustments: {
+                    brightness: 0,
+                    contrast: 0,
+                    saturation: 0,
+                    temperature: 0,
+                    sharpness: 0,
+                    blur: 0,
+                    exposure: 0,
+                    hue: 0
+                }
+            };
+
+            // 重置画布
+            canvas.width = originalImage.width;
+            canvas.height = originalImage.height;
+            ctx.drawImage(originalImage, 0, 0);
+
+            // 重置调整滑块
+            adjustmentSliders.forEach(slider => {
+                slider.value = 0;
+            });
+
+            // 重置效果按钮状态
+            effectBtns.forEach(btn => btn.classList.remove('active-effect'));
+
+            // 重置历史记录
+            if (!skipHistory) {
+                history = [];
+                historyIndex = -1;
+                addToHistory('重置所有效果');
+                showNotification('已重置所有效果', 'info');
+            } else {
+                // 初始化历史记录
+                history = [];
+                historyIndex = -1;
+                addToHistory('初始图片');
+            }
+        }
+
+        // 开始新图片
+        function startNewImage() {
+            // 重置状态
+            originalImage = null;
+            canvas.width = 0;
+            canvas.height = 0;
+            previewWrapper.classList.add('hidden');
+            previewPlaceholder.classList.remove('hidden');
+
+            // 重置历史记录
+            history = [];
+            historyIndex = -1;
+            updateHistoryUI();
+
+            // 重置文件输入
+            fileUpload.value = '';
+
+            // 显示初始状态
+            initialState.classList.remove('hidden');
+            editorState.classList.add('hidden');
+
+            showNotification('已准备好处理新图片', 'info');
+        }
+
+        // 下载图片
+        function downloadImage() {
+            if (!canvas || canvas.width === 0 || canvas.height === 0) {
+                showNotification('没有可下载的图片', 'error');
+                return;
+            }
+
+            const format = downloadFormat.value;
+            const quality = parseInt(qualitySlider.value) / 100;
+
+            // 转换画布数据为指定格式
+            let dataUrl;
+            if (format === 'jpeg') {
+                dataUrl = canvas.toDataURL('image/jpeg', quality);
+            } else if (format === 'webp') {
+                dataUrl = canvas.toDataURL('image/webp', quality);
+            } else {
+                dataUrl = canvas.toDataURL('image/png');
+            }
+
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.download = `edited-image.${format}`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showNotification('图片已下载', 'success');
+        }
+
+        // 改变缩放级别
+        function changeZoom(amount) {
+            zoomLevel = Math.max(25, Math.min(400, zoomLevel + amount));
+            updateZoom();
+        }
+
+        // 重置缩放
+        function resetZoom() {
+            zoomLevel = 100;
+            updateZoom();
+        }
+
+        // 更新缩放显示
+        function updateZoom() {
+            zoomLevelDisplay.textContent = `${zoomLevel}%`;
+            canvasElement.style.transform = `scale(${zoomLevel / 100})`;
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            notificationMessage.textContent = message;
+
+            // 设置图标
+            notificationIcon.className = '';
+            switch (type) {
+                case 'success':
+                    notificationIcon.className = 'fa fa-check-circle text-green-400 mr-2';
+                    break;
+                case 'error':
+                    notificationIcon.className = 'fa fa-times-circle text-red-400 mr-2';
+                    break;
+                case 'warning':
+                    notificationIcon.className = 'fa fa-exclamation-triangle text-yellow-400 mr-2';
+                    break;
+                default:
+                    notificationIcon.className = 'fa fa-info-circle text-blue-400 mr-2';
+            }
+
+            // 显示通知
+            notification.classList.remove('translate-y-20', 'opacity-0');
+            notification.classList.add('translate-y-0', 'opacity-100');
+
+            // 3秒后隐藏通知
+            setTimeout(() => {
+                notification.classList.remove('translate-y-0', 'opacity-100');
+                notification.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // 切换主题
+        function toggleTheme() {
+            const icon = themeToggle.querySelector('i');
+            if (icon.classList.contains('fa-moon-o')) {
+                icon.classList.remove('fa-moon-o');
+                icon.classList.add('fa-sun-o');
+                document.body.classList.add('bg-gray-900', 'text-white');
+                document.body.classList.remove('bg-gray-50', 'text-dark');
+                // 更新元素颜色以适应深色模式
+                document.querySelectorAll('.bg-white').forEach(el => {
+                    el.classList.remove('bg-white');
+                    el.classList.add('bg-gray-800');
+                });
+                document.querySelectorAll('.bg-gray-100').forEach(el => {
+                    el.classList.remove('bg-gray-100');
+                    el.classList.add('bg-gray-700');
+                });
+                showNotification('已切换到深色模式', 'info');
+            } else {
+                icon.classList.remove('fa-sun-o');
+                icon.classList.add('fa-moon-o');
+                document.body.classList.remove('bg-gray-900', 'text-white');
+                document.body.classList.add('bg-gray-50', 'text-dark');
+                // 恢复浅色模式颜色
+                document.querySelectorAll('.bg-gray-800').forEach(el => {
+                    el.classList.remove('bg-gray-800');
+                    el.classList.add('bg-white');
+                });
+                document.querySelectorAll('.bg-gray-700').forEach(el => {
+                    el.classList.remove('bg-gray-700');
+                    el.classList.add('bg-gray-100');
+                });
+                showNotification('已切换到浅色模式', 'info');
+            }
+        }
+
+        // 初始化应用
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

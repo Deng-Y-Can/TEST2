@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>正则表达式测试工具</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义主题 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            secondary: '#10B981',
+            danger: '#EF4444',
+            warning: '#F59E0B',
+            dark: '#1E293B',
+            light: '#F8FAFC'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['Fira Code', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .transition-height {
+        transition: max-height 0.3s ease-in-out;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .bg-gradient {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+      }
+      .match-highlight {
+        @apply bg-yellow-200 px-1 rounded font-medium;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-gray-800 min-h-screen flex flex-col">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white shadow-md sticky top-0 z-50 transition-all duration-300">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-code text-primary text-2xl"></i>
+        <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient">正则表达式测试工具</h1>
+      </div>
+      <nav class="hidden md:flex space-x-6">
+        <a href="#tester" class="text-gray-600 hover:text-primary transition-colors duration-200">验证工具</a>
+        <a href="#examples" class="text-gray-600 hover:text-primary transition-colors duration-200">常用示例</a>
+        <a href="#cheatsheet" class="text-gray-600 hover:text-primary transition-colors duration-200">速查表</a>
+      </nav>
+      <button id="mobileMenuBtn" class="md:hidden text-gray-600 hover:text-primary">
+        <i class="fa fa-bars text-xl"></i>
+      </button>
+    </div>
+    
+    <!-- 移动端菜单 -->
+    <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-100">
+      <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+        <a href="#tester" class="py-2 text-gray-600 hover:text-primary transition-colors duration-200">验证工具</a>
+        <a href="#examples" class="py-2 text-gray-600 hover:text-primary transition-colors duration-200">常用示例</a>
+        <a href="#cheatsheet" class="py-2 text-gray-600 hover:text-primary transition-colors duration-200">速查表</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要内容 -->
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <!-- 正则表达式测试器 -->
+    <section id="tester" class="bg-white rounded-xl shadow-lg p-6 mb-10 transform transition-all duration-300 hover:shadow-xl">
+      <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+        <i class="fa fa-search text-primary mr-2"></i>正则表达式验证
+      </h2>
+      
+      <div class="space-y-6">
+        <!-- 正则表达式输入区 -->
+        <div class="space-y-2">
+          <label for="regexInput" class="block text-sm font-medium text-gray-700">正则表达式</label>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <div class="relative flex-grow">
+              <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">/</span>
+              <input 
+                type="text" 
+                id="regexInput" 
+                class="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all duration-200"
+                placeholder="在此输入正则表达式..."
+              >
+              <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">/</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <select id="regexFlags" class="border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all duration-200 bg-white min-w-[140px]">
+                <option value="">无修饰符</option>
+                <option value="i">i (忽略大小写)</option>
+                <option value="g">g (全局匹配)</option>
+                <option value="m">m (多行匹配)</option>
+                <option value="s">s (单行模式)</option>
+                <option value="u">u (Unicode模式)</option>
+                <option value="y">y (粘性匹配)</option>
+                <option value="gi">gi (全局+忽略大小写)</option>
+                <option value="gm">gm (全局+多行)</option>
+              </select>
+            </div>
+          </div>
+          <div id="regexValidation" class="hidden text-sm"></div>
+        </div>
+        
+        <!-- 测试字符串输入区 -->
+        <div class="space-y-2">
+          <label for="testString" class="block text-sm font-medium text-gray-700">测试字符串</label>
+          <textarea 
+            id="testString" 
+            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all duration-200 min-h-[100px]"
+            placeholder="在此输入要测试的字符串..."
+          ></textarea>
+          
+          <!-- 带高亮的测试字符串显示 -->
+          <div id="highlightedString" class="hidden mt-2 p-3 bg-gray-50 rounded-lg font-mono text-sm min-h-[60px] overflow-x-auto"></div>
+        </div>
+        
+        <!-- 按钮区 -->
+        <div class="flex flex-wrap gap-3">
+          <button id="testBtn" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+            <i class="fa fa-check mr-2"></i>验证
+          </button>
+          <button id="clearBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center shadow-sm hover:shadow transform hover:-translate-y-0.5">
+            <i class="fa fa-eraser mr-2"></i>清空
+          </button>
+          <button id="copyBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center shadow-sm hover:shadow transform hover:-translate-y-0.5">
+            <i class="fa fa-copy mr-2"></i>复制结果
+          </button>
+          <button id="explainBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center shadow-sm hover:shadow transform hover:-translate-y-0.5">
+            <i class="fa fa-lightbulb-o mr-2"></i>解释表达式
+          </button>
+        </div>
+        
+        <!-- 结果显示区 -->
+        <div id="results" class="hidden space-y-6">
+          <div class="p-4 rounded-lg border-l-4" id="resultStatus">
+            <!-- 结果状态会动态填充 -->
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 匹配详情 -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-medium text-gray-700 mb-3 flex items-center">
+                <i class="fa fa-list-alt text-primary mr-2"></i>匹配详情
+              </h3>
+              <div id="matchDetails" class="font-mono text-sm space-y-3 max-h-80 overflow-y-auto pr-2">
+                <!-- 匹配详情会动态填充 -->
+              </div>
+            </div>
+            
+            <!-- 分组信息 -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-medium text-gray-700 mb-3 flex items-center">
+                <i class="fa fa-sitemap text-primary mr-2"></i>分组信息
+              </h3>
+              <div id="groupDetails" class="font-mono text-sm space-y-3 max-h-80 overflow-y-auto pr-2">
+                <!-- 分组信息会动态填充 -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- 匹配位置 -->
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h3 class="font-medium text-gray-700 mb-3 flex items-center">
+              <i class="fa fa-map-marker text-primary mr-2"></i>匹配位置
+            </h3>
+            <div id="positionDetails" class="font-mono text-sm space-y-2">
+              <!-- 匹配位置会动态填充 -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 常用正则表达式示例 -->
+    <section id="examples" class="bg-white rounded-xl shadow-lg p-6 mb-10 transform transition-all duration-300 hover:shadow-xl">
+      <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+        <i class="fa fa-list-ul text-primary mr-2"></i>常用正则表达式示例
+      </h2>
+      
+      <!-- 示例分类标签 -->
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button class="example-filter active px-4 py-2 rounded-full text-sm bg-primary text-white" data-category="all">全部</button>
+        <button class="example-filter px-4 py-2 rounded-full text-sm bg-gray-200 hover:bg-gray-300 transition-colors" data-category="basic">基础验证</button>
+        <button class="example-filter px-4 py-2 rounded-full text-sm bg-gray-200 hover:bg-gray-300 transition-colors" data-category="internet">网络相关</button>
+        <button class="example-filter px-4 py-2 rounded-full text-sm bg-gray-200 hover:bg-gray-300 transition-colors" data-category="security">安全相关</button>
+        <button class="example-filter px-4 py-2 rounded-full text-sm bg-gray-200 hover:bg-gray-300 transition-colors" data-category="date">日期时间</button>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- 基础验证 -->
+        <div class="example-item border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-all duration-200 group" data-category="basic">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">邮箱地址</h3>
+            <button class="copy-example text-gray-400 hover:text-primary transition-colors duration-200" data-regex="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+              <i class="fa fa-copy"></i>
+            </button>
+          </div>
+          <div class="font-mono text-sm bg-gray-50 p-3 rounded text-gray-700 mb-3 overflow-x-auto">
+            ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+          </div>
+          <p class="text-sm text-gray-600">匹配标准邮箱格式，如：example@domain.com</p>
+        </div>
+        
+        <div class="example-item border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-all duration-200 group" data-category="basic">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">中国大陆手机号码</h3>
+            <button class="copy-example text-gray-400 hover:text-primary transition-colors duration-200" data-regex="^1[3-9]\d{9}$">
+              <i class="fa fa-copy"></i>
+            </button>
+          </div>
+          <div class="font-mono text-sm bg-gray-50 p-3 rounded text-gray-700 mb-3 overflow-x-auto">
+            ^1[3-9]\d{9}$
+          </div>
+          <p class="text-sm text-gray-600">匹配11位中国大陆手机号，如：13800138000</p>
+        </div>
+        
+        <div class="example-item border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-all duration-200 group" data-category="basic">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">18位身份证号码</h3>
+            <button class="copy-example text-gray-400 hover:text-primary transition-colors duration-200" data-regex="^\d{17}[\dXx]$">
+              <i class="fa fa-copy"></i>
+            </button>
+          </div>
+          <div class="font-mono text-sm bg-gray-50 p-3 rounded text-gray-700 mb-3 overflow-x-auto">
+            ^\d{17}[\dXx]$
+          </div>
+          <p class="text-sm text-gray-600">匹配18位身份证号码，最后一位可以是数字或X</p>
+        </div>
+        
+        <!-- 网络相关 -->
+        <div class="example-item border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-all duration-200 group" data-category="internet">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">URL地址</h3>
+            <button class="copy-example text-gray-400 hover:text-primary transition-colors duration-200" data-regex="^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$">
+              <i class="fa fa-copy"></i>
+            </button>
+          </div>
+          <div class="font-mono text-sm bg-gray-50 p-3 rounded text-gray-700 mb-3 overflow-x-auto">
+            ^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$
+          </div>
+          <p class="text-sm text-gray-600">匹配网址URL，如：https://www.example.com</p>
+        </div>
+        
+        <div class="example-item border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-all duration-200 group" data-category="internet">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">IP地址 (IPv4)</h3>
+            <button class="copy-example text-gray-400 hover:text-primary transition-colors duration-200" data-regex="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
+              <i class="fa fa-copy"></i>
+            </button>
+          </div>
+          <div class="font-mono text-sm bg-gray-50 p-3 rounded text-gray-700 mb-3 overflow-x-auto">
+            ^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$
+          </div>
+          <p class="text-sm text-gray-600">匹配IPv4地址，如：192.168.1.1</p>
+        </div>
+        
+        <!-- 安全相关 -->
+        <div class="example-item border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-all duration-200 group" data-category="security">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">强密码</h3>
+            <button class="copy-example text-gray-400 hover:text-primary transition-colors duration-200" data-regex="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$">
+              <i class="fa fa-copy"></i>
+            </button>
+          </div>
+          <div class="font-mono text-sm bg-gray-50 p-3 rounded text-gray-700 mb-3 overflow-x-auto">
+            ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
+          </div>
+          <p class="text-sm text-gray-600">至少8位，包含大小写字母、数字和特殊字符</p>
+        </div>
+        
+        <!-- 日期时间 -->
+        <div class="example-item border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-all duration-200 group" data-category="date">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">日期 (YYYY-MM-DD)</h3>
+            <button class="copy-example text-gray-400 hover:text-primary transition-colors duration-200" data-regex="^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$">
+              <i class="fa fa-copy"></i>
+            </button>
+          </div>
+          <div class="font-mono text-sm bg-gray-50 p-3 rounded text-gray-700 mb-3 overflow-x-auto">
+            ^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$
+          </div>
+          <p class="text-sm text-gray-600">匹配YYYY-MM-DD格式的日期，如：2025-12-31</p>
+        </div>
+        
+        <div class="example-item border border-gray-200 rounded-lg p-4 hover:border-primary/50 transition-all duration-200 group" data-category="date">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">时间 (HH:MM:SS)</h3>
+            <button class="copy-example text-gray-400 hover:text-primary transition-colors duration-200" data-regex="^(0\d|1\d|2[0-3]):([0-5]\d):([0-5]\d)$">
+              <i class="fa fa-copy"></i>
+            </button>
+          </div>
+          <div class="font-mono text-sm bg-gray-50 p-3 rounded text-gray-700 mb-3 overflow-x-auto">
+            ^(0\d|1\d|2[0-3]):([0-5]\d):([0-5]\d)$
+          </div>
+          <p class="text-sm text-gray-600">匹配HH:MM:SS格式的时间，如：14:30:45</p>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 正则表达式速查表 -->
+    <section id="cheatsheet" class="bg-white rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
+      <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+        <i class="fa fa-book text-primary mr-2"></i>正则表达式速查表
+      </h2>
+      
+      <!-- 速查表标签页 -->
+      <div class="border-b border-gray-200 mb-6">
+        <ul class="flex flex-wrap -mb-px" id="cheatsheetTabs" role="tablist">
+          <li class="mr-2" role="presentation">
+            <button class="cheatsheet-tab active inline-block p-4 border-b-2 border-primary text-primary rounded-t-lg" id="basic-tab" data-tab="basic">基本语法</button>
+          </li>
+          <li class="mr-2" role="presentation">
+            <button class="cheatsheet-tab inline-block p-4 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 rounded-t-lg" id="characters-tab" data-tab="characters">字符类</button>
+          </li>
+          <li class="mr-2" role="presentation">
+            <button class="cheatsheet-tab inline-block p-4 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 rounded-t-lg" id="quantifiers-tab" data-tab="quantifiers">量词</button>
+          </li>
+          <li class="mr-2" role="presentation">
+            <button class="cheatsheet-tab inline-block p-4 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 rounded-t-lg" id="flags-tab" data-tab="flags">修饰符</button>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- 速查表内容 -->
+      <div class="cheatsheet-content" id="basic-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">基础符号</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">表达式</th>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">描述</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">.</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配任意单个字符，除了换行符</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">^</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配输入的开始</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">$</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配输入的结束</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">\</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">转义字符，用于匹配特殊字符</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">|</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配左右任意一个表达式</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">()</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">分组，将多个表达式组成一个单元</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">[]</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">字符集，匹配其中任意一个字符</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">位置匹配</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">表达式</th>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">描述</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">\b</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">单词边界，匹配单词的开始或结束</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">\B</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">非单词边界，匹配非单词的开始或结束</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">(?=pattern)</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">正向先行断言，匹配后面紧跟pattern的位置</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">(?!pattern)</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">负向先行断言，匹配后面不紧跟pattern的位置</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <div class="cheatsheet-content hidden" id="characters-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">字符类</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">表达式</th>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">描述</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">[abc]</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配a、b或c中的任意一个</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">[^abc]</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配除a、b、c之外的任意字符</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">[a-z]</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配任意小写字母</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">[A-Z]</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配任意大写字母</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">[0-9]</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配任意数字</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">[a-zA-Z0-9]</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配任意字母或数字</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">预定义字符类</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">表达式</th>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">描述</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">\d</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配任意数字，等同于[0-9]</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">\D</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配任意非数字字符，等同于[^0-9]</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">\w</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配字母、数字或下划线，等同于[a-zA-Z0-9_]</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">\W</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配非字母、数字或下划线的字符</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">\s</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配任意空白字符（空格、制表符、换行等）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">\S</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配任意非空白字符</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <div class="cheatsheet-content hidden" id="quantifiers-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">基本量词</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">表达式</th>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">描述</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">*</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素零次或多次（贪婪模式）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">+</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素一次或多次（贪婪模式）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">?</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素零次或一次（贪婪模式）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">{n}</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素恰好n次</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">{n,}</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素至少n次（贪婪模式）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">{n,m}</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素至少n次，最多m次（贪婪模式）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">非贪婪量词</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">表达式</th>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">描述</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">*?</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素零次或多次（非贪婪模式）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">+?</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素一次或多次（非贪婪模式）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">??</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素零次或一次（非贪婪模式）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">{n}?</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素恰好n次（非贪婪模式）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">{n,}?</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素至少n次（非贪婪模式）</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">{n,m}?</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">匹配前面的元素至少n次，最多m次（非贪婪模式）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <div class="cheatsheet-content hidden" id="flags-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">修饰符（标志）</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">标志</th>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">描述</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">i</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">忽略大小写，匹配不区分大小写</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">g</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">全局匹配，找到所有匹配项而不是第一个</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">m</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">多行模式，^匹配行首，$匹配行尾</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">s</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">单行模式，.匹配包括换行符在内的任意字符</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">u</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">Unicode模式，正确处理Unicode字符</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">y</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">粘性匹配，只从正则表达式的lastIndex位置开始匹配</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">修饰符组合示例</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">组合</th>
+                  <th class="px-3 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">描述</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">gi</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">全局匹配 + 忽略大小写</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">gm</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">全局匹配 + 多行模式</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono text-sm text-gray-700">gms</td>
+                  <td class="px-3 py-2 text-sm text-gray-600">全局匹配 + 多行模式 + 单行模式</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-dark text-white py-8 mt-10">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <div class="flex items-center space-x-2">
+            <i class="fa fa-code text-primary text-xl"></i>
+            <span class="font-bold text-lg">正则表达式测试工具</span>
+          </div>
+          <p class="text-gray-400 text-sm mt-2">一个功能强大的在线正则表达式验证工具</p>
+        </div>
+        
+        <div class="flex space-x-6">
+          <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
+            <i class="fa fa-github text-xl"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
+            <i class="fa fa-twitter text-xl"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
+            <i class="fa fa-linkedin text-xl"></i>
+          </a>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+        &copy; 2025 正则表达式测试工具 | Candy
+      </div>
+    </div>
+  </footer>
+  
+  <!-- 通知提示 -->
+  <div id="notification" class="fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center z-50">
+    <i id="notificationIcon" class="mr-2"></i>
+    <span id="notificationText"></span>
+  </div>
+
+  <!-- 解释弹窗 -->
+  <div id="explainModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xl font-bold text-gray-800">正则表达式解释</h3>
+          <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+      <div class="p-6" id="explainContent">
+        <!-- 解释内容将动态填充 -->
+      </div>
+      <div class="p-4 bg-gray-50 rounded-b-xl flex justify-end">
+        <button id="closeModalBtn2" class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200">
+          关闭
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // DOM元素引用 - 确保所有元素都能正确获取
+    const regexInput = document.getElementById('regexInput');
+    const regexFlags = document.getElementById('regexFlags');
+    const testString = document.getElementById('testString');
+    const testBtn = document.getElementById('testBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const explainBtn = document.getElementById('explainBtn');
+    const results = document.getElementById('results');
+    const resultStatus = document.getElementById('resultStatus');
+    const matchDetails = document.getElementById('matchDetails');
+    const groupDetails = document.getElementById('groupDetails');
+    const positionDetails = document.getElementById('positionDetails');
+    const regexValidation = document.getElementById('regexValidation');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const notification = document.getElementById('notification');
+    const notificationIcon = document.getElementById('notificationIcon');
+    const notificationText = document.getElementById('notificationText');
+    const copyExampleBtns = document.querySelectorAll('.copy-example');
+    const highlightedString = document.getElementById('highlightedString');
+    const exampleFilters = document.querySelectorAll('.example-filter');
+    const exampleItems = document.querySelectorAll('.example-item');
+    const cheatsheetTabs = document.querySelectorAll('.cheatsheet-tab');
+    const cheatsheetContents = document.querySelectorAll('.cheatsheet-content');
+    const explainModal = document.getElementById('explainModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const closeModalBtn2 = document.getElementById('closeModalBtn2');
+    const explainContent = document.getElementById('explainContent');
+    
+    // 移动端菜单切换 - 修复菜单切换功能
+    mobileMenuBtn.addEventListener('click', () => {
+      if (mobileMenu) {
+        mobileMenu.classList.toggle('hidden');
+        const icon = mobileMenuBtn.querySelector('i');
+        if (icon) {
+          if (mobileMenu.classList.contains('hidden')) {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+          } else {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+          }
+        }
+      }
+    });
+    
+    // 平滑滚动 - 确保锚点导航正常工作
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        // 关闭移动菜单（如果打开）
+        if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+          mobileMenu.classList.add('hidden');
+          const icon = mobileMenuBtn.querySelector('i');
+          if (icon) {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+          }
+        }
+        
+        const targetId = this.getAttribute('href');
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+    
+    // 示例过滤功能 - 修复分类筛选
+    exampleFilters.forEach(filter => {
+      filter.addEventListener('click', () => {
+        // 更新活跃状态
+        exampleFilters.forEach(f => {
+          f.classList.remove('active', 'bg-primary', 'text-white');
+          f.classList.add('bg-gray-200', 'hover:bg-gray-300');
+        });
+        filter.classList.add('active', 'bg-primary', 'text-white');
+        filter.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+        
+        const category = filter.getAttribute('data-category');
+        
+        // 过滤示例
+        exampleItems.forEach(item => {
+          if (category === 'all' || item.getAttribute('data-category') === category) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+    });
+    
+    // 速查表标签切换 - 修复标签页切换
+    cheatsheetTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // 更新标签活跃状态
+        cheatsheetTabs.forEach(t => {
+          t.classList.remove('active', 'border-primary', 'text-primary');
+          t.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+        });
+        tab.classList.add('active', 'border-primary', 'text-primary');
+        tab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+        
+        // 显示对应内容
+        const tabId = tab.getAttribute('data-tab');
+        cheatsheetContents.forEach(content => {
+          content.classList.add('hidden');
+        });
+        const targetContent = document.getElementById(`${tabId}-content`);
+        if (targetContent) {
+          targetContent.classList.remove('hidden');
+        }
+      });
+    });
+    
+    // 验证正则表达式格式
+    function validateRegex(regex, flags) {
+      try {
+        new RegExp(regex, flags);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    // 显示正则表达式验证状态
+    function showRegexValidation(isValid, message) {
+      if (regexValidation) {
+        regexValidation.classList.remove('hidden', 'text-danger', 'text-secondary');
+        if (isValid) {
+          regexValidation.classList.add('text-secondary');
+          regexValidation.classList.remove('text-danger');
+          regexValidation.innerHTML = `<i class="fa fa-check-circle mr-1"></i> ${message}`;
+        } else {
+          regexValidation.classList.add('text-danger');
+          regexValidation.classList.remove('text-secondary');
+          regexValidation.innerHTML = `<i class="fa fa-exclamation-circle mr-1"></i> ${message}`;
+        }
+      }
+    }
+    
+    // 高亮显示匹配的文本
+    function highlightMatches(str, regex) {
+      if (!str || !regex) return '';
+      
+      let highlighted = '';
+      let lastIndex = 0;
+      
+      // 创建一个带全局标志的正则表达式用于查找所有匹配
+      const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g';
+      const globalRegex = new RegExp(regex.source, flags);
+      
+      let match;
+      while ((match = globalRegex.exec(str)) !== null) {
+        // 添加非匹配部分
+        highlighted += str.substring(lastIndex, match.index);
+        
+        // 添加匹配部分（高亮）
+        highlighted += `<span class="match-highlight">${escapeHtml(match[0])}</span>`;
+        
+        lastIndex = globalRegex.lastIndex;
+        
+        // 处理零宽度匹配，避免无限循环
+        if (match[0].length === 0) {
+          globalRegex.lastIndex++;
+        }
+      }
+      
+      // 添加剩余部分
+      highlighted += str.substring(lastIndex);
+      
+      return highlighted;
+    }
+    
+    // HTML转义函数，防止XSS和格式问题
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    
+    // 测试正则表达式匹配 - 修复核心验证功能
+    function testRegex() {
+      if (!regexInput || !regexFlags || !testString) return;
+      
+      const regex = regexInput.value.trim();
+      const flags = regexFlags.value;
+      
+      // 验证正则表达式格式
+      if (!validateRegex(regex, flags)) {
+        showRegexValidation(false, '无效的正则表达式格式');
+        if (results) results.classList.add('hidden');
+        if (highlightedString) highlightedString.classList.add('hidden');
+        return;
+      }
+      
+      showRegexValidation(true, '正则表达式格式有效');
+      
+      const str = testString.value;
+      let regExp;
+      try {
+        regExp = new RegExp(regex, flags);
+      } catch (e) {
+        showNotification('正则表达式错误: ' + e.message, 'error');
+        return;
+      }
+      
+      const isMatch = regExp.test(str);
+      
+      // 重置lastIndex，确保后续匹配正确
+      regExp.lastIndex = 0;
+      
+      // 获取所有匹配（处理全局和非全局情况）
+      let matches = [];
+      if (flags.includes('g')) {
+        let match;
+        while ((match = regExp.exec(str)) !== null) {
+          matches.push(match);
+          // 处理零宽度匹配，避免无限循环
+          if (match[0].length === 0) {
+            regExp.lastIndex++;
+          }
+        }
+      } else {
+        const match = regExp.exec(str);
+        if (match) {
+          matches.push(match);
+        }
+      }
+      
+      // 显示结果状态
+      if (resultStatus) {
+        resultStatus.className = '';
+        if (isMatch) {
+          resultStatus.classList.add('bg-green-50', 'border-green-500', 'text-green-800');
+          resultStatus.innerHTML = `
+            <div class="flex items-center">
+              <i class="fa fa-check-circle text-green-500 mr-2"></i>
+              <h3 class="font-medium">匹配成功</h3>
+            </div>
+            <p class="mt-1 text-sm">测试字符串与正则表达式匹配，共找到 ${matches.length} 个匹配项</p>
+          `;
+        } else {
+          resultStatus.classList.add('bg-red-50', 'border-red-500', 'text-red-800');
+          resultStatus.innerHTML = `
+            <div class="flex items-center">
+              <i class="fa fa-times-circle text-red-500 mr-2"></i>
+              <h3 class="font-medium">匹配失败</h3>
+            </div>
+            <p class="mt-1 text-sm">测试字符串与正则表达式不匹配</p>
+          `;
+        }
+      }
+      
+      // 显示匹配详情
+      if (matchDetails) {
+        matchDetails.innerHTML = '';
+        if (matches.length > 0) {
+          matches.forEach((match, index) => {
+            const matchEl = document.createElement('div');
+            matchEl.classList.add('p-2', 'bg-gray-100', 'rounded', 'relative');
+            
+            // 处理空匹配的情况
+            const displayValue = match[0] === '' ? '<span class="text-gray-500 italic">(空匹配)</span>' : escapeHtml(match[0]);
+            
+            matchEl.innerHTML = `
+              <span class="absolute -left-1 -top-1 bg-primary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">${index + 1}</span>
+              <div class="ml-4 break-all">${displayValue}</div>
+            `;
+            matchDetails.appendChild(matchEl);
+          });
+        } else {
+          matchDetails.innerHTML = '<div class="text-gray-500 italic">未找到匹配项</div>';
+        }
+      }
+      
+      // 显示分组信息
+      if (groupDetails) {
+        groupDetails.innerHTML = '';
+        if (matches.length > 0) {
+          let hasGroups = false;
+          
+          matches.forEach((match, matchIndex) => {
+            if (match.length > 1) {
+              hasGroups = true;
+              const groupContainer = document.createElement('div');
+              groupContainer.classList.add('mb-3', 'pb-3', 'border-b', 'border-gray-200', 'last:border-0', 'last:mb-0', 'last:pb-0');
+              
+              groupContainer.innerHTML = `<div class="font-medium text-gray-800 mb-2">匹配项 ${matchIndex + 1} 的分组:</div>`;
+              
+              for (let i = 1; i < match.length; i++) {
+                const groupEl = document.createElement('div');
+                groupEl.classList.add('p-2', 'bg-gray-100', 'rounded', 'ml-4', 'mb-2');
+                
+                // 处理未匹配的分组
+                const groupValue = match[i] === undefined ? '<span class="text-gray-500 italic">(未匹配)</span>' : 
+                                   match[i] === '' ? '<span class="text-gray-500 italic">(空匹配)</span>' : escapeHtml(match[i]);
+                
+                groupEl.innerHTML = `
+                  <div class="text-xs text-gray-500 mb-1">分组 ${i}</div>
+                  <div class="break-all">${groupValue}</div>
+                `;
+                groupContainer.appendChild(groupEl);
+              }
+              
+              groupDetails.appendChild(groupContainer);
+            }
+          });
+          
+          if (!hasGroups) {
+            groupDetails.innerHTML = '<div class="text-gray-500 italic">该正则表达式没有捕获分组，或分组未匹配到内容</div>';
+          }
+        } else {
+          groupDetails.innerHTML = '<div class="text-gray-500 italic">未找到匹配项，因此没有分组信息</div>';
+        }
+      }
+      
+      // 显示匹配位置
+      if (positionDetails) {
+        positionDetails.innerHTML = '';
+        if (matches.length > 0) {
+          const positionsList = document.createElement('div');
+          positionsList.classList.add('grid', 'grid-cols-1', 'sm:grid-cols-2', 'gap-3');
+          
+          matches.forEach((match, index) => {
+            const positionEl = document.createElement('div');
+            positionEl.classList.add('p-2', 'bg-gray-100', 'rounded');
+            
+            // 计算结束位置
+            const endIndex = match.index + match[0].length;
+            
+            positionEl.innerHTML = `
+              <div class="font-medium text-sm mb-1">匹配项 ${index + 1}</div>
+              <div class="text-sm">开始位置: <span class="font-medium">${match.index}</span></div>
+              <div class="text-sm">结束位置: <span class="font-medium">${endIndex}</span></div>
+              <div class="text-sm">长度: <span class="font-medium">${match[0].length}</span></div>
+            `;
+            positionsList.appendChild(positionEl);
+          });
+          
+          positionDetails.appendChild(positionsList);
+        } else {
+          positionDetails.innerHTML = '<div class="text-gray-500 italic">未找到匹配项，因此没有位置信息</div>';
+        }
+      }
+      
+      // 显示高亮的测试字符串
+      if (highlightedString) {
+        highlightedString.classList.remove('hidden');
+        highlightedString.innerHTML = highlightMatches(str, regExp) || '<div class="text-gray-500 italic">测试字符串为空</div>';
+      }
+      
+      // 显示结果区域
+      if (results) results.classList.remove('hidden');
+      
+      // 平滑滚动到结果区域
+      if (results) {
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+    
+    // 清空输入 - 修复清空功能
+    function clearInputs() {
+      if (regexInput) regexInput.value = '';
+      if (regexFlags) regexFlags.value = '';
+      if (testString) testString.value = '';
+      if (results) results.classList.add('hidden');
+      if (regexValidation) regexValidation.classList.add('hidden');
+      if (highlightedString) highlightedString.classList.add('hidden');
+      
+      // 聚焦到正则表达式输入框
+      if (regexInput) regexInput.focus();
+      
+      showNotification('已清空所有输入', 'success');
+    }
+    
+    // 复制结果 - 修复复制功能
+    function copyResults() {
+      if (results && results.classList.contains('hidden')) {
+        showNotification('没有可复制的结果', 'error');
+        return;
+      }
+      
+      let resultText = '';
+      if (resultStatus && resultStatus.querySelector('p')) {
+        const statusText = resultStatus.querySelector('p').textContent;
+        resultText += `状态: ${statusText}\n\n`;
+      }
+      
+      // 添加匹配详情
+      resultText += '匹配详情:\n';
+      if (matchDetails) {
+        const matches = matchDetails.querySelectorAll('div[class*="bg-gray-100"]');
+        if (matches.length > 0) {
+          matches.forEach((match, index) => {
+            const textEl = match.querySelector('div');
+            if (textEl) {
+              let text = textEl.textContent;
+              // 处理空匹配的显示文本
+              if (text.includes('(空匹配)')) text = '';
+              resultText += `${index + 1}. ${text}\n`;
+            }
+          });
+        } else {
+          resultText += '无匹配项\n';
+        }
+      }
+      
+      // 添加分组信息（如果有）
+      if (groupDetails) {
+        const groupContainers = groupDetails.querySelectorAll('div[class*="border-b"]');
+        if (groupContainers.length > 0) {
+          resultText += '\n分组信息:\n';
+          groupContainers.forEach((container, matchIndex) => {
+            resultText += `匹配项 ${matchIndex + 1} 的分组:\n`;
+            const groups = container.querySelectorAll('div[class*="bg-gray-100"]');
+            groups.forEach((group, groupIndex) => {
+              const textEl = group.querySelector('div:last-child');
+              if (textEl) {
+                let text = textEl.textContent;
+                // 处理空匹配的显示文本
+                if (text.includes('(空匹配)')) text = '';
+                else if (text.includes('(未匹配)')) text = '未匹配';
+                resultText += `  分组 ${groupIndex + 1}: ${text}\n`;
+              }
+            });
+          });
+        }
+      }
+      
+      // 添加位置信息
+      resultText += '\n匹配位置:\n';
+      if (positionDetails) {
+        const positionEls = positionDetails.querySelectorAll('div[class*="bg-gray-100"]');
+        if (positionEls.length > 0) {
+          positionEls.forEach((pos, index) => {
+            const lines = pos.querySelectorAll('div:not(.font-medium)');
+            resultText += `匹配项 ${index + 1}:\n`;
+            lines.forEach(line => {
+              if (line) resultText += `  ${line.textContent}\n`;
+            });
+          });
+        } else {
+          resultText += '无位置信息\n';
+        }
+      }
+      
+      // 执行复制操作
+      navigator.clipboard.writeText(resultText).then(() => {
+        showNotification('结果已复制到剪贴板', 'success');
+      }).catch(err => {
+        showNotification('复制失败，请手动复制', 'error');
+        console.error('复制失败:', err);
+      });
+    }
+    
+    // 解释正则表达式 - 修复解释功能
+    function explainRegex() {
+      if (!regexInput || !regexFlags) return;
+      
+      const regex = regexInput.value.trim();
+      const flags = regexFlags.value;
+      
+      // 验证正则表达式格式
+      if (!validateRegex(regex, flags)) {
+        showNotification('请输入有效的正则表达式', 'error');
+        return;
+      }
+      
+      // 简单的正则表达式解释器
+      let explanation = `<div class="space-y-4">`;
+      
+      // 添加基本信息
+      explanation += `
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <div class="font-medium mb-2">正则表达式:</div>
+          <div class="font-mono text-sm">/${escapeHtml(regex)}/${flags}</div>
+        </div>
+      `;
+      
+      // 解释修饰符
+      if (flags) {
+        explanation += `
+          <div>
+            <h4 class="font-medium text-gray-800 mb-2">修饰符解释:</h4>
+            <ul class="list-disc pl-5 space-y-1 text-gray-700">
+        `;
+        
+        if (flags.includes('i')) {
+          explanation += `<li>i: 忽略大小写，匹配不区分大小写</li>`;
+        }
+        if (flags.includes('g')) {
+          explanation += `<li>g: 全局匹配，找到所有匹配项而不是第一个</li>`;
+        }
+        if (flags.includes('m')) {
+          explanation += `<li>m: 多行模式，^匹配行首，$匹配行尾</li>`;
+        }
+        if (flags.includes('s')) {
+          explanation += `<li>s: 单行模式，.匹配包括换行符在内的任意字符</li>`;
+        }
+        if (flags.includes('u')) {
+          explanation += `<li>u: Unicode模式，正确处理Unicode字符</li>`;
+        }
+        if (flags.includes('y')) {
+          explanation += `<li>y: 粘性匹配，只从正则表达式的lastIndex位置开始匹配</li>`;
+        }
+        
+        explanation += `
+            </ul>
+          </div>
+        `;
+      }
+      
+      // 简单解释正则表达式结构
+      explanation += `
+        <div>
+          <h4 class="font-medium text-gray-800 mb-2">表达式解释:</h4>
+          <div class="p-3 bg-gray-50 rounded-lg text-gray-700 text-sm">
+      `;
+      
+      // 处理常见模式的简单解释
+      if (regex === '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$') {
+        explanation += `
+          这是一个邮箱地址验证表达式:
+          <ul class="list-disc pl-5 mt-2 space-y-1">
+            <li>^: 匹配输入的开始</li>
+            <li>[a-zA-Z0-9._%+-]+: 匹配邮箱用户名部分，允许字母、数字和特定符号</li>
+            <li>@: 匹配@符号</li>
+            <li>[a-zA-Z0-9.-]+: 匹配域名部分</li>
+            <li>\\.: 匹配点号</li>
+            <li>[a-zA-Z]{2,}: 匹配顶级域名，如com、org等，至少2个字母</li>
+            <li>$: 匹配输入的结束</li>
+          </ul>
+        `;
+      } else if (regex === '^1[3-9]\\d{9}$') {
+        explanation += `
+          这是一个中国大陆手机号码验证表达式:
+          <ul class="list-disc pl-5 mt-2 space-y-1">
+            <li>^: 匹配输入的开始</li>
+            <li>1: 第一位固定为1</li>
+            <li>[3-9]: 第二位为3-9中的任意数字</li>
+            <li>\\d{9}: 后面跟9位数字</li>
+            <li>$: 匹配输入的结束</li>
+          </ul>
+          <p class="mt-2">总长度为11位数字，符合中国大陆手机号码规则</p>
+        `;
+      } else {
+        // 通用解释
+        explanation += `
+          该正则表达式的基本结构如下:
+          <ul class="list-disc pl-5 mt-2 space-y-1">
+            <li>^: 表示匹配输入的开始位置（如果有此符号）</li>
+            <li>$: 表示匹配输入的结束位置（如果有此符号）</li>
+            <li>.: 匹配任意单个字符（除了换行符）</li>
+            <li>*: 匹配前面的元素零次或多次</li>
+            <li>+: 匹配前面的元素一次或多次</li>
+            <li>?: 匹配前面的元素零次或一次</li>
+            <li>[]: 字符集，匹配其中任意一个字符</li>
+            <li>(): 分组，将多个表达式组成一个单元</li>
+          </ul>
+        `;
+      }
+      
+      explanation += `
+          </div>
+        </div>
+      </div>
+      `;
+      
+      // 显示弹窗
+      if (explainContent) explainContent.innerHTML = explanation;
+      if (explainModal) {
+        explainModal.classList.remove('hidden');
+        // 阻止背景滚动
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    
+    // 关闭弹窗
+    function closeModal() {
+      if (explainModal) {
+        explainModal.classList.add('hidden');
+        document.body.style.overflow = ''; // 恢复滚动
+      }
+    }
+    
+    // 复制示例正则表达式 - 修复示例复制功能
+    function setupCopyExamples() {
+      copyExampleBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const regex = this.getAttribute('data-regex');
+          if (regexInput && regex) {
+            regexInput.value = regex;
+            if (regexValidation) regexValidation.classList.add('hidden');
+            
+            // 滚动到正则表达式输入框
+            if (regexInput) {
+              regexInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              
+              // 高亮显示输入框
+              regexInput.classList.add('ring-2', 'ring-primary');
+              setTimeout(() => {
+                regexInput.classList.remove('ring-2', 'ring-primary');
+              }, 1000);
+            }
+            
+            showNotification('正则表达式已复制到输入框', 'success');
+          }
+        });
+      });
+    }
+    
+    // 显示通知 - 修复通知功能
+    function showNotification(message, type = 'info') {
+      if (!notification || !notificationText || !notificationIcon) return;
+      
+      notificationText.textContent = message;
+      
+      // 设置图标和样式
+      notificationIcon.className = '';
+      notification.className = 'fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-y-0 opacity-100 transition-all duration-300 flex items-center z-50';
+      
+      if (type === 'success') {
+        notification.classList.add('bg-green-50', 'text-green-800', 'border', 'border-green-200');
+        notificationIcon.classList.add('fa', 'fa-check-circle', 'text-green-500');
+      } else if (type === 'error') {
+        notification.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
+        notificationIcon.classList.add('fa', 'fa-exclamation-circle', 'text-red-500');
+      } else {
+        notification.classList.add('bg-blue-50', 'text-blue-800', 'border', 'border-blue-200');
+        notificationIcon.classList.add('fa', 'fa-info-circle', 'text-blue-500');
+      }
+      
+      // 3秒后隐藏通知
+      setTimeout(() => {
+        notification.classList.remove('translate-y-0', 'opacity-100');
+        notification.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+    
+    // 输入框实时验证
+    if (regexInput) {
+      regexInput.addEventListener('input', () => {
+        const regex = regexInput.value.trim();
+        const flags = regexFlags ? regexFlags.value : '';
+        
+        if (regex === '') {
+          if (regexValidation) regexValidation.classList.add('hidden');
+          return;
+        }
+        
+        if (validateRegex(regex, flags)) {
+          showRegexValidation(true, '正则表达式格式有效');
+        } else {
+          showRegexValidation(false, '无效的正则表达式格式');
+        }
+      });
+    }
+    
+    if (regexFlags) {
+      regexFlags.addEventListener('change', () => {
+        if (regexInput && regexInput.value.trim() !== '') {
+          regexInput.dispatchEvent(new Event('input'));
+        }
+      });
+    }
+    
+    // 事件监听 - 确保所有按钮点击事件正确绑定
+    if (testBtn) testBtn.addEventListener('click', testRegex);
+    if (clearBtn) clearBtn.addEventListener('click', clearInputs);
+    if (copyBtn) copyBtn.addEventListener('click', copyResults);
+    if (explainBtn) explainBtn.addEventListener('click', explainRegex);
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+    if (closeModalBtn2) closeModalBtn2.addEventListener('click', closeModal);
+    
+    // 点击弹窗外部关闭弹窗
+    if (explainModal) {
+      explainModal.addEventListener('click', (e) => {
+        if (e.target === explainModal) {
+          closeModal();
+        }
+      });
+    }
+    
+    // 键盘快捷键
+    document.addEventListener('keydown', (e) => {
+      // Ctrl+Enter 或 Cmd+Enter 触发验证
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        testRegex();
+      }
+      
+      // ESC 清空输入或关闭弹窗
+      if (e.key === 'Escape') {
+        if (explainModal && !explainModal.classList.contains('hidden')) {
+          closeModal();
+        } else {
+          clearInputs();
+        }
+      }
+    });
+    
+    // 初始化 - 确保页面加载完成后初始化功能
+    document.addEventListener('DOMContentLoaded', () => {
+      // 设置示例复制功能
+      setupCopyExamples();
+      
+      // 设置默认示例
+      if (regexInput) {
+        regexInput.value = '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$';
+      }
+      if (testString) {
+        testString.value = 'example@domain.com';
+      }
+      
+      // 自动验证默认正则表达式
+      if (regexInput) {
+        regexInput.dispatchEvent(new Event('input'));
+      }
+      
+      // 验证所有关键元素是否加载成功
+      const criticalElements = [
+        regexInput, testString, testBtn, results
+      ];
+      
+      const allLoaded = criticalElements.every(el => el !== null);
+      if (!allLoaded) {
+        console.warn('部分关键元素未加载成功，可能影响功能');
+      }
+    });
+  </script>
+</body>
+</html>

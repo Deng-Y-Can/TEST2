@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纯前端C#代码运行器</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入代码编辑器 -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
+    
+    <!-- 配置Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007ACC', // VS Code蓝色
+                        secondary: '#5E6AD2',
+                        dark: '#1E1E1E',
+                        light: '#F8F9FA',
+                        success: '#36D399',
+                        error: '#F87272',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['Consolas', 'Monaco', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .editor-shadow {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-code text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-gray-800">CS<span class="text-primary">Front</span>Runner</h1>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-gray-600 hover:text-primary transition-all-300">
+                    <i class="fa fa-book mr-1"></i> 支持的特性
+                </a>
+                <a href="#" class="text-gray-600 hover:text-primary transition-all-300">
+                    <i class="fa fa-exclamation-circle mr-1"></i> 限制说明
+                </a>
+            </div>
+            
+            <button class="md:hidden text-gray-600" id="mobileMenuBtn">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-100 px-4 py-2">
+            <a href="#" class="block py-2 text-gray-600 hover:text-primary">
+                <i class="fa fa-book mr-1"></i> 支持的特性
+            </a>
+            <a href="#" class="block py-2 text-gray-600 hover:text-primary">
+                <i class="fa fa-exclamation-circle mr-1"></i> 限制说明
+            </a>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <!-- 代码编辑区和结果区容器 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 代码编辑区域 -->
+            <div class="flex flex-col h-[calc(100vh-12rem)] md:h-[calc(100vh-10rem)]">
+                <div class="bg-white rounded-t-lg border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+                    <h2 class="font-semibold text-gray-800">C#代码编辑器</h2>
+                    <div class="flex space-x-2">
+                        <button id="resetBtn" class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-all-300">
+                            <i class="fa fa-refresh mr-1"></i> 重置
+                        </button>
+                        <button id="runBtn" class="px-4 py-1 text-sm bg-primary text-white hover:bg-primary/90 rounded transition-all-300 flex items-center">
+                            <i class="fa fa-play mr-1"></i> 运行
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="editorContainer" class="flex-grow bg-dark rounded-b-lg overflow-hidden editor-shadow"></div>
+                
+                <div class="mt-4 bg-white p-3 rounded-lg shadow-sm">
+                    <h3 class="font-medium text-gray-700 mb-2">快速示例</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button class="example-btn px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-all-300" data-example="hello">
+                             基础输出
+                        </button>
+                        <button class="example-btn px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-all-300" data-example="math">
+                            数学计算
+                        </button>
+                        <button class="example-btn px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-all-300" data-example="array">
+                            数组操作
+                        </button>
+                        <button class="example-btn px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-all-300" data-example="class">
+                            类与对象
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 结果显示区域 -->
+            <div class="flex flex-col h-[calc(100vh-12rem)] md:h-[calc(100vh-10rem)]">
+                <!-- 结果标签页 -->
+                <div class="bg-white rounded-t-lg border-b border-gray-200 flex">
+                    <button id="outputTab" class="tab-btn active px-4 py-3 font-medium text-primary border-b-2 border-primary">
+                        <i class="fa fa-terminal mr-1"></i> 输出
+                    </button>
+                    <button id="errorsTab" class="tab-btn px-4 py-3 font-medium text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-exclamation-triangle mr-1"></i> 错误
+                    </button>
+                    <button id="jsTab" class="tab-btn px-4 py-3 font-medium text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-code mr-1"></i> 转换后的JS
+                    </button>
+                </div>
+                
+                <!-- 输出区域 -->
+                <div id="outputContainer" class="flex-grow bg-dark text-gray-100 p-4 rounded-b-lg overflow-auto font-mono text-sm editor-shadow">
+                    <div class="text-gray-400 italic">程序输出将显示在这里...</div>
+                </div>
+                
+                <!-- 错误区域 (默认隐藏) -->
+                <div id="errorsContainer" class="flex-grow bg-dark text-error p-4 rounded-b-lg overflow-auto font-mono text-sm editor-shadow hidden">
+                    <div class="text-gray-400 italic">错误信息将显示在这里...</div>
+                </div>
+                
+                <!-- 转换后的JS代码区域 (默认隐藏) -->
+                <div id="jsContainer" class="flex-grow bg-dark text-gray-100 p-4 rounded-b-lg overflow-auto font-mono text-sm editor-shadow hidden">
+                    <div class="text-gray-400 italic">转换后的JavaScript代码将显示在这里...</div>
+                </div>
+                
+                <!-- 执行信息 -->
+                <div class="mt-4 bg-white p-3 rounded-lg shadow-sm">
+                    <div class="flex flex-wrap justify-between text-sm">
+                        <div class="mb-2 sm:mb-0">
+                            <span class="text-gray-500">执行环境:</span>
+                            <span class="ml-1 font-medium">JavaScript模拟C#执行</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">执行时间:</span>
+                            <span id="executionTime" class="ml-1 font-medium">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500">
+                        <i class="fa fa-info-circle mr-1"></i> 注意：支持基础C#语法，需包含Program类和Main方法作为入口。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-gray-300 py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-sm">© 2023 CSFrontRunner - 纯前端C#代码运行器</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 运行中加载动画 (默认隐藏) -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mr-4"></div>
+            <p class="font-medium">正在解析和执行代码...</p>
+        </div>
+    </div>
+
+    <!-- C#到JavaScript转换执行引擎 -->
+    <script>
+        // 改进的C#语法解析和执行器
+        const CSharpExecutor = {
+            // 检查代码是否包含必要的Program类和Main方法
+            validateStructure: function(csharpCode) {
+                if (!csharpCode.includes('public class Program')) {
+                    return { valid: false, message: '代码必须包含public class Program定义' };
+                }
+                
+                if (!csharpCode.includes('public static void Main()')) {
+                    return { valid: false, message: 'Program类中必须包含public static void Main()方法作为入口' };
+                }
+                
+                return { valid: true };
+            },
+            
+            // 转换C#代码为JavaScript
+            convertToJavaScript: function(csharpCode) {
+                let jsCode = csharpCode;
+                
+                // 移除using语句
+                jsCode = jsCode.replace(/using\s+System;\s*/g, '');
+                
+                // 类定义转换 - 确保Program类正确定义
+                jsCode = jsCode.replace(/public class Program\s*\{/g, 'class Program {');
+                jsCode = jsCode.replace(/public class (.*?)\s*\{/g, 'class $1 {');
+                
+                // 方法定义转换 - 处理静态和实例方法
+                jsCode = jsCode.replace(/public static void (Main)\s*\(\s*\)/g, 'static $1()');
+                jsCode = jsCode.replace(/public static void (.*?)\s*\((.*?)\)/g, 'static $1($2)');
+                jsCode = jsCode.replace(/public void (.*?)\s*\((.*?)\)/g, '$1($2)');
+                
+                // 构造函数转换
+                jsCode = jsCode.replace(/public (.*?)\s*\((.*?)\)/g, 'constructor($2)');
+                
+                // 属性转换
+                jsCode = jsCode.replace(/public (.*?) (.*?)\s*\{\s*get;\s*set;\s*\}/g, 'this.$2 = undefined;');
+                
+                // 基本类型转换
+                jsCode = jsCode.replace(/int\s+/g, 'let ');
+                jsCode = jsCode.replace(/string\s+/g, 'let ');
+                jsCode = jsCode.replace(/double\s+/g, 'let ');
+                jsCode = jsCode.replace(/bool\s+/g, 'let ');
+                jsCode = jsCode.replace(/char\s+/g, 'let ');
+                
+                // Console.WriteLine转换
+                jsCode = jsCode.replace(/Console\.WriteLine\((.*?)\);/g, 'console.log($1);');
+                jsCode = jsCode.replace(/Console\.Write\((.*?)\);/g, 'process.stdout.write($1);');
+                
+                // 字符串插值转换 ${} -> ${}
+                jsCode = jsCode.replace(/\$"(.*?)"/g, '`$1`');
+                
+                // 数组初始化转换
+                jsCode = jsCode.replace(/(int|string|double|bool)\[\]\s*(.*?)\s*=\s*\{\s*(.*?)\s*\};/g, 'let $2 = [$3];');
+                
+                // 处理foreach循环
+                jsCode = jsCode.replace(/foreach \(\s*(.*?)\s+(\w+)\s+in\s+(\w+)\s*\)\s*\{/g, 'for (let $2 of $3) {');
+                
+                // 确保正确调用Main方法
+                jsCode += '\n\nProgram.Main();';
+                
+                return jsCode;
+            },
+            
+            // 执行C#代码
+            run: function(csharpCode) {
+                try {
+                    // 验证代码结构
+                    const validation = this.validateStructure(csharpCode);
+                    if (!validation.valid) {
+                        throw new Error(validation.message);
+                    }
+                    
+                    // 转换代码
+                    const jsCode = this.convertToJavaScript(csharpCode);
+                    
+                    // 创建一个安全的执行环境，不重复声明Array
+                    const sandbox = {
+                        console: {
+                            log: function() {} // 会被捕获器覆盖
+                        },
+                        // 直接使用原生Array，不重新定义
+                        Math: Math
+                    };
+                    
+                    // 使用Function构造函数创建执行函数
+                    const func = new Function(...Object.keys(sandbox), jsCode);
+                    
+                    return {
+                        success: true,
+                        func: () => func(...Object.values(sandbox)),
+                        jsCode: jsCode
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error
+                    };
+                }
+            }
+        };
+
+        // 移动菜单切换
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 标签页切换
+        function switchTab(tabId, contentId) {
+            // 重置所有标签
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-primary', 'border-primary', 'border-b-2');
+                btn.classList.add('text-gray-500');
+            });
+            
+            // 隐藏所有内容
+            document.getElementById('outputContainer').classList.add('hidden');
+            document.getElementById('errorsContainer').classList.add('hidden');
+            document.getElementById('jsContainer').classList.add('hidden');
+            
+            // 激活当前标签
+            document.getElementById(tabId).classList.add('active', 'text-primary', 'border-primary', 'border-b-2');
+            document.getElementById(tabId).classList.remove('text-gray-500');
+            
+            // 显示当前内容
+            document.getElementById(contentId).classList.remove('hidden');
+        }
+        
+        document.getElementById('outputTab').addEventListener('click', () => switchTab('outputTab', 'outputContainer'));
+        document.getElementById('errorsTab').addEventListener('click', () => switchTab('errorsTab', 'errorsContainer'));
+        document.getElementById('jsTab').addEventListener('click', () => switchTab('jsTab', 'jsContainer'));
+        
+        // 初始化代码编辑器
+        let editor;
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            // 默认C#代码
+            const defaultCode = `using System;
+
+public class Program
+{
+    public static void Main()
+    {
+        // 在此处编写C#代码
+        Console.WriteLine("Hello, World!");
+        
+        // 示例：基本计算
+        int a = 10;
+        int b = 20;
+        int sum = a + b;
+        Console.WriteLine($"{a} + {b} = {sum}");
+    }
+}`;
+
+            // 创建编辑器
+            editor = monaco.editor.create(document.getElementById('editorContainer'), {
+                value: defaultCode,
+                language: 'csharp',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                scrollBeyondLastLine: false,
+                lineNumbers: 'on',
+                roundedSelection: false
+            });
+        });
+        
+        // 代码示例
+        const examples = {
+            hello: `using System;
+
+public class Program
+{
+    public static void Main()
+    {
+        Console.WriteLine("Hello, World!");
+        Console.WriteLine("这是前端执行的C#代码");
+        
+        // 变量和类型
+        string name = "CSharp";
+        int version = 8;
+        Console.WriteLine($"欢迎使用 {name} v{version}");
+    }
+}`,
+            math: `using System;
+
+public class Program
+{
+    public static void Main()
+    {
+        // 数学计算示例
+        int x = 15;
+        int y = 4;
+        
+        Console.WriteLine($"x = {x}, y = {y}");
+        Console.WriteLine($"x + y = {x + y}");
+        Console.WriteLine($"x - y = {x - y}");
+        Console.WriteLine($"x * y = {x * y}");
+        Console.WriteLine($"x / y = {x / y}");  // 整数除法
+        Console.WriteLine($"x % y = {x % y}");  // 取余
+    }
+}`,
+            array: `using System;
+
+public class Program
+{
+    public static void Main()
+    {
+        // 数组示例
+        int[] numbers = { 5, 2, 8, 1, 9 };
+        
+        Console.WriteLine("数组元素:");
+        foreach (int num in numbers)
+        {
+            Console.Write(num + " ");
+        }
+        Console.WriteLine();
+        
+        // 排序 - 使用JavaScript原生排序
+        numbers.sort((a, b) => a - b);
+        
+        Console.WriteLine("排序后:");
+        foreach (int num in numbers)
+        {
+            Console.Write(num + " ");
+        }
+        Console.WriteLine();
+    }
+}`,
+            class: `using System;
+
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    
+    public Person(string name, int age)
+    {
+        Name = name;
+        Age = age;
+    }
+    
+    public void Greet()
+    {
+        Console.WriteLine($"大家好，我叫{Name}，今年{Age}岁。");
+    }
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        // 创建对象
+        Person person = new Person("张三", 25);
+        
+        // 调用方法
+        person.Greet();
+    }
+}
+`};
+
+        // 绑定示例代码按钮事件
+        document.querySelectorAll('.example-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const exampleKey = this.getAttribute('data-example');
+                if (examples[exampleKey]) {
+                    editor.setValue(examples[exampleKey]);
+                }
+            });
+        });
+        
+        // 重置按钮
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            if (confirm('确定要重置代码编辑器吗？当前代码将会丢失。')) {
+                const defaultCode = `using System;
+
+public class Program
+{
+    public static void Main()
+    {
+        // 在此处编写C#代码
+        Console.WriteLine("Hello, World!");
+        
+        // 示例：基本计算
+        int a = 10;
+        int b = 20;
+        int sum = a + b;
+        Console.WriteLine($"{a} + {b} = {sum}");
+    }
+}`;
+                editor.setValue(defaultCode);
+                clearResults();
+            }
+        });
+        
+        // 清除结果
+        function clearResults() {
+            document.getElementById('outputContainer').innerHTML = '<div class="text-gray-400 italic">程序输出将显示在这里...</div>';
+            document.getElementById('errorsContainer').innerHTML = '<div class="text-gray-400 italic">错误信息将显示在这里...</div>';
+            document.getElementById('jsContainer').innerHTML = '<div class="text-gray-400 italic">转换后的JavaScript代码将显示在这里...</div>';
+            document.getElementById('executionTime').textContent = '-';
+        }
+        
+        // 重定向Console输出
+        function captureConsoleOutput() {
+            const originalConsoleLog = console.log;
+            const output = [];
+            
+            console.log = function(...args) {
+                // 保存输出
+                output.push(args.join(' '));
+                // 同时调用原始方法，在浏览器控制台也显示
+                originalConsoleLog.apply(console, args);
+            };
+            
+            return {
+                output: output,
+                restore: () => {
+                    console.log = originalConsoleLog;
+                }
+            };
+        }
+        
+        // 运行按钮 - 前端直接执行C#代码
+        document.getElementById('runBtn').addEventListener('click', function() {
+            const code = editor.getValue();
+            
+            if (!code.trim()) {
+                document.getElementById('errorsContainer').textContent = '错误: 请输入C#代码后再运行';
+                switchTab('errorsTab', 'errorsContainer');
+                return;
+            }
+            
+            // 显示加载动画
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            clearResults();
+            
+            try {
+                // 记录开始时间
+                const startTime = performance.now();
+                
+                // 捕获控制台输出
+                const outputCapturer = captureConsoleOutput();
+                
+                try {
+                    // 使用自定义的C#执行器执行代码
+                    const result = CSharpExecutor.run(code);
+                    
+                    // 显示转换后的JavaScript代码
+                    document.getElementById('jsContainer').textContent = result.jsCode;
+                    
+                    if (!result.success) {
+                        throw result.error;
+                    }
+                    
+                    // 执行转换后的代码
+                    result.func();
+                    
+                    // 显示输出
+                    if (outputCapturer.output.length > 0) {
+                        document.getElementById('outputContainer').textContent = outputCapturer.output.join('\n');
+                    } else {
+                        document.getElementById('outputContainer').textContent = '程序已执行，但没有输出内容。';
+                    }
+                    
+                    switchTab('outputTab', 'outputContainer');
+                    
+                } catch (error) {
+                    // 显示错误信息
+                    document.getElementById('errorsContainer').textContent = `错误: ${error.message}\n\n${error.stack || ''}`;
+                    switchTab('errorsTab', 'errorsContainer');
+                } finally {
+                    outputCapturer.restore();
+                }
+                
+                // 计算执行时间
+                const endTime = performance.now();
+                document.getElementById('executionTime').textContent = `${(endTime - startTime).toFixed(2)}ms`;
+                
+            } catch (error) {
+                console.error('执行代码时发生错误:', error);
+                document.getElementById('errorsContainer').textContent = `执行失败: ${error.message}`;
+                switchTab('errorsTab', 'errorsContainer');
+            } finally {
+                // 隐藏加载动画
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

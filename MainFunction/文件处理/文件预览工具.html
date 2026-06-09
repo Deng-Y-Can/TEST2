@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy全能文件查看器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 核心文件处理库 -->
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github-dark.min.css">
+    <!-- Office文件处理库 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        word: '#2B579A',
+                        excel: '#217346',
+                        powerpoint: '#D24726'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .file-drop-active {
+                @apply border-primary bg-blue-50 dark:bg-blue-900/20;
+            }
+
+            .preview-container {
+                @apply w-full h-[calc(100vh-16rem)] md:h-[calc(100vh-12rem)] overflow-auto;
+            }
+
+            .text-balance {
+                text-wrap: balance;
+            }
+
+            .excel-cell {
+                @apply border border-gray-300 dark:border-gray-600 p-2 min-w-[80px] text-sm;
+            }
+
+            .excel-header {
+                @apply excel-cell bg-gray-100 dark:bg-gray-700 font-medium;
+            }
+
+            .ppt-slide {
+                @apply border-2 border-gray-200 dark:border-gray-700 rounded-lg shadow-md mb-8 overflow-hidden transition-transform hover:scale-[1.01];
+            }
+
+            .word-preview {
+                @apply max-w-3xl mx-auto p-6 bg-white dark:bg-gray-800 shadow-sm;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- 头部 -->
+        <header class="mb-8 text-center">
+            <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-primary mb-2 flex items-center justify-center">
+                <i class="fa fa-file-text-o mr-3"></i>全能文件查看器
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400 text-balance max-w-2xl mx-auto">
+                安全查看各种类型的文件，不会修改源文件格式。支持Office文档、文本、图片、PDF、代码和媒体文件。
+            </p>
+        </header>
+
+        <!-- 文件操作区 -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-all duration-300 hover:shadow-xl">
+            <!-- 文件选择区域 -->
+            <div id="fileDropArea" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer transition-all duration-300 mb-6">
+                <i class="fa fa-cloud-upload text-5xl text-gray-400 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">拖放文件到这里，或点击选择文件</h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-4">
+                    支持Word、Excel、PowerPoint、PDF、文本、图片、代码、音视频等格式
+                </p>
+                <label class="inline-block bg-primary hover:bg-primary/90 text-white font-medium py-2 px-6 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105">
+                    <i class="fa fa-folder-open mr-2"></i>选择文件
+                    <input type="file" id="fileInput" class="hidden" accept="*">
+                </label>
+            </div>
+
+            <!-- 文件信息区域 -->
+            <div id="fileInfo" class="hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i id="fileIcon" class="fa fa-file text-2xl mr-3 text-primary"></i>
+                        <div>
+                            <h4 id="fileName" class="font-medium truncate max-w-md"></h4>
+                            <p id="fileDetails" class="text-sm text-gray-500 dark:text-gray-400"></p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="closeFileBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 py-2 px-4 rounded-lg transition-all duration-300">
+                            <i class="fa fa-times mr-1"></i>关闭
+                        </button>
+                        <button id="downloadFileBtn" class="bg-secondary hover:bg-secondary/90 text-white py-2 px-4 rounded-lg transition-all duration-300">
+                            <i class="fa fa-download mr-1"></i>下载
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预览区域 -->
+        <div id="previewArea" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-all duration-300">
+            <!-- 加载指示器 -->
+            <div id="loadingIndicator" class="hidden flex justify-center items-center preview-container">
+                <div class="text-center">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+                    <p>正在加载文件...</p>
+                </div>
+            </div>
+
+            <!-- 文本预览 -->
+            <div id="textPreview" class="hidden preview-container p-4">
+                <pre class="whitespace-pre-wrap break-all text-sm md:text-base"><code id="textContent"></code></pre>
+            </div>
+
+            <!-- 图片预览 -->
+            <div id="imagePreview" class="hidden preview-container flex justify-center items-center p-4">
+                <img id="imageContent" src="" alt="预览图片" class="max-w-full max-h-full object-contain shadow-md">
+            </div>
+
+            <!-- PDF预览 -->
+            <div id="pdfPreview" class="hidden preview-container p-4">
+                <div id="pdfContainer" class="w-full"></div>
+            </div>
+
+            <!-- 代码预览 -->
+            <div id="codePreview" class="hidden preview-container p-4">
+                <pre><code id="codeContent" class="language-auto"></code></pre>
+            </div>
+
+            <!-- 音频预览 -->
+            <div id="audioPreview" class="hidden preview-container flex justify-center items-center p-4">
+                <audio id="audioContent" controls class="w-full max-w-2xl"></audio>
+            </div>
+
+            <!-- 视频预览 -->
+            <div id="videoPreview" class="hidden preview-container flex justify-center items-center p-4">
+                <video id="videoContent" controls class="max-w-full max-h-full"></audio>
+            </div>
+
+            <!-- Word预览 -->
+            <div id="wordPreview" class="hidden preview-container p-4">
+                <div class="mb-4 flex justify-between items-center">
+                    <h3 class="font-medium text-word"><i class="fa fa-file-word-o mr-2"></i>Word文档预览</h3>
+                    <div class="text-sm text-gray-500">可能与原格式存在细微差异</div>
+                </div>
+                <div id="wordContainer" class="word-preview"></div>
+            </div>
+
+            <!-- Excel预览 -->
+            <div id="excelPreview" class="hidden preview-container p-4">
+                <div class="mb-4 flex flex-wrap gap-2">
+                    <div id="excelSheets" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div id="excelContainer" class="overflow-auto"></div>
+            </div>
+
+            <!-- PowerPoint预览 -->
+            <div id="powerpointPreview" class="hidden preview-container p-4">
+                <div class="mb-6 flex justify-between items-center">
+                    <h3 class="font-medium text-powerpoint"><i class="fa fa-file-powerpoint-o mr-2"></i>PowerPoint演示文稿</h3>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm" id="pptSlideInfo">幻灯片 1 / <span id="pptTotalSlides">0</span></span>
+                        <div class="flex gap-2">
+                            <button id="pptPrev" class="p-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <i class="fa fa-chevron-left"></i>
+                            </button>
+                            <button id="pptNext" class="p-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600" disabled>
+                                <i class="fa fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="pptContainer" class="flex justify-center"></div>
+                <div id="pptThumbnails" class="mt-6 flex overflow-x-auto gap-3 pb-3"></div>
+            </div>
+
+            <!-- 不支持的文件类型 -->
+            <div id="unsupportedPreview" class="hidden preview-container flex flex-col justify-center items-center text-center p-8">
+                <i class="fa fa-exclamation-triangle text-5xl text-yellow-500 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">不支持的文件类型</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">无法预览此类型的文件</p>
+                <p id="unsupportedFileInfo" class="text-sm bg-gray-100 dark:bg-gray-700 p-3 rounded-lg"></p>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <footer class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p>文件查看器 - 所有文件均在本地处理，不会上传到服务器</p>
+            <p class="mt-1">支持的格式：Word、Excel、PowerPoint、PDF、文本、图片、代码、音频和视频文件</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM元素
+        const fileDropArea = document.getElementById('fileDropArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileDetails = document.getElementById('fileDetails');
+        const fileIcon = document.getElementById('fileIcon');
+        const closeFileBtn = document.getElementById('closeFileBtn');
+        const downloadFileBtn = document.getElementById('downloadFileBtn');
+        const previewArea = document.getElementById('previewArea');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        // 预览容器
+        const textPreview = document.getElementById('textPreview');
+        const textContent = document.getElementById('textContent');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageContent = document.getElementById('imageContent');
+        const pdfPreview = document.getElementById('pdfPreview');
+        const pdfContainer = document.getElementById('pdfContainer');
+        const codePreview = document.getElementById('codePreview');
+        const codeContent = document.getElementById('codeContent');
+        const audioPreview = document.getElementById('audioPreview');
+        const audioContent = document.getElementById('audioContent');
+        const videoPreview = document.getElementById('videoPreview');
+        const videoContent = document.getElementById('videoContent');
+        const wordPreview = document.getElementById('wordPreview');
+        const wordContainer = document.getElementById('wordContainer');
+        const excelPreview = document.getElementById('excelPreview');
+        const excelSheets = document.getElementById('excelSheets');
+        const excelContainer = document.getElementById('excelContainer');
+        const powerpointPreview = document.getElementById('powerpointPreview');
+        const pptContainer = document.getElementById('pptContainer');
+        const pptThumbnails = document.getElementById('pptThumbnails');
+        const pptSlideInfo = document.getElementById('pptSlideInfo');
+        const pptTotalSlides = document.getElementById('pptTotalSlides');
+        const pptPrev = document.getElementById('pptPrev');
+        const pptNext = document.getElementById('pptNext');
+        const unsupportedPreview = document.getElementById('unsupportedPreview');
+        const unsupportedFileInfo = document.getElementById('unsupportedFileInfo');
+
+        // 当前文件和状态
+        let currentFile = null;
+        let excelData = null;
+        let currentSheet = 0;
+        let pptData = null;
+        let currentSlide = 0;
+
+        // 事件监听 - 文件拖放
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            fileDropArea.classList.add('file-drop-active');
+        }
+
+        function unhighlight() {
+            fileDropArea.classList.remove('file-drop-active');
+        }
+
+        fileDropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        // 事件监听 - 文件选择
+        fileInput.addEventListener('change', function () {
+            if (this.files.length > 0) {
+                handleFile(this.files[0]);
+            }
+        });
+
+        // 点击文件区域触发文件选择
+        fileDropArea.addEventListener('click', function () {
+            fileInput.click();
+        });
+
+        // 关闭文件按钮
+        closeFileBtn.addEventListener('click', function () {
+            resetViewer();
+            currentFile = null;
+            excelData = null;
+            pptData = null;
+            fileInput.value = '';
+        });
+
+        // 下载文件按钮
+        downloadFileBtn.addEventListener('click', function () {
+            if (currentFile) {
+                const url = URL.createObjectURL(currentFile);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = currentFile.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // PPT导航按钮
+        pptPrev.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        });
+
+        pptNext.addEventListener('click', () => {
+            if (pptData && currentSlide < pptData.slides.length - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        });
+
+        // 处理文件
+        function handleFile(file) {
+            currentFile = file;
+            showFileInfo(file);
+            showLoading();
+            previewFile(file);
+        }
+
+        // 显示文件信息
+        function showFileInfo(file) {
+            fileInfo.classList.remove('hidden');
+            fileName.textContent = file.name;
+
+            // 格式化文件大小
+            const fileSize = formatFileSize(file.size);
+            fileDetails.textContent = `${file.type || '未知类型'} · ${fileSize}`;
+
+            // 设置文件图标
+            setFileIcon(file);
+        }
+
+        // 设置文件图标
+        function setFileIcon(file) {
+            const fileName = file.name.toLowerCase();
+
+            if (isWordFile(fileName)) {
+                fileIcon.className = 'fa fa-file-word-o text-2xl mr-3 text-word';
+            } else if (isExcelFile(fileName)) {
+                fileIcon.className = 'fa fa-file-excel-o text-2xl mr-3 text-excel';
+            } else if (isPowerPointFile(fileName)) {
+                fileIcon.className = 'fa fa-file-powerpoint-o text-2xl mr-3 text-powerpoint';
+            } else if (file.type.startsWith('text/')) {
+                fileIcon.className = 'fa fa-file-text-o text-2xl mr-3 text-primary';
+            } else if (file.type.startsWith('image/')) {
+                fileIcon.className = 'fa fa-file-image-o text-2xl mr-3 text-primary';
+            } else if (file.type === 'application/pdf') {
+                fileIcon.className = 'fa fa-file-pdf-o text-2xl mr-3 text-red-500';
+            } else if (file.type.startsWith('audio/')) {
+                fileIcon.className = 'fa fa-file-audio-o text-2xl mr-3 text-green-500';
+            } else if (file.type.startsWith('video/')) {
+                fileIcon.className = 'fa fa-file-video-o text-2xl mr-3 text-purple-500';
+            } else if (isCodeFile(fileName)) {
+                fileIcon.className = 'fa fa-file-code-o text-2xl mr-3 text-yellow-500';
+            } else {
+                fileIcon.className = 'fa fa-file-o text-2xl mr-3 text-gray-500';
+            }
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            previewArea.classList.remove('hidden');
+            hideAllPreviews();
+            loadingIndicator.classList.remove('hidden');
+        }
+
+        // 隐藏所有预览
+        function hideAllPreviews() {
+            textPreview.classList.add('hidden');
+            imagePreview.classList.add('hidden');
+            pdfPreview.classList.add('hidden');
+            codePreview.classList.add('hidden');
+            audioPreview.classList.add('hidden');
+            videoPreview.classList.add('hidden');
+            wordPreview.classList.add('hidden');
+            excelPreview.classList.add('hidden');
+            powerpointPreview.classList.add('hidden');
+            unsupportedPreview.classList.add('hidden');
+            loadingIndicator.classList.add('hidden');
+        }
+
+        // 重置查看器
+        function resetViewer() {
+            fileInfo.classList.add('hidden');
+            previewArea.classList.add('hidden');
+            hideAllPreviews();
+            pdfContainer.innerHTML = '';
+            excelSheets.innerHTML = '';
+            excelContainer.innerHTML = '';
+            pptContainer.innerHTML = '';
+            pptThumbnails.innerHTML = '';
+        }
+
+        // 预览文件
+        function previewFile(file) {
+            const reader = new FileReader();
+            const fileName = file.name.toLowerCase();
+
+            // 检查文件类型并选择适当的预览方式
+            if (isWordFile(fileName)) {
+                // Word文件预览
+                reader.onload = function (e) {
+                    hideAllPreviews();
+                    wordPreview.classList.remove('hidden');
+                    renderWord(e.target.result);
+                };
+                reader.readAsArrayBuffer(file);
+            } else if (isExcelFile(fileName)) {
+                // Excel文件预览
+                reader.onload = function (e) {
+                    hideAllPreviews();
+                    excelPreview.classList.remove('hidden');
+                    parseExcel(e.target.result);
+                };
+                reader.readAsArrayBuffer(file);
+            } else if (isPowerPointFile(fileName)) {
+                // PowerPoint文件预览
+                reader.onload = function (e) {
+                    hideAllPreviews();
+                    powerpointPreview.classList.remove('hidden');
+                    parsePowerPoint(e.target.result, file.name);
+                };
+                reader.readAsArrayBuffer(file);
+            } else if (file.type.startsWith('text/') || isTextFile(fileName)) {
+                // 文本文件预览
+                reader.onload = function (e) {
+                    hideAllPreviews();
+                    textContent.textContent = e.target.result;
+                    textPreview.classList.remove('hidden');
+                };
+                reader.readAsText(file);
+            } else if (file.type.startsWith('image/')) {
+                // 图片预览
+                reader.onload = function (e) {
+                    hideAllPreviews();
+                    imageContent.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type === 'application/pdf') {
+                // PDF预览
+                reader.onload = function (e) {
+                    hideAllPreviews();
+                    pdfPreview.classList.remove('hidden');
+                    renderPdf(e.target.result);
+                };
+                reader.readAsArrayBuffer(file);
+            } else if (isCodeFile(fileName)) {
+                // 代码文件预览
+                reader.onload = function (e) {
+                    hideAllPreviews();
+                    codeContent.textContent = e.target.result;
+                    codePreview.classList.remove('hidden');
+                    hljs.highlightElement(codeContent);
+                };
+                reader.readAsText(file);
+            } else if (file.type.startsWith('audio/')) {
+                // 音频预览
+                reader.onload = function (e) {
+                    hideAllPreviews();
+                    audioContent.src = e.target.result;
+                    audioPreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type.startsWith('video/')) {
+                // 视频预览
+                reader.onload = function (e) {
+                    hideAllPreviews();
+                    videoContent.src = e.target.result;
+                    videoPreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // 不支持的文件类型
+                hideAllPreviews();
+                unsupportedFileInfo.textContent = `文件名: ${file.name} | 类型: ${file.type || '未知'} | 大小: ${formatFileSize(file.size)}`;
+                unsupportedPreview.classList.remove('hidden');
+            }
+        }
+
+        // 渲染Word文档
+        function renderWord(arrayBuffer) {
+            mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                .then(function (result) {
+                    const html = result.value; // 转换后的HTML
+                    const messages = result.messages; // 转换过程中的消息
+
+                    // 显示转换后的内容
+                    wordContainer.innerHTML = html;
+
+                    // 处理图片
+                    wordContainer.querySelectorAll('img').forEach(img => {
+                        img.className = 'max-w-full h-auto my-4';
+                    });
+
+                    // 处理表格
+                    wordContainer.querySelectorAll('table').forEach(table => {
+                        table.className = 'border-collapse w-full my-4';
+                        table.querySelectorAll('td, th').forEach(cell => {
+                            cell.className = 'border border-gray-300 dark:border-gray-600 p-2';
+                        });
+                        table.querySelectorAll('th').forEach(header => {
+                            header.className += ' bg-gray-50 dark:bg-gray-700 font-medium';
+                        });
+                    });
+
+                    // 处理标题
+                    wordContainer.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(header => {
+                        header.className += ' mt-6 mb-3';
+                    });
+
+                    // 处理段落
+                    wordContainer.querySelectorAll('p').forEach(p => {
+                        p.className += ' mb-4';
+                    });
+
+                    // 输出转换消息（如格式不支持的警告）
+                    if (messages.length > 0) {
+                        console.log('Word转换消息:', messages);
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Word解析错误:', error);
+                    wordContainer.innerHTML = `
+                            <div class="text-center p-8">
+                                <i class="fa fa-exclamation-circle text-3xl text-red-500 mb-2"></i>
+                                <p class="text-red-500">无法解析Word文件: ${error.message}</p>
+                            </div>
+                        `;
+                });
+        }
+
+        // 解析并显示Excel文件
+        function parseExcel(data) {
+            try {
+                // 解析Excel文件
+                const workbook = XLSX.read(data, { type: 'array' });
+                excelData = workbook;
+
+                // 清空之前的内容
+                excelSheets.innerHTML = '';
+                excelContainer.innerHTML = '';
+
+                // 创建工作表切换按钮
+                workbook.SheetNames.forEach((sheetName, index) => {
+                    const button = document.createElement('button');
+                    button.className = `px-3 py-1 rounded ${index === 0 ? 'bg-excel text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'}`;
+                    button.textContent = sheetName;
+                    button.addEventListener('click', () => {
+                        currentSheet = index;
+                        renderExcelSheet(sheetName);
+                        // 更新按钮样式
+                        document.querySelectorAll('#excelSheets button').forEach((btn, i) => {
+                            if (i === index) {
+                                btn.className = 'px-3 py-1 rounded bg-excel text-white';
+                            } else {
+                                btn.className = 'px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600';
+                            }
+                        });
+                    });
+                    excelSheets.appendChild(button);
+                });
+
+                // 渲染第一个工作表
+                renderExcelSheet(workbook.SheetNames[0]);
+            } catch (error) {
+                console.error('解析Excel错误:', error);
+                excelContainer.innerHTML = `
+                        <div class="text-center p-8">
+                            <i class="fa fa-exclamation-circle text-3xl text-red-500 mb-2"></i>
+                            <p class="text-red-500">无法解析Excel文件: ${error.message}</p>
+                        </div>
+                    `;
+            }
+        }
+
+        // 渲染Excel工作表
+        function renderExcelSheet(sheetName) {
+            if (!excelData) return;
+
+            const sheet = excelData.Sheets[sheetName];
+            const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+
+            // 创建表格
+            const table = document.createElement('table');
+            table.className = 'border-collapse w-full';
+
+            // 生成表头和内容
+            for (let row = range.s.r; row <= range.e.r; row++) {
+                const tr = document.createElement('tr');
+                tr.className = row === 0 ? 'bg-gray-50 dark:bg-gray-800' : '';
+
+                for (let col = range.s.c; col <= range.e.c; col++) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+                    const cell = sheet[cellAddress];
+                    const cellValue = cell ? cell.v : '';
+
+                    const td = document.createElement(row === 0 ? 'th' : 'td');
+                    td.className = row === 0 ? 'excel-header' : 'excel-cell';
+
+                    // 尝试格式化不同类型的数据
+                    if (typeof cellValue === 'number') {
+                        // 检查是否为日期
+                        if (cell.t === 'n' && cell.w.includes('/') || cell.w.includes('-')) {
+                            td.textContent = cell.w; // 使用格式化后的日期
+                        } else {
+                            td.textContent = cellValue;
+                        }
+                    } else if (typeof cellValue === 'boolean') {
+                        td.textContent = cellValue ? 'TRUE' : 'FALSE';
+                    } else {
+                        td.textContent = cellValue;
+                    }
+
+                    tr.appendChild(td);
+                }
+
+                table.appendChild(tr);
+            }
+
+            excelContainer.innerHTML = '';
+            excelContainer.appendChild(table);
+        }
+
+        // 解析PowerPoint文件
+        function parsePowerPoint(arrayBuffer, fileName) {
+            JSZip.loadAsync(arrayBuffer)
+                .then(function (zip) {
+                    // 收集所有幻灯片
+                    const slidePromises = [];
+
+                    // 遍历zip中的所有文件
+                    zip.forEach(function (relativePath, zipEntry) {
+                        // 查找幻灯片文件
+                        if (relativePath.startsWith('ppt/slides/slide') && relativePath.endsWith('.xml')) {
+                            slidePromises.push(
+                                zipEntry.async('string').then(function (content) {
+                                    return {
+                                        path: relativePath,
+                                        content: content
+                                    };
+                                })
+                            );
+                        }
+                    });
+
+                    // 等待所有幻灯片解析完成
+                    return Promise.all(slidePromises);
+                })
+                .then(function (slides) {
+                    // 按幻灯片编号排序
+                    slides.sort(function (a, b) {
+                        const numA = parseInt(a.path.match(/slide(\d+)\.xml/)[1]);
+                        const numB = parseInt(b.path.match(/slide(\d+)\.xml/)[1]);
+                        return numA - numB;
+                    });
+
+                    // 存储幻灯片数据
+                    pptData = {
+                        slides: slides,
+                        total: slides.length
+                    };
+
+                    // 更新幻灯片计数
+                    pptTotalSlides.textContent = slides.length;
+
+                    // 生成幻灯片缩略图导航
+                    generateSlideThumbnails();
+
+                    // 显示第一张幻灯片
+                    currentSlide = 0;
+                    showSlide(currentSlide);
+
+                    // 更新导航按钮状态
+                    updateSlideNavigation();
+                })
+                .catch(function (error) {
+                    console.error('PowerPoint解析错误:', error);
+                    pptContainer.innerHTML = `
+                            <div class="text-center p-8">
+                                <i class="fa fa-exclamation-circle text-3xl text-red-500 mb-2"></i>
+                                <p class="text-red-500">无法解析PowerPoint文件: ${error.message}</p>
+                            </div>
+                        `;
+                });
+        }
+
+        // 生成幻灯片缩略图导航
+        function generateSlideThumbnails() {
+            if (!pptData || !pptData.slides.length) return;
+
+            pptThumbnails.innerHTML = '';
+
+            pptData.slides.forEach((slide, index) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = `w-24 h-18 flex items-center justify-center border ${index === currentSlide ? 'border-powerpoint' : 'border-gray-200 dark:border-gray-700'} rounded cursor-pointer overflow-hidden`;
+                thumbnail.innerHTML = `<span class="text-sm">幻灯片 ${index + 1}</span>`;
+                thumbnail.addEventListener('click', () => {
+                    currentSlide = index;
+                    showSlide(currentSlide);
+                });
+                pptThumbnails.appendChild(thumbnail);
+            });
+        }
+
+        // 显示指定幻灯片
+        function showSlide(index) {
+            if (!pptData || !pptData.slides[index]) return;
+
+            const slide = pptData.slides[index];
+            const xmlContent = slide.content;
+
+            // 简单解析PPT XML内容，提取文本信息
+            // 注意：这是简化版解析，真实PPT解析要复杂得多
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
+
+            // 提取幻灯片中的文本
+            const textElements = xmlDoc.getElementsByTagName('a:t');
+            const slideText = Array.from(textElements).map(el => el.textContent).filter(text => text.trim() !== '');
+
+            // 更新幻灯片信息
+            pptSlideInfo.textContent = `幻灯片 ${index + 1} / ${pptData.total}`;
+
+            // 创建幻灯片预览
+            let slideHtml = '<div class="ppt-slide w-full max-w-3xl">';
+
+            if (slideText.length > 0) {
+                // 简单判断标题和内容
+                slideHtml += `<div class="p-8">`;
+                slideHtml += `<h2 class="text-2xl font-bold mb-6 text-center">${slideText[0]}</h2>`;
+
+                if (slideText.length > 1) {
+                    slideHtml += `<div class="space-y-3">`;
+                    for (let i = 1; i < slideText.length; i++) {
+                        // 简单判断列表项
+                        if (slideText[i].startsWith('•')) {
+                            slideHtml += `<p class="ml-6"><span class="text-powerpoint">•</span> ${slideText[i].substring(1)}</p>`;
+                        } else {
+                            slideHtml += `<p>${slideText[i]}</p>`;
+                        }
+                    }
+                    slideHtml += `</div>`;
+                }
+
+                slideHtml += `</div>`;
+            } else {
+                slideHtml += `<div class="p-8 text-center text-gray-500">`;
+                slideHtml += `<i class="fa fa-file-image-o text-4xl mb-4"></i>`;
+                slideHtml += `<p>幻灯片 ${index + 1} 可能包含图片或其他非文本内容</p>`;
+                slideHtml += `<p class="text-sm mt-2">完整预览需要更复杂的解析</p>`;
+                slideHtml += `</div>`;
+            }
+
+            slideHtml += `</div>`;
+
+            // 更新幻灯片容器
+            pptContainer.innerHTML = slideHtml;
+
+            // 更新缩略图选中状态
+            const thumbnails = pptThumbnails.querySelectorAll('div');
+            thumbnails.forEach((thumb, i) => {
+                if (i === index) {
+                    thumb.className = 'w-24 h-18 flex items-center justify-center border border-powerpoint rounded cursor-pointer overflow-hidden';
+                } else {
+                    thumb.className = 'w-24 h-18 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded cursor-pointer overflow-hidden';
+                }
+            });
+
+            // 更新导航按钮状态
+            updateSlideNavigation();
+        }
+
+        // 更新幻灯片导航按钮状态
+        function updateSlideNavigation() {
+            if (!pptData) return;
+
+            pptPrev.disabled = currentSlide === 0;
+            pptNext.disabled = currentSlide === pptData.slides.length - 1;
+        }
+
+        // 渲染PDF
+        function renderPdf(data) {
+            pdfContainer.innerHTML = '';
+
+            const loadingTask = pdfjsLib.getDocument({
+                data: data,
+                cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/cmaps/',
+                cMapPacked: true,
+            });
+
+            loadingTask.promise.then(function (pdf) {
+                // 显示PDF总页数
+                const pageCountEl = document.createElement('div');
+                pageCountEl.className = 'mb-4 text-center text-sm text-gray-500 dark:text-gray-400';
+                pageCountEl.textContent = `共 ${pdf.numPages} 页`;
+                pdfContainer.appendChild(pageCountEl);
+
+                // 渲染每一页
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    pdf.getPage(pageNum).then(function (page) {
+                        const scale = 1.5;
+                        const viewport = page.getViewport({ scale: scale });
+
+                        // 创建画布
+                        const canvas = document.createElement('canvas');
+                        canvas.className = 'mb-6 mx-auto border border-gray-200 dark:border-gray-700 rounded shadow-sm';
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        pdfContainer.appendChild(canvas);
+
+                        // 渲染页面内容
+                        const renderContext = {
+                            canvasContext: context,
+                            viewport: viewport
+                        };
+
+                        const renderTask = page.render(renderContext);
+                        renderTask.promise.then(function () {
+                            // 页面渲染完成
+                        });
+                    });
+                }
+            }).catch(function (error) {
+                console.error('PDF加载错误:', error);
+                pdfContainer.innerHTML = `
+                        <div class="text-center p-8">
+                            <i class="fa fa-exclamation-circle text-3xl text-red-500 mb-2"></i>
+                            <p class="text-red-500">无法加载PDF文件: ${error.message}</p>
+                        </div>
+                    `;
+            });
+        }
+
+        // 工具函数 - 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 工具函数 - 判断文件类型
+        function isWordFile(filename) {
+            const wordExtensions = ['docx', 'doc'];
+            const ext = filename.split('.').pop().toLowerCase();
+            return wordExtensions.includes(ext);
+        }
+
+        function isExcelFile(filename) {
+            const excelExtensions = ['xlsx', 'xls', 'xlsm'];
+            const ext = filename.split('.').pop().toLowerCase();
+            return excelExtensions.includes(ext);
+        }
+
+        function isPowerPointFile(filename) {
+            const powerpointExtensions = ['pptx', 'ppt'];
+            const ext = filename.split('.').pop().toLowerCase();
+            return powerpointExtensions.includes(ext);
+        }
+
+        function isCodeFile(filename) {
+            const codeExtensions = [
+                'js', 'html', 'css', 'json', 'xml', 'php', 'py', 'java', 'c', 'cpp',
+                'cs', 'rb', 'go', 'swift', 'kt', 'ts', 'sql', 'sh', 'bat', 'md',
+                'yaml', 'yml', 'ini', 'conf', 'log'
+            ];
+
+            const ext = filename.split('.').pop().toLowerCase();
+            return codeExtensions.includes(ext);
+        }
+
+        function isTextFile(filename) {
+            const textExtensions = ['txt', 'csv', 'rtf', 'md', 'markdown'];
+            const ext = filename.split('.').pop().toLowerCase();
+            return textExtensions.includes(ext);
+        }
+
+        // 初始化代码高亮
+        hljs.highlightAll();
+
+        // 深色模式支持 - 根据系统设置自动切换
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</body>
+</html>

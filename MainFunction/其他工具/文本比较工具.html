@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy文件对比工具</title>
+    <!-- 引入外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 配置Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        danger: '#EF4444',
+                        warning: '#F59E0B',
+                        neutral: '#64748B',
+                        'diff-added': '#dcfce7',
+                        'diff-removed': '#fee2e2',
+                        'diff-modified': '#fef3c7',
+                        'diff-unchanged': '#f8fafc',
+                        'row-selected': '#dbeafe'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['Consolas', 'Monaco', 'monospace']
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .scrollbar-thin {
+                scrollbar-width: thin;
+            }
+
+                .scrollbar-thin::-webkit-scrollbar {
+                    width: 6px;
+                    height: 6px;
+                }
+
+                .scrollbar-thin::-webkit-scrollbar-thumb {
+                    background-color: rgba(100, 116, 139, 0.5);
+                    border-radius: 3px;
+                }
+
+            .diff-line {
+                min-height: 1.5rem;
+                white-space: pre-wrap;
+                word-break: break-all;
+                outline: none;
+            }
+
+            .diff-row {
+                display: flex;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-md z-10">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-code-fork text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-gray-800">文件对比工具</h1>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-moon-o text-gray-600"></i>
+                </button>
+                <button id="help-button" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <i class="fa fa-question-circle text-gray-600"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-1 container mx-auto px-4 py-6">
+        <!-- 操作工具栏 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div class="flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex flex-wrap gap-3">
+                    <button id="compare-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-sm hover:shadow">
+                        <i class="fa fa-exchange"></i>
+                        <span>对比文件</span>
+                    </button>
+
+                    <button id="clear-btn" class="bg-neutral hover:bg-neutral/90 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-sm hover:shadow">
+                        <i class="fa fa-trash"></i>
+                        <span>清空内容</span>
+                    </button>
+
+                    <button id="swap-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md flex items-center gap-2 transition-all">
+                        <i class="fa fa-random"></i>
+                        <span>交换文件</span>
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <!-- 修改为导出功能 -->
+                    <button id="export-left-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md flex items-center gap-2 transition-all">
+                        <i class="fa fa-download"></i>
+                        <span>导出左侧文件</span>
+                    </button>
+
+                    <button id="export-right-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md flex items-center gap-2 transition-all">
+                        <i class="fa fa-download"></i>
+                        <span>导出右侧文件</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文件输入区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 左侧文件输入 -->
+            <div class="file-input-container relative bg-white rounded-lg shadow-sm overflow-hidden border-2 border-dashed border-gray-300 hover:border-primary transition-colors">
+                <div id="left-drop-area" class="p-6 h-full">
+                    <div id="left-drop-message" class="text-center py-12">
+                        <i class="fa fa-file-text-o text-4xl text-gray-400 mb-4"></i>
+                        <h3 class="text-lg font-medium mb-2">左侧文件</h3>
+                        <p class="text-gray-500 mb-4">拖放文件到此处，或点击上传</p>
+                        <label class="inline-block bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md cursor-pointer transition-all">
+                            <i class="fa fa-folder-open-o mr-2"></i>选择文件
+                            <input type="file" id="left-file-input" class="hidden" />
+                        </label>
+                        <p class="text-sm text-gray-400 mt-4">或粘贴文本内容：</p>
+                    </div>
+                    <textarea id="left-content" class="w-full mt-3 p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all min-h-[150px] font-mono text-sm resize-none" placeholder="在此粘贴左侧文件内容..."></textarea>
+                    <div id="left-file-info" class="hidden absolute bottom-0 left-0 right-0 bg-gray-50 p-3 border-t border-gray-100 text-sm">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <i class="fa fa-file-o text-primary mr-2"></i>
+                                <span id="left-file-name" class="truncate max-w-[70%]"></span>
+                            </div>
+                            <button id="clear-left" class="text-gray-400 hover:text-danger transition-colors">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="left-drop-highlight" class="absolute inset-0 bg-primary/10 border-2 border-primary hidden flex items-center justify-center">
+                        <div class="text-center p-6">
+                            <i class="fa fa-cloud-upload text-5xl text-primary mb-3"></i>
+                            <p class="text-primary font-medium">释放文件以上传</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧文件输入 -->
+            <div class="file-input-container relative bg-white rounded-lg shadow-sm overflow-hidden border-2 border-dashed border-gray-300 hover:border-primary transition-colors">
+                <div id="right-drop-area" class="p-6 h-full">
+                    <div id="right-drop-message" class="text-center py-12">
+                        <i class="fa fa-file-text-o text-4xl text-gray-400 mb-4"></i>
+                        <h3 class="text-lg font-medium mb-2">右侧文件</h3>
+                        <p class="text-gray-500 mb-4">拖放文件到此处，或点击上传</p>
+                        <label class="inline-block bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md cursor-pointer transition-all">
+                            <i class="fa fa-folder-open-o mr-2"></i>选择文件
+                            <input type="file" id="right-file-input" class="hidden" />
+                        </label>
+                        <p class="text-sm text-gray-400 mt-4">或粘贴文本内容：</p>
+                    </div>
+                    <textarea id="right-content" class="w-full mt-3 p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all min-h-[150px] font-mono text-sm resize-none" placeholder="在此粘贴右侧文件内容..."></textarea>
+                    <div id="right-file-info" class="hidden absolute bottom-0 left-0 right-0 bg-gray-50 p-3 border-t border-gray-100 text-sm">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <i class="fa fa-file-o text-primary mr-2"></i>
+                                <span id="right-file-name" class="truncate max-w-[70%]"></span>
+                            </div>
+                            <button id="clear-right" class="text-gray-400 hover:text-danger transition-colors">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="right-drop-highlight" class="absolute inset-0 bg-primary/10 border-2 border-primary hidden flex items-center justify-center">
+                        <div class="text-center p-6">
+                            <i class="fa fa-cloud-upload text-5xl text-primary mb-3"></i>
+                            <p class="text-primary font-medium">释放文件以上传</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 差异显示区域 -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
+            <div class="border-b border-gray-200 px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+                <h2 class="font-semibold text-gray-800 flex items-center">
+                    <i class="fa fa-exclamation-triangle text-warning mr-2"></i>
+                    差异对比结果
+                </h2>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center text-sm">
+                        <span class="inline-block w-3 h-3 bg-diff-added rounded-sm mr-1"></span>
+                        <span>新增</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <span class="inline-block w-3 h-3 bg-diff-removed rounded-sm mr-1"></span>
+                        <span>删除</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <span class="inline-block w-3 h-3 bg-diff-modified rounded-sm mr-1"></span>
+                        <span>修改</span>
+                    </div>
+                    <div class="h-5 border-r border-gray-300 mx-1"></div>
+                    <div class="flex gap-2">
+                        <button id="select-all-diff" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-md flex items-center gap-1 transition-all">
+                            <i class="fa fa-check-square-o"></i>
+                            <span>全选</span>
+                        </button>
+                        <button id="deselect-all-diff" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-md flex items-center gap-1 transition-all">
+                            <i class="fa fa-square-o"></i>
+                            <span>取消全选</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="diff-result" class="hidden">
+                <div class="diff-row border-b border-gray-200 font-medium bg-gray-50">
+                    <div class="w-12 border-r border-gray-200 p-2 text-center">#</div>
+                    <div class="w-1/2 border-r border-gray-200 p-2">原始文件</div>
+                    <div class="w-10 border-r border-gray-200 p-2 text-center">操作</div>
+                    <div class="w-1/2 p-2">目标文件</div>
+                </div>
+
+                <div class="relative max-h-[500px] overflow-y-auto scrollbar-thin" id="diff-scroll-container">
+                    <div id="diff-content">
+                        <!-- 差异内容将动态生成在这里 -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="no-diff-message" class="py-16 text-center hidden">
+                <i class="fa fa-check-circle text-secondary text-5xl mb-4"></i>
+                <p class="text-gray-600 text-lg">两个文件内容完全相同，没有差异</p>
+            </div>
+
+            <div id="empty-content-message" class="py-16 text-center">
+                <i class="fa fa-info-circle text-primary text-5xl mb-4"></i>
+                <p class="text-gray-600 text-lg">请输入或上传文件内容，然后点击"对比文件"按钮查看差异</p>
+            </div>
+        </div>
+
+        <!-- 批量操作区 -->
+        <div id="batch-actions" class="bg-white rounded-lg shadow-sm p-4 hidden">
+            <h3 class="font-medium mb-3 text-gray-800">批量操作</h3>
+            <div class="flex flex-wrap gap-3">
+                <button id="apply-all-left" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md flex items-center gap-2 transition-all">
+                    <i class="fa fa-arrow-left"></i>
+                    <span>全部应用到左侧</span>
+                </button>
+                <button id="apply-all-right" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md flex items-center gap-2 transition-all">
+                    <i class="fa fa-arrow-right"></i>
+                    <span>全部应用到右侧</span>
+                </button>
+                <button id="apply-selected" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-all shadow-sm hover:shadow">
+                    <i class="fa fa-exchange"></i>
+                    <span>应用选中项</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 帮助模态框 -->
+    <div id="help-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto m-4">
+            <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-800">使用帮助</h2>
+                <button id="close-help" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <h3 class="font-semibold text-lg mb-2">如何使用文件对比工具</h3>
+                <ul class="list-disc pl-5 mb-4 space-y-2">
+                    <li>通过拖放文件到左侧和右侧区域</li>
+                    <li>点击"选择文件"按钮上传文件</li>
+                    <li>直接在文本框中粘贴内容进行对比</li>
+                    <li>点击"对比文件"按钮查看差异</li>
+                    <li>使用"导出左侧文件"和"导出右侧文件"按钮保存内容</li>
+                </ul>
+
+                <h3 class="font-semibold text-lg mb-2">差异操作</h3>
+                <ul class="list-disc pl-5 mb-4 space-y-2">
+                    <li>点击箭头按钮将单行从一侧应用到另一侧</li>
+                    <li>可以直接在对比区域编辑内容</li>
+                    <li>使用行首复选框选择特定行，或使用全选/取消全选按钮</li>
+                    <li>选择特定差异行后，点击"应用选中项"批量应用</li>
+                </ul>
+
+                <h3 class="font-semibold text-lg mb-2">颜色说明</h3>
+                <div class="space-y-2 mb-4">
+                    <div class="flex items-center">
+                        <span class="inline-block w-4 h-4 bg-diff-added rounded-sm mr-2"></span>
+                        <span>新增行 - 只在右侧文件中存在的行</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="inline-block w-4 h-4 bg-diff-removed rounded-sm mr-2"></span>
+                        <span>删除行 - 只在左侧文件中存在的行</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="inline-block w-4 h-4 bg-diff-modified rounded-sm mr-2"></span>
+                        <span>修改行 - 两侧都存在但内容不同的行</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="inline-block w-4 h-4 bg-row-selected rounded-sm mr-2"></span>
+                        <span>选中行 - 已选择的行</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 拖放提示（仅移动设备显示） -->
+    <div id="mobile-upload-hint" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-primary text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 z-40 hidden">
+        <i class="fa fa-info-circle"></i>
+        <span>点击"选择文件"按钮上传文件</span>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-4">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>文件对比工具 &copy; 2025 - 安全本地处理</p>
+        </div>
+    </footer>
+
+    <script>
+        // 全局变量
+        let diffData = [];
+        let leftContent = '';
+        let rightContent = '';
+        let leftLines = [];
+        let rightLines = [];
+        let isProcessing = false; // 防止重复处理
+
+        // DOM 元素
+        const leftDropArea = document.getElementById('left-drop-area');
+        const rightDropArea = document.getElementById('right-drop-area');
+        const leftFileInput = document.getElementById('left-file-input');
+        const rightFileInput = document.getElementById('right-file-input');
+        const leftContentEl = document.getElementById('left-content');
+        const rightContentEl = document.getElementById('right-content');
+        const leftFileInfo = document.getElementById('left-file-info');
+        const rightFileInfo = document.getElementById('right-file-info');
+        const leftFileName = document.getElementById('left-file-name');
+        const rightFileName = document.getElementById('right-file-name');
+        const clearLeftBtn = document.getElementById('clear-left');
+        const clearRightBtn = document.getElementById('clear-right');
+        const compareBtn = document.getElementById('compare-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const swapBtn = document.getElementById('swap-btn');
+        // 修改为导出按钮
+        const exportLeftBtn = document.getElementById('export-left-btn');
+        const exportRightBtn = document.getElementById('export-right-btn');
+        const diffResult = document.getElementById('diff-result');
+        const noDiffMessage = document.getElementById('no-diff-message');
+        const emptyContentMessage = document.getElementById('empty-content-message');
+        const diffContent = document.getElementById('diff-content');
+        const batchActions = document.getElementById('batch-actions');
+        const applyAllLeftBtn = document.getElementById('apply-all-left');
+        const applyAllRightBtn = document.getElementById('apply-all-right');
+        const selectAllDiffBtn = document.getElementById('select-all-diff');
+        const deselectAllDiffBtn = document.getElementById('deselect-all-diff');
+        const applySelectedBtn = document.getElementById('apply-selected');
+        const helpButton = document.getElementById('help-button');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelpBtn = document.getElementById('close-help');
+        const themeToggle = document.getElementById('theme-toggle');
+        const leftDropHighlight = document.getElementById('left-drop-highlight');
+        const rightDropHighlight = document.getElementById('right-drop-highlight');
+        const leftDropMessage = document.getElementById('left-drop-message');
+        const rightDropMessage = document.getElementById('right-drop-message');
+        const diffScrollContainer = document.getElementById('diff-scroll-container');
+        const mobileUploadHint = document.getElementById('mobile-upload-hint');
+
+        // 初始化事件监听
+        function initEventListeners() {
+            // 检测移动设备并显示提示
+            if (isMobileDevice()) {
+                mobileUploadHint.classList.remove('hidden');
+                // 3秒后自动隐藏提示
+                setTimeout(() => {
+                    mobileUploadHint.classList.add('hidden');
+                }, 3000);
+            }
+
+            // 拖放事件
+            [leftDropArea, rightDropArea].forEach(area => {
+                area.addEventListener('dragover', handleDragOver);
+                area.addEventListener('dragenter', handleDragEnter);
+                area.addEventListener('dragleave', handleDragLeave);
+                area.addEventListener('drop', (e) => {
+                    if (area === leftDropArea) {
+                        handleDrop(e, 'left');
+                    } else {
+                        handleDrop(e, 'right');
+                    }
+                });
+            });
+
+            // 文件选择事件
+            leftFileInput.addEventListener('change', (e) => handleFileSelect(e, 'left'));
+            rightFileInput.addEventListener('change', (e) => handleFileSelect(e, 'right'));
+
+            // 清空按钮事件
+            clearLeftBtn.addEventListener('click', () => clearContent('left'));
+            clearRightBtn.addEventListener('click', () => clearContent('right'));
+            clearBtn.addEventListener('click', clearAllContent);
+
+            // 对比按钮事件 - 添加防抖处理
+            compareBtn.addEventListener('click', debounce(compareFiles, 300));
+
+            // 交换按钮事件
+            swapBtn.addEventListener('click', swapFiles);
+
+            // 导出按钮事件 - 新增功能
+            exportLeftBtn.addEventListener('click', () => exportFile('left'));
+            exportRightBtn.addEventListener('click', () => exportFile('right'));
+
+            // 批量操作事件
+            applyAllLeftBtn.addEventListener('click', () => applyAllChanges('left'));
+            applyAllRightBtn.addEventListener('click', () => applyAllChanges('right'));
+            selectAllDiffBtn.addEventListener('click', selectAllDifferences);
+            deselectAllDiffBtn.addEventListener('click', deselectAllDifferences);
+            applySelectedBtn.addEventListener('click', applySelectedChanges);
+
+            // 帮助模态框事件
+            helpButton.addEventListener('click', () => helpModal.classList.remove('hidden'));
+            closeHelpBtn.addEventListener('click', () => helpModal.classList.add('hidden'));
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) {
+                    helpModal.classList.add('hidden');
+                }
+            });
+
+            // 深色模式切换
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // 文本区域内容变化事件 - 添加防抖处理
+            leftContentEl.addEventListener('input', debounce(() => {
+                leftContent = leftContentEl.value;
+                leftLines = leftContent.split('\n');
+                updateFileInfo('left');
+                leftDropMessage.classList.add('hidden');
+            }, 300));
+
+            rightContentEl.addEventListener('input', debounce(() => {
+                rightContent = rightContentEl.value;
+                rightLines = rightContent.split('\n');
+                updateFileInfo('right');
+                rightDropMessage.classList.add('hidden');
+            }, 300));
+        }
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // 检测是否为移动设备
+        function isMobileDevice() {
+            return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+        }
+
+        // 拖放处理函数
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            // 显示拖放高亮
+            if (this === leftDropArea) {
+                leftDropHighlight.classList.remove('hidden');
+            } else {
+                rightDropHighlight.classList.remove('hidden');
+            }
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            // 检查是否完全离开区域
+            const relatedTarget = e.relatedTarget;
+            if (!this.contains(relatedTarget)) {
+                if (this === leftDropArea) {
+                    leftDropHighlight.classList.add('hidden');
+                } else {
+                    rightDropHighlight.classList.add('hidden');
+                }
+            }
+        }
+
+        function handleDrop(e, side) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // 隐藏拖放高亮
+            if (side === 'left') {
+                leftDropHighlight.classList.add('hidden');
+            } else {
+                rightDropHighlight.classList.add('hidden');
+            }
+
+            if (e.dataTransfer.files && e.dataTransfer.files.length) {
+                const file = e.dataTransfer.files[0];
+                readFileContent(file, side);
+                updateFileName(side, file.name);
+                // 隐藏拖放提示
+                if (side === 'left') {
+                    leftDropMessage.classList.add('hidden');
+                } else {
+                    rightDropMessage.classList.add('hidden');
+                }
+            }
+        }
+
+        // 文件选择处理
+        function handleFileSelect(e, side) {
+            if (e.target.files && e.target.files.length) {
+                const file = e.target.files[0];
+                readFileContent(file, side);
+                updateFileName(side, file.name);
+                // 重置input值，允许重复选择同一文件
+                e.target.value = '';
+                // 隐藏拖放提示
+                if (side === 'left') {
+                    leftDropMessage.classList.add('hidden');
+                } else {
+                    rightDropMessage.classList.add('hidden');
+                }
+            }
+        }
+
+        // 读取文件内容
+        function readFileContent(file, side) {
+            const reader = new FileReader();
+
+            reader.onloadstart = () => {
+                // 显示加载状态
+                if (side === 'left') {
+                    leftDropMessage.innerHTML = '<i class="fa fa-spinner fa-spin text-4xl text-primary mb-4"></i><p class="text-gray-600">正在加载文件...</p>';
+                    leftDropMessage.classList.remove('hidden');
+                } else {
+                    rightDropMessage.innerHTML = '<i class="fa fa-spinner fa-spin text-4xl text-primary mb-4"></i><p class="text-gray-600">正在加载文件...</p>';
+                    rightDropMessage.classList.remove('hidden');
+                }
+            };
+
+            reader.onload = (e) => {
+                const content = e.target.result;
+                if (side === 'left') {
+                    leftContentEl.value = content;
+                    leftContent = content;
+                    leftLines = content.split('\n');
+                    leftDropMessage.classList.add('hidden');
+                } else {
+                    rightContentEl.value = content;
+                    rightContent = content;
+                    rightLines = content.split('\n');
+                    rightDropMessage.classList.add('hidden');
+                }
+                updateFileInfo(side);
+            };
+
+            reader.onerror = () => {
+                alert('文件读取失败，请尝试其他文件');
+                if (side === 'left') {
+                    leftDropMessage.classList.remove('hidden');
+                } else {
+                    rightDropMessage.classList.remove('hidden');
+                }
+            };
+
+            // 只处理文本文件
+            if (file.type.startsWith('text/') ||
+                ['.txt', '.html', '.css', '.js', '.json', '.md', '.xml', '.py', '.java', '.c', '.cpp', '.php', '.rb', '.go'].some(ext =>
+                    file.name.toLowerCase().endsWith(ext)
+                )) {
+                reader.readAsText(file);
+            } else {
+                alert('请选择文本文件进行对比，支持的格式：txt, html, css, js, json, md, xml, py, java, c, cpp等');
+                if (side === 'left') {
+                    leftDropMessage.classList.remove('hidden');
+                } else {
+                    rightDropMessage.classList.remove('hidden');
+                }
+            }
+        }
+
+        // 导出文件功能 - 新增功能
+        function exportFile(side) {
+            const content = side === 'left' ? leftContent : rightContent;
+            const fileName = side === 'left' ?
+                (leftFileName.textContent || 'left_file.txt') :
+                (rightFileName.textContent || 'right_file.txt');
+
+            if (!content.trim()) {
+                alert(`请确保${side === 'left' ? '左侧' : '右侧'}有内容再进行导出`);
+                return;
+            }
+
+            // 创建Blob对象
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            // 创建下载链接
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+
+            // 模拟点击下载
+            document.body.appendChild(a);
+            a.click();
+
+            // 清理
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 0);
+        }
+
+        // 更新文件名显示
+        function updateFileName(side, name) {
+            if (side === 'left') {
+                leftFileName.textContent = name;
+                leftFileInfo.classList.remove('hidden');
+            } else {
+                rightFileName.textContent = name;
+                rightFileInfo.classList.remove('hidden');
+            }
+        }
+
+        // 更新文件信息（如内容变化时）
+        function updateFileInfo(side) {
+            const content = side === 'left' ? leftContent : rightContent;
+            if (!content.trim()) {
+                if (side === 'left') {
+                    leftFileInfo.classList.add('hidden');
+                    leftDropMessage.classList.remove('hidden');
+                } else {
+                    rightFileInfo.classList.add('hidden');
+                    rightDropMessage.classList.remove('hidden');
+                }
+            } else {
+                if (side === 'left') {
+                    leftFileInfo.classList.remove('hidden');
+                } else {
+                    rightFileInfo.classList.remove('hidden');
+                }
+            }
+        }
+
+        // 清空内容
+        function clearContent(side) {
+            if (side === 'left') {
+                leftContentEl.value = '';
+                leftContent = '';
+                leftLines = [];
+                leftFileInfo.classList.add('hidden');
+                leftDropMessage.classList.remove('hidden');
+            } else {
+                rightContentEl.value = '';
+                rightContent = '';
+                rightLines = [];
+                rightFileInfo.classList.add('hidden');
+                rightDropMessage.classList.remove('hidden');
+            }
+            resetDiffDisplay();
+        }
+
+        // 清空所有内容
+        function clearAllContent() {
+            clearContent('left');
+            clearContent('right');
+            resetDiffDisplay();
+        }
+
+        // 交换文件内容
+        function swapFiles() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            try {
+                const tempContent = leftContent;
+                const tempFileName = leftFileName.textContent;
+                const tempLines = [...leftLines];
+
+                leftContent = rightContent;
+                leftContentEl.value = leftContent;
+                leftFileName.textContent = rightFileName.textContent;
+                leftLines = [...rightLines];
+
+                rightContent = tempContent;
+                rightContentEl.value = rightContent;
+                rightFileName.textContent = tempFileName;
+                rightLines = tempLines;
+
+                // 更新文件信息显示状态
+                updateFileInfo('left');
+                updateFileInfo('right');
+
+                // 如果有内容则重新对比
+                if (leftContent.trim() && rightContent.trim()) {
+                    compareFiles();
+                } else {
+                    resetDiffDisplay();
+                }
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        // 重置差异显示
+        function resetDiffDisplay() {
+            diffResult.classList.add('hidden');
+            noDiffMessage.classList.add('hidden');
+            emptyContentMessage.classList.remove('hidden');
+            batchActions.classList.add('hidden');
+            diffData = [];
+        }
+
+        // 对比文件 - 使用requestAnimationFrame优化渲染性能
+        function compareFiles() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            // 显示加载状态
+            compareBtn.disabled = true;
+            compareBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i><span>处理中...</span>';
+
+            // 使用requestAnimationFrame优化渲染
+            requestAnimationFrame(() => {
+                try {
+                    leftContent = leftContentEl.value;
+                    rightContent = rightContentEl.value;
+                    leftLines = leftContent.split('\n');
+                    rightLines = rightContent.split('\n');
+
+                    // 检查内容是否为空
+                    if (!leftContent.trim() || !rightContent.trim()) {
+                        alert('请确保左右两侧都有内容再进行对比');
+                        return;
+                    }
+
+                    // 计算差异 - 使用Web Worker处理大数据量对比
+                    if (leftLines.length > 500 || rightLines.length > 500) {
+                        // 大数据量使用Worker
+                        const worker = new Worker(URL.createObjectURL(new Blob([`
+                                self.onmessage = function(e) {
+                                    const { leftLines, rightLines } = e.data;
+                                    const diffs = computeDiff(leftLines, rightLines);
+                                    self.postMessage(diffs);
+                                };
+
+                                function computeDiff(oldLines, newLines) {
+                                    const oldLen = oldLines.length;
+                                    const newLen = newLines.length;
+
+                                    // 优化：使用一维数组代替二维数组减少内存占用
+                                    const matrix = new Array((oldLen + 1) * (newLen + 1));
+
+                                    // 填充矩阵
+                                    for (let i = 0; i <= oldLen; i++) {
+                                        for (let j = 0; j <= newLen; j++) {
+                                            if (i === 0) {
+                                                matrix[i * (newLen + 1) + j] = j;
+                                            } else if (j === 0) {
+                                                matrix[i * (newLen + 1) + j] = i;
+                                            } else if (oldLines[i - 1] === newLines[j - 1]) {
+                                                matrix[i * (newLen + 1) + j] = matrix[(i - 1) * (newLen + 1) + (j - 1)];
+                                            } else {
+                                                matrix[i * (newLen + 1) + j] = 1 + Math.min(
+                                                    matrix[(i - 1) * (newLen + 1) + j],    // 删除
+                                                    matrix[i * (newLen + 1) + (j - 1)],    // 插入
+                                                    matrix[(i - 1) * (newLen + 1) + (j - 1)] // 替换
+                                                );
+                                            }
+                                        }
+                                    }
+
+                                    // 回溯找到差异
+                                    const diffs = [];
+                                    let i = oldLen, j = newLen;
+
+                                    while (i > 0 || j > 0) {
+                                        if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+                                            // 相同行
+                                            diffs.unshift({
+                                                type: 'equal',
+                                                oldLine: i - 1,
+                                                newLine: j - 1,
+                                                content: oldLines[i - 1]
+                                            });
+                                            i--;
+                                            j--;
+                                        } else if (i > 0 && (j === 0 || matrix[(i - 1) * (newLen + 1) + j] <= matrix[i * (newLen + 1) + (j - 1)])) {
+                                            // 删除行（只在旧文件中存在）
+                                            diffs.unshift({
+                                                type: 'delete',
+                                                oldLine: i - 1,
+                                                newLine: null,
+                                                content: oldLines[i - 1]
+                                            });
+                                            i--;
+                                        } else if (j > 0 && (i === 0 || matrix[i * (newLen + 1) + (j - 1)] <= matrix[(i - 1) * (newLen + 1) + j])) {
+                                            // 新增行（只在新文件中存在）
+                                            diffs.unshift({
+                                                type: 'insert',
+                                                oldLine: null,
+                                                newLine: j - 1,
+                                                content: newLines[j - 1]
+                                            });
+                                            j--;
+                                        } else {
+                                            // 修改行（两行都存在但内容不同）
+                                            diffs.unshift({
+                                                type: 'replace',
+                                                oldLine: i - 1,
+                                                newLine: j - 1,
+                                                oldContent: oldLines[i - 1],
+                                                newContent: newLines[j - 1]
+                                            });
+                                            i--;
+                                            j--;
+                                        }
+                                    }
+
+                                    return diffs;
+                                }
+                            `], { type: 'application/javascript' })));
+
+                        worker.onmessage = function (e) {
+                            diffData = e.data;
+                            displayDiff(leftLines, rightLines, diffData);
+                            batchActions.classList.remove('hidden');
+
+                            // 清理worker
+                            worker.terminate();
+
+                            // 恢复按钮状态
+                            compareBtn.disabled = false;
+                            compareBtn.innerHTML = '<i class="fa fa-exchange"></i><span>对比文件</span>';
+                            isProcessing = false;
+                        };
+
+                        worker.postMessage({ leftLines, rightLines });
+                    } else {
+                        // 小数据量直接处理
+                        diffData = computeDiff(leftLines, rightLines);
+                        displayDiff(leftLines, rightLines, diffData);
+                        batchActions.classList.remove('hidden');
+
+                        // 恢复按钮状态
+                        compareBtn.disabled = false;
+                        compareBtn.innerHTML = '<i class="fa fa-exchange"></i><span>对比文件</span>';
+                        isProcessing = false;
+                    }
+                } catch (error) {
+                    console.error('对比文件时出错:', error);
+                    alert('文件对比过程中发生错误，请重试');
+
+                    // 恢复按钮状态
+                    compareBtn.disabled = false;
+                    compareBtn.innerHTML = '<i class="fa fa-exchange"></i><span>对比文件</span>';
+                    isProcessing = false;
+                }
+            });
+        }
+
+        // 计算差异（优化版的 Myers 差异算法）
+        function computeDiff(oldLines, newLines) {
+            const oldLen = oldLines.length;
+            const newLen = newLines.length;
+
+            // 优化：使用一维数组代替二维数组减少内存占用
+            const matrix = new Array((oldLen + 1) * (newLen + 1));
+
+            // 填充矩阵
+            for (let i = 0; i <= oldLen; i++) {
+                for (let j = 0; j <= newLen; j++) {
+                    if (i === 0) {
+                        matrix[i * (newLen + 1) + j] = j;
+                    } else if (j === 0) {
+                        matrix[i * (newLen + 1) + j] = i;
+                    } else if (oldLines[i - 1] === newLines[j - 1]) {
+                        matrix[i * (newLen + 1) + j] = matrix[(i - 1) * (newLen + 1) + (j - 1)];
+                    } else {
+                        matrix[i * (newLen + 1) + j] = 1 + Math.min(
+                            matrix[(i - 1) * (newLen + 1) + j],    // 删除
+                            matrix[i * (newLen + 1) + (j - 1)],    // 插入
+                            matrix[(i - 1) * (newLen + 1) + (j - 1)] // 替换
+                        );
+                    }
+                }
+            }
+
+            // 回溯找到差异
+            const diffs = [];
+            let i = oldLen, j = newLen;
+
+            while (i > 0 || j > 0) {
+                if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+                    // 相同行
+                    diffs.unshift({
+                        type: 'equal',
+                        oldLine: i - 1,
+                        newLine: j - 1,
+                        content: oldLines[i - 1]
+                    });
+                    i--;
+                    j--;
+                } else if (i > 0 && (j === 0 || matrix[(i - 1) * (newLen + 1) + j] <= matrix[i * (newLen + 1) + (j - 1)])) {
+                    // 删除行（只在旧文件中存在）
+                    diffs.unshift({
+                        type: 'delete',
+                        oldLine: i - 1,
+                        newLine: null,
+                        content: oldLines[i - 1]
+                    });
+                    i--;
+                } else if (j > 0 && (i === 0 || matrix[i * (newLen + 1) + (j - 1)] <= matrix[(i - 1) * (newLen + 1) + j])) {
+                    // 新增行（只在新文件中存在）
+                    diffs.unshift({
+                        type: 'insert',
+                        oldLine: null,
+                        newLine: j - 1,
+                        content: newLines[j - 1]
+                    });
+                    j--;
+                } else {
+                    // 修改行（两行都存在但内容不同）
+                    diffs.unshift({
+                        type: 'replace',
+                        oldLine: i - 1,
+                        newLine: j - 1,
+                        oldContent: oldLines[i - 1],
+                        newContent: newLines[j - 1]
+                    });
+                    i--;
+                    j--;
+                }
+            }
+
+            return diffs;
+        }
+
+        // 显示差异 - 使用文档片段优化DOM操作
+        function displayDiff(leftLines, rightLines, diffs) {
+            // 使用文档片段减少DOM重绘
+            const fragment = document.createDocumentFragment();
+
+            // 检查是否有差异
+            const hasDifferences = diffs.some(diff => diff.type !== 'equal');
+
+            // 更新显示状态
+            diffResult.classList.remove('hidden');
+            noDiffMessage.classList.toggle('hidden', hasDifferences);
+            emptyContentMessage.classList.add('hidden');
+
+            if (!hasDifferences) {
+                diffContent.innerHTML = '';
+                return;
+            }
+
+            // 构建差异显示内容
+            diffs.forEach((diff, index) => {
+                // 创建整行容器
+                const rowEl = document.createElement('div');
+                rowEl.className = 'diff-row border-b border-gray-100 hover:bg-gray-50 transition-colors';
+                rowEl.dataset.diffIndex = index;
+
+                // 创建行号单元格
+                const lineNumCell = document.createElement('div');
+                lineNumCell.className = 'w-12 border-r border-gray-200 p-2 text-right text-gray-500 text-sm';
+
+                // 创建左侧内容单元格
+                const leftCell = document.createElement('div');
+                leftCell.className = 'w-1/2 border-r border-gray-200 p-0';
+
+                // 创建操作按钮单元格
+                const actionCell = document.createElement('div');
+                actionCell.className = 'w-10 border-r border-gray-200 p-2 flex items-center justify-center';
+
+                // 创建右侧内容单元格
+                const rightCell = document.createElement('div');
+                rightCell.className = 'w-1/2 p-0';
+
+                // 创建左侧内容编辑区
+                const leftContent = document.createElement('div');
+                leftContent.className = 'diff-line p-2 font-mono text-sm w-full h-full';
+                leftContent.contentEditable = true;
+                leftContent.spellcheck = false;
+                leftContent.dataset.lineIndex = diff.oldLine !== null ? diff.oldLine : '';
+                leftContent.dataset.side = 'left';
+
+                // 创建右侧内容编辑区
+                const rightContent = document.createElement('div');
+                rightContent.className = 'diff-line p-2 font-mono text-sm w-full h-full';
+                rightContent.contentEditable = true;
+                rightContent.spellcheck = false;
+                rightContent.dataset.lineIndex = diff.newLine !== null ? diff.newLine : '';
+                rightContent.dataset.side = 'right';
+
+                // 创建选择框
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'mr-2 h-3 w-3 text-primary rounded';
+                checkbox.dataset.diffIndex = index;
+
+                // 选择框事件
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    if (checkbox.checked) {
+                        rowEl.classList.add('bg-row-selected');
+                    } else {
+                        rowEl.classList.remove('bg-row-selected');
+                    }
+                });
+
+                // 行点击事件 - 切换选择状态
+                rowEl.addEventListener('click', (e) => {
+                    if (e.target !== checkbox &&
+                        e.target.tagName !== 'BUTTON' &&
+                        e.target.parentElement?.tagName !== 'BUTTON') {
+                        checkbox.checked = !checkbox.checked;
+                        if (checkbox.checked) {
+                            rowEl.classList.add('bg-row-selected');
+                        } else {
+                            rowEl.classList.remove('bg-row-selected');
+                        }
+                    }
+                });
+
+                // 内容编辑事件 - 使用防抖处理
+                leftContent.addEventListener('input', debounce(function () {
+                    const lineIndex = parseInt(this.dataset.lineIndex);
+                    if (!isNaN(lineIndex)) {
+                        leftLines[lineIndex] = this.textContent;
+                        leftContentEl.value = leftLines.join('\n');
+                        leftContent = leftLines.join('\n');
+                        // 实时更新对比
+                        compareFiles();
+                    }
+                }, 300));
+
+                rightContent.addEventListener('input', debounce(function () {
+                    const lineIndex = parseInt(this.dataset.lineIndex);
+                    if (!isNaN(lineIndex)) {
+                        rightLines[lineIndex] = this.textContent;
+                        rightContentEl.value = rightLines.join('\n');
+                        rightContent = rightLines.join('\n');
+                        // 实时更新对比
+                        compareFiles();
+                    }
+                }, 300));
+
+                // 根据差异类型设置样式和内容
+                switch (diff.type) {
+                    case 'equal':
+                        lineNumCell.textContent = diff.oldLine + 1;
+                        leftContent.textContent = diff.content || '';
+                        leftContent.className += ' bg-diff-unchanged';
+                        rightContent.textContent = diff.content || '';
+                        rightContent.className += ' bg-diff-unchanged';
+                        break;
+
+                    case 'delete':
+                        lineNumCell.textContent = diff.oldLine + 1;
+                        leftContent.textContent = diff.content || '';
+                        leftContent.className += ' bg-diff-removed';
+                        rightContent.textContent = '';
+                        rightContent.className += ' bg-gray-50';
+                        rightContent.contentEditable = false;
+
+                        // 添加向右箭头按钮（将删除的行添加到右侧）
+                        const deleteActionBtn = createActionButton('right', index);
+                        actionCell.appendChild(deleteActionBtn);
+                        break;
+
+                    case 'insert':
+                        lineNumCell.textContent = '';
+                        leftContent.textContent = '';
+                        leftContent.className += ' bg-gray-50';
+                        leftContent.contentEditable = false;
+                        rightContent.textContent = diff.content || '';
+                        rightContent.className += ' bg-diff-added';
+
+                        // 添加向左箭头按钮（将新增的行添加到左侧）
+                        const insertActionBtn = createActionButton('left', index);
+                        actionCell.appendChild(insertActionBtn);
+                        break;
+
+                    case 'replace':
+                        lineNumCell.textContent = diff.oldLine + 1;
+                        leftContent.textContent = diff.oldContent || '';
+                        leftContent.className += ' bg-diff-modified';
+                        rightContent.textContent = diff.newContent || '';
+                        rightContent.className += ' bg-diff-modified';
+
+                        // 添加双向箭头按钮
+                        const replaceLeftBtn = createActionButton('left', index);
+                        const replaceRightBtn = createActionButton('right', index);
+                        actionCell.appendChild(replaceLeftBtn);
+                        actionCell.appendChild(replaceRightBtn);
+                        break;
+                }
+
+                // 添加选择框（只对差异行）
+                if (diff.type !== 'equal') {
+                    const checkboxContainer = document.createElement('div');
+                    checkboxContainer.className = 'flex items-center justify-end';
+                    checkboxContainer.appendChild(checkbox);
+                    checkboxContainer.appendChild(document.createTextNode(lineNumCell.textContent));
+                    lineNumCell.textContent = '';
+                    lineNumCell.appendChild(checkboxContainer);
+                }
+
+                // 组装单元格
+                leftCell.appendChild(leftContent);
+                rightCell.appendChild(rightContent);
+
+                // 组装行
+                rowEl.appendChild(lineNumCell);
+                rowEl.appendChild(leftCell);
+                rowEl.appendChild(actionCell);
+                rowEl.appendChild(rightCell);
+
+                // 添加到文档片段
+                fragment.appendChild(rowEl);
+            });
+
+            // 一次性更新DOM
+            diffContent.innerHTML = '';
+            diffContent.appendChild(fragment);
+
+            // 重置滚动位置
+            diffScrollContainer.scrollTop = 0;
+        }
+
+        // 创建操作按钮
+        function createActionButton(direction, index) {
+            const btn = document.createElement('button');
+            btn.className = `p-1 rounded hover:bg-gray-200 text-gray-700 transition-colors ${direction === 'left' ? 'mr-1' : 'ml-1'}`;
+            btn.innerHTML = direction === 'left' ?
+                '<i class="fa fa-arrow-left text-primary"></i>' :
+                '<i class="fa fa-arrow-right text-primary"></i>';
+            btn.title = direction === 'left' ? '应用到左侧' : '应用到右侧';
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                applyChange(direction, index);
+                // 提供视觉反馈
+                btn.classList.add('bg-primary/20');
+                setTimeout(() => {
+                    btn.classList.remove('bg-primary/20');
+                }, 300);
+            });
+            return btn;
+        }
+
+        // 应用单个差异 - 改进替换逻辑：直接替换对面那一行的数据，并确保更新对比文本
+        function applyChange(direction, index) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            try {
+                const diff = diffData[index];
+                if (!diff) return;
+
+                switch (diff.type) {
+                    case 'delete':
+                        // 从左侧删除，添加到右侧对应位置
+                        if (direction === 'right' && diff.oldLine !== null) {
+                            // 直接替换或插入到对应位置
+                            if (diff.oldLine < rightLines.length) {
+                                rightLines[diff.oldLine] = diff.content;
+                            } else {
+                                rightLines.splice(diff.oldLine, 0, diff.content);
+                            }
+                        }
+                        break;
+
+                    case 'insert':
+                        // 从右侧添加，添加到左侧对应位置
+                        if (direction === 'left' && diff.newLine !== null) {
+                            // 直接替换或插入到对应位置
+                            if (diff.newLine < leftLines.length) {
+                                leftLines[diff.newLine] = diff.content;
+                            } else {
+                                leftLines.splice(diff.newLine, 0, diff.content);
+                            }
+                        }
+                        break;
+
+                    case 'replace':
+                        // 改进：直接替换对面那一行的数据
+                        if (direction === 'left' && diff.newLine !== null && diff.oldLine !== null) {
+                            // 将右侧内容直接替换到左侧对应行
+                            leftLines[diff.oldLine] = diff.newContent;
+                        } else if (direction === 'right' && diff.oldLine !== null && diff.newLine !== null) {
+                            // 将左侧内容直接替换到右侧对应行
+                            rightLines[diff.newLine] = diff.oldContent;
+                        }
+                        break;
+                }
+
+                // 更新内容并重新对比 - 确保执行替换操作后更新对比文本
+                leftContent = leftLines.join('\n');
+                rightContent = rightLines.join('\n');
+                leftContentEl.value = leftContent;
+                rightContentEl.value = rightContent;
+
+                // 重新计算并显示差异
+                compareFiles();
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        // 应用所有差异到指定侧
+        function applyAllChanges(direction) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            try {
+                // 创建一个反向的差异数组，从后往前处理避免索引问题
+                const reversedDiffs = [...diffData].reverse();
+
+                reversedDiffs.forEach(diff => {
+                    switch (diff.type) {
+                        case 'delete':
+                            if (direction === 'right' && diff.oldLine !== null) {
+                                if (diff.oldLine < rightLines.length) {
+                                    rightLines[diff.oldLine] = diff.content;
+                                } else {
+                                    rightLines.splice(diff.oldLine, 0, diff.content);
+                                }
+                            }
+                            break;
+
+                        case 'insert':
+                            if (direction === 'left' && diff.newLine !== null) {
+                                if (diff.newLine < leftLines.length) {
+                                    leftLines[diff.newLine] = diff.content;
+                                } else {
+                                    leftLines.splice(diff.newLine, 0, diff.content);
+                                }
+                            }
+                            break;
+
+                        case 'replace':
+                            if (direction === 'left' && diff.newLine !== null && diff.oldLine !== null) {
+                                // 直接替换左侧行
+                                leftLines[diff.oldLine] = diff.newContent;
+                            } else if (direction === 'right' && diff.oldLine !== null && diff.newLine !== null) {
+                                // 直接替换右侧行
+                                rightLines[diff.newLine] = diff.oldContent;
+                            }
+                            break;
+                    }
+                });
+
+                // 更新内容并重新对比
+                leftContent = leftLines.join('\n');
+                rightContent = rightLines.join('\n');
+                leftContentEl.value = leftContent;
+                rightContentEl.value = rightContent;
+
+                // 重新计算并显示差异
+                compareFiles();
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        // 选择所有差异行
+        function selectAllDifferences() {
+            const checkboxes = document.querySelectorAll('#diff-content input[type="checkbox"]');
+            const rows = document.querySelectorAll('#diff-content .diff-row');
+
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.checked = true;
+                rows[index].classList.add('bg-row-selected');
+            });
+        }
+
+        // 取消选择所有差异行
+        function deselectAllDifferences() {
+            const checkboxes = document.querySelectorAll('#diff-content input[type="checkbox"]');
+            const rows = document.querySelectorAll('#diff-content .diff-row');
+
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.checked = false;
+                rows[index].classList.remove('bg-row-selected');
+            });
+        }
+
+        // 应用选中的差异
+        function applySelectedChanges() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            try {
+                const checkboxes = document.querySelectorAll('#diff-content input[type="checkbox"]:checked');
+                if (checkboxes.length === 0) {
+                    alert('请先选择要应用的差异行');
+                    return;
+                }
+
+                // 获取选中的差异索引并按降序排序，避免处理顺序影响索引
+                const selectedIndices = Array.from(checkboxes)
+                    .map(checkbox => parseInt(checkbox.dataset.diffIndex))
+                    .sort((a, b) => b - a);
+
+                selectedIndices.forEach(index => {
+                    const diff = diffData[index];
+                    if (!diff) return;
+
+                    // 确定应用方向
+                    let direction = null;
+                    if (diff.type === 'delete') {
+                        direction = 'right'; // 删除的行只能应用到右侧
+                    } else if (diff.type === 'insert') {
+                        direction = 'left'; // 新增的行只能应用到左侧
+                    } else if (diff.type === 'replace') {
+                        direction = 'left'; // 默认从右到左应用替换
+                    }
+
+                    if (direction) {
+                        switch (diff.type) {
+                            case 'delete':
+                                if (direction === 'right' && diff.oldLine !== null) {
+                                    if (diff.oldLine < rightLines.length) {
+                                        rightLines[diff.oldLine] = diff.content;
+                                    } else {
+                                        rightLines.splice(diff.oldLine, 0, diff.content);
+                                    }
+                                }
+                                break;
+
+                            case 'insert':
+                                if (direction === 'left' && diff.newLine !== null) {
+                                    if (diff.newLine < leftLines.length) {
+                                        leftLines[diff.newLine] = diff.content;
+                                    } else {
+                                        leftLines.splice(diff.newLine, 0, diff.content);
+                                    }
+                                }
+                                break;
+
+                            case 'replace':
+                                if (direction === 'left' && diff.newLine !== null && diff.oldLine !== null) {
+                                    leftLines[diff.oldLine] = diff.newContent;
+                                } else if (direction === 'right' && diff.oldLine !== null && diff.newLine !== null) {
+                                    rightLines[diff.newLine] = diff.oldContent;
+                                }
+                                break;
+                        }
+                    }
+                });
+
+                // 更新内容并重新对比
+                leftContent = leftLines.join('\n');
+                rightContent = rightLines.join('\n');
+                leftContentEl.value = leftContent;
+                rightContentEl.value = rightContent;
+
+                // 重新计算并显示差异
+                compareFiles();
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        // 切换深色/浅色模式
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const icon = themeToggle.querySelector('i');
+
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.remove('fa-moon-o');
+                icon.classList.add('fa-sun-o');
+                document.body.classList.add('bg-gray-900', 'text-gray-100');
+                document.body.classList.remove('bg-gray-50', 'text-gray-800');
+            } else {
+                icon.classList.remove('fa-sun-o');
+                icon.classList.add('fa-moon-o');
+                document.body.classList.remove('bg-gray-900', 'text-gray-100');
+                document.body.classList.add('bg-gray-50', 'text-gray-800');
+            }
+        }
+
+        // 初始化应用
+        function initApp() {
+            initEventListeners();
+        }
+
+        // 启动应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

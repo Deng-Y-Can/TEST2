@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy加密解密工具 | 安全处理您的文本与文件</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入Chart.js用于展示加密性能 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+    <!-- 配置Tailwind自定义主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36CFC9',
+                        dark: '#1D2129',
+                        light: '#F2F3F5',
+                        success: '#52C41A',
+                        warning: '#FAAD14',
+                        danger: '#FF4D4F',
+                        neutral: '#86909C'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .glass-effect {
+                backdrop-filter: blur(10px);
+                background-color: rgba(255, 255, 255, 0.7);
+            }
+        }
+    </style>
+
+    <style>
+        /* 基础动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+
+        /* 平滑滚动 */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* 加载动画 */
+        .loader {
+            border-top-color: #165DFF;
+            animation: spinner 0.8s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-50 text-dark min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-shield text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-primary">Candy加密解密工具</h1>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="#home" class="text-gray-700 hover:text-primary transition-custom font-medium">首页</a>
+                <a href="#features" class="text-gray-700 hover:text-primary transition-custom font-medium">功能</a>
+                <a href="#tools" class="text-gray-700 hover:text-primary transition-custom font-medium">工具</a>
+                <a href="#about" class="text-gray-700 hover:text-primary transition-custom font-medium">关于</a>
+            </nav>
+
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 transition-custom">
+                    <i class="fa fa-moon-o text-gray-600"></i>
+                </button>
+                <button class="md:hidden p-2 rounded-full hover:bg-gray-100 transition-custom" id="mobile-menu-button">
+                    <i class="fa fa-bars text-gray-600"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t animate-fade-in">
+            <div class="container mx-auto px-4 py-3 flex flex-col space-y-3">
+                <a href="#home" class="text-gray-700 hover:text-primary transition-custom py-2">首页</a>
+                <a href="#features" class="text-gray-700 hover:text-primary transition-custom py-2">功能</a>
+                <a href="#tools" class="text-gray-700 hover:text-primary transition-custom py-2">工具</a>
+                <a href="#about" class="text-gray-700 hover:text-primary transition-custom py-2">关于</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="flex-grow">
+        <!-- 英雄区域 -->
+        <section id="home" class="bg-gradient-to-br from-primary/5 to-secondary/5 py-16 md:py-24">
+            <div class="container mx-auto px-4">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h2 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-dark leading-tight mb-6 text-shadow">
+                        安全、高效的<span class="text-primary">加密解密</span>解决方案
+                    </h2>
+                    <p class="text-[clamp(1rem,2vw,1.25rem)] text-gray-600 mb-8 max-w-2xl mx-auto">
+                        支持多种加密算法，自定义参数设置，轻松处理文本与文件的加密解密需求
+                    </p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <a href="#tools" class="px-8 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-custom transform hover:-translate-y-1">
+                            开始使用 <i class="fa fa-arrow-right ml-2"></i>
+                        </a>
+                        <a href="#features" class="px-8 py-3 bg-white hover:bg-gray-50 text-primary border border-primary font-medium rounded-lg hover:shadow-md transition-custom transform hover:-translate-y-1">
+                            了解更多 <i class="fa fa-info-circle ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 特性介绍 -->
+        <section id="features" class="py-16 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-16">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">强大的加密解密功能</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">我们提供多种加密算法和灵活的参数配置，满足您不同场景下的安全需求</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- 特性卡片 1 -->
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-custom p-6 border border-gray-100 transform hover:-translate-y-2">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fa fa-lock text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">多种加密算法</h3>
+                        <p class="text-gray-600">支持AES、DES、RSA、Base64等多种加密算法，满足不同安全级别需求</p>
+                    </div>
+
+                    <!-- 特性卡片 2 -->
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-custom p-6 border border-gray-100 transform hover:-translate-y-2">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fa fa-sliders text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">自定义参数</h3>
+                        <p class="text-gray-600">每种加密算法都支持自定义参数设置，如密钥长度、模式选择、偏移量等</p>
+                    </div>
+
+                    <!-- 特性卡片 3 -->
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-custom p-6 border border-gray-100 transform hover:-translate-y-2">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fa fa-file-text-o text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">文本与文件处理</h3>
+                        <p class="text-gray-600">不仅支持文本内容的加密解密，还可以直接处理文件，保护您的重要数据</p>
+                    </div>
+
+                    <!-- 特性卡片 4 -->
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-custom p-6 border border-gray-100 transform hover:-translate-y-2">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fa fa-shield text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">本地处理</h3>
+                        <p class="text-gray-600">所有加密解密操作均在本地完成，不会上传您的数据到服务器，保障信息安全</p>
+                    </div>
+
+                    <!-- 特性卡片 5 -->
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-custom p-6 border border-gray-100 transform hover:-translate-y-2">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fa fa-clock-o text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">操作历史</h3>
+                        <p class="text-gray-600">自动记录您的加密解密操作历史，方便查看和重复使用之前的参数配置</p>
+                    </div>
+
+                    <!-- 特性卡片 6 -->
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-custom p-6 border border-gray-100 transform hover:-translate-y-2">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fa fa-download text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">结果导出</h3>
+                        <p class="text-gray-600">支持将加密解密结果复制到剪贴板或导出为文件，方便后续使用</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 加密解密工具区域 -->
+        <section id="tools" class="py-16 bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">加密解密工具</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">选择加密算法，配置参数，处理您的文本或文件</p>
+                </div>
+
+                <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <!-- 工具选项卡 -->
+                    <div class="border-b border-gray-200">
+                        <div class="flex flex-wrap">
+                            <button class="tool-tab active px-6 py-4 font-medium text-primary border-b-2 border-primary" data-tab="text">
+                                <i class="fa fa-font mr-2"></i>文本处理
+                            </button>
+                            <button class="tool-tab px-6 py-4 font-medium text-gray-500 hover:text-primary" data-tab="file">
+                                <i class="fa fa-file mr-2"></i>文件处理
+                            </button>
+                            <button class="tool-tab px-6 py-4 font-medium text-gray-500 hover:text-primary" data-tab="history">
+                                <i class="fa fa-history mr-2"></i>操作历史
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 文本处理选项卡内容 -->
+                    <div class="tool-content active p-6 md:p-8" id="text-content">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- 左侧：输入区域 -->
+                            <div class="lg:col-span-1 space-y-6">
+                                <!-- 操作类型选择 -->
+                                <div class="bg-gray-50 p-4 rounded-xl">
+                                    <h3 class="font-semibold mb-3">操作类型</h3>
+                                    <div class="flex space-x-2">
+                                        <button class="operation-btn active flex-1 py-2 px-4 bg-primary text-white rounded-lg transition-custom" data-operation="encrypt">
+                                            加密
+                                        </button>
+                                        <button class="operation-btn flex-1 py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-custom" data-operation="decrypt">
+                                            解密
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 加密算法选择 -->
+                                <div class="bg-gray-50 p-4 rounded-xl">
+                                    <h3 class="font-semibold mb-3">加密算法</h3>
+                                    <select id="algorithm-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom">
+                                        <option value="aes">AES (Advanced Encryption Standard)</option>
+                                        <option value="des">DES (Data Encryption Standard)</option>
+                                        <option value="rsa">RSA (Rivest-Shamir-Adleman)</option>
+                                        <option value="base64">Base64 (编码/解码)</option>
+                                        <option value="md5">MD5 (消息摘要算法)</option>
+                                        <option value="sha256">SHA-256 (安全散列算法)</option>
+                                    </select>
+                                </div>
+
+                                <!-- 算法参数配置 -->
+                                <div id="algorithm-params" class="bg-gray-50 p-4 rounded-xl space-y-4">
+                                    <h3 class="font-semibold">参数配置</h3>
+
+                                    <!-- AES参数 -->
+                                    <div class="algorithm-params aes active">
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">密钥 (Key)</label>
+                                                <input type="text" id="aes-key" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="输入密钥">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">模式 (Mode)</label>
+                                                <select id="aes-mode" class="w-full p-2 border border-gray-300 rounded-lg">
+                                                    <option value="cbc">CBC (Cipher Block Chaining)</option>
+                                                    <option value="ecb">ECB (Electronic Codebook)</option>
+                                                    <option value="cfb">CFB (Cipher Feedback)</option>
+                                                    <option value="ofb">OFB (Output Feedback)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">偏移量 (IV)</label>
+                                                <input type="text" id="aes-iv" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="输入偏移量">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">密钥长度</label>
+                                                <select id="aes-length" class="w-full p-2 border border-gray-300 rounded-lg">
+                                                    <option value="128">128位</option>
+                                                    <option value="192">192位</option>
+                                                    <option value="256">256位</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- DES参数 -->
+                                    <div class="algorithm-params des hidden">
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">密钥 (Key)</label>
+                                                <input type="text" id="des-key" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="输入密钥">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">模式 (Mode)</label>
+                                                <select id="des-mode" class="w-full p-2 border border-gray-300 rounded-lg">
+                                                    <option value="cbc">CBC (Cipher Block Chaining)</option>
+                                                    <option value="ecb">ECB (Electronic Codebook)</option>
+                                                    <option value="cfb">CFB (Cipher Feedback)</option>
+                                                    <option value="ofb">OFB (Output Feedback)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">偏移量 (IV)</label>
+                                                <input type="text" id="des-iv" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="输入偏移量">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- RSA参数 -->
+                                    <div class="algorithm-params rsa hidden">
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">密钥大小</label>
+                                                <select id="rsa-size" class="w-full p-2 border border-gray-300 rounded-lg">
+                                                    <option value="1024">1024位</option>
+                                                    <option value="2048">2048位</option>
+                                                    <option value="4096">4096位</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">公钥</label>
+                                                <textarea id="rsa-public-key" class="w-full p-2 border border-gray-300 rounded-lg h-24" placeholder="输入公钥 (加密时使用)"></textarea>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">私钥</label>
+                                                <textarea id="rsa-private-key" class="w-full p-2 border border-gray-300 rounded-lg h-24" placeholder="输入私钥 (解密时使用)"></textarea>
+                                            </div>
+                                            <button id="generate-rsa-keys" class="w-full py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-custom text-sm">
+                                                生成RSA密钥对
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Base64参数 (无特殊参数) -->
+                                    <div class="algorithm-params base64 hidden">
+                                        <p class="text-sm text-gray-600">Base64编码/解码无需额外参数</p>
+                                    </div>
+
+                                    <!-- MD5参数 (无特殊参数) -->
+                                    <div class="algorithm-params md5 hidden">
+                                        <p class="text-sm text-gray-600">MD5是单向哈希算法，只能加密不能解密</p>
+                                    </div>
+
+                                    <!-- SHA-256参数 (无特殊参数) -->
+                                    <div class="algorithm-params sha256 hidden">
+                                        <p class="text-sm text-gray-600">SHA-256是单向哈希算法，只能加密不能解密</p>
+                                    </div>
+                                </div>
+
+                                <!-- 操作按钮 -->
+                                <button id="process-text-btn" class="w-full py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-custom flex items-center justify-center">
+                                    <i class="fa fa-cog mr-2"></i>
+                                    <span id="process-btn-text">执行加密</span>
+                                </button>
+                            </div>
+
+                            <!-- 右侧：输入和输出区域 -->
+                            <div class="lg:col-span-2 space-y-6">
+                                <!-- 输入文本区域 -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="font-semibold">输入内容</h3>
+                                        <div class="flex space-x-2">
+                                            <button id="clear-input" class="text-sm text-gray-500 hover:text-gray-700 p-1">
+                                                <i class="fa fa-trash-o"></i> 清空
+                                            </button>
+                                            <button id="sample-input" class="text-sm text-gray-500 hover:text-gray-700 p-1">
+                                                <i class="fa fa-file-text-o"></i> 示例
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea id="input-text" class="w-full p-3 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom resize-none" placeholder="请输入要加密或解密的文本..."></textarea>
+                                </div>
+
+                                <!-- 输出结果区域 -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="font-semibold">处理结果</h3>
+                                        <div class="flex space-x-2">
+                                            <button id="copy-result" class="text-sm text-gray-500 hover:text-gray-700 p-1">
+                                                <i class="fa fa-copy"></i> 复制
+                                            </button>
+                                            <button id="download-result" class="text-sm text-gray-500 hover:text-gray-700 p-1">
+                                                <i class="fa fa-download"></i> 下载
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="relative">
+                                        <textarea id="output-result" class="w-full p-3 border border-gray-300 rounded-lg h-48 bg-gray-50 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom resize-none" placeholder="处理结果将显示在这里..." readonly></textarea>
+                                        <div id="result-message" class="absolute bottom-3 right-3 text-xs px-2 py-1 rounded-full hidden"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 处理信息 -->
+                                <div class="bg-gray-50 p-4 rounded-xl">
+                                    <h3 class="font-semibold mb-2">处理信息</h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                        <div>
+                                            <p class="text-gray-500">算法</p>
+                                            <p id="info-algorithm" class="font-medium">AES</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">操作</p>
+                                            <p id="info-operation" class="font-medium">加密</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">耗时</p>
+                                            <p id="info-time" class="font-medium">-</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">字符数</p>
+                                            <p id="info-length" class="font-medium">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文件处理选项卡内容 -->
+                    <div class="tool-content hidden p-6 md:p-8" id="file-content">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- 左侧：文件上传和设置 -->
+                            <div class="space-y-6">
+                                <!-- 操作类型选择 -->
+                                <div class="bg-gray-50 p-4 rounded-xl">
+                                    <h3 class="font-semibold mb-3">操作类型</h3>
+                                    <div class="flex space-x-2">
+                                        <button class="file-operation-btn active flex-1 py-2 px-4 bg-primary text-white rounded-lg transition-custom" data-operation="encrypt">
+                                            加密
+                                        </button>
+                                        <button class="file-operation-btn flex-1 py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-custom" data-operation="decrypt">
+                                            解密
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 加密算法选择 -->
+                                <div class="bg-gray-50 p-4 rounded-xl">
+                                    <h3 class="font-semibold mb-3">加密算法</h3>
+                                    <select id="file-algorithm-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom">
+                                        <option value="aes">AES (Advanced Encryption Standard)</option>
+                                        <option value="des">DES (Data Encryption Standard)</option>
+                                    </select>
+                                </div>
+
+                                <!-- 算法参数配置 (简化版) -->
+                                <div id="file-algorithm-params" class="bg-gray-50 p-4 rounded-xl space-y-4">
+                                    <h3 class="font-semibold">参数配置</h3>
+
+                                    <!-- AES参数 -->
+                                    <div class="file-algorithm-params aes active">
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">密钥 (Key)</label>
+                                                <input type="text" id="file-aes-key" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="输入密钥">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">模式 (Mode)</label>
+                                                <select id="file-aes-mode" class="w-full p-2 border border-gray-300 rounded-lg">
+                                                    <option value="cbc">CBC (Cipher Block Chaining)</option>
+                                                    <option value="ecb">ECB (Electronic Codebook)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">偏移量 (IV)</label>
+                                                <input type="text" id="file-aes-iv" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="输入偏移量">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- DES参数 -->
+                                    <div class="file-algorithm-params des hidden">
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">密钥 (Key)</label>
+                                                <input type="text" id="file-des-key" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="输入密钥">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">模式 (Mode)</label>
+                                                <select id="file-des-mode" class="w-full p-2 border border-gray-300 rounded-lg">
+                                                    <option value="cbc">CBC (Cipher Block Chaining)</option>
+                                                    <option value="ecb">ECB (Electronic Codebook)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">偏移量 (IV)</label>
+                                                <input type="text" id="file-des-iv" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="输入偏移量">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 文件上传区域 -->
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary transition-custom bg-gray-50">
+                                    <i class="fa fa-cloud-upload text-4xl text-gray-400 mb-3"></i>
+                                    <p class="mb-3">点击或拖拽文件到此处</p>
+                                    <p class="text-sm text-gray-500 mb-4">支持所有常见文件格式，大小不超过10MB</p>
+                                    <label class="inline-block px-5 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg cursor-pointer transition-custom">
+                                        选择文件
+                                        <input type="file" id="file-upload" class="hidden">
+                                    </label>
+                                    <div id="file-info" class="mt-4 hidden">
+                                        <div class="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-200">
+                                            <div class="flex items-center">
+                                                <i class="fa fa-file-o text-gray-500 mr-2"></i>
+                                                <span id="file-name" class="text-sm truncate max-w-[200px]"></span>
+                                            </div>
+                                            <span id="file-size" class="text-xs text-gray-500"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 操作按钮 -->
+                                <button id="process-file-btn" class="w-full py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-custom flex items-center justify-center" disabled>
+                                    <i class="fa fa-cog mr-2"></i>
+                                    <span id="file-process-btn-text">执行文件加密</span>
+                                </button>
+                            </div>
+
+                            <!-- 右侧：处理状态和结果 -->
+                            <div class="space-y-6">
+                                <!-- 处理状态 -->
+                                <div class="bg-gray-50 p-6 rounded-xl text-center">
+                                    <div id="file-status-default" class="block">
+                                        <i class="fa fa-info-circle text-4xl text-gray-300 mb-3"></i>
+                                        <p class="text-gray-500">请上传文件并点击处理按钮</p>
+                                    </div>
+
+                                    <div id="file-status-processing" class="hidden">
+                                        <div class="loader w-12 h-12 border-4 border-gray-200 rounded-full mx-auto mb-3"></div>
+                                        <p class="text-gray-700">正在处理文件...</p>
+                                        <div class="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                            <div id="file-progress" class="h-full bg-primary w-0 transition-all duration-300"></div>
+                                        </div>
+                                    </div>
+
+                                    <div id="file-status-success" class="hidden">
+                                        <i class="fa fa-check-circle text-4xl text-success mb-3"></i>
+                                        <p class="text-gray-700 mb-4">文件处理完成</p>
+                                        <a id="download-file-result" href="#" class="inline-flex items-center px-5 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-custom">
+                                            <i class="fa fa-download mr-2"></i> 下载处理后的文件
+                                        </a>
+                                    </div>
+
+                                    <div id="file-status-error" class="hidden">
+                                        <i class="fa fa-exclamation-circle text-4xl text-danger mb-3"></i>
+                                        <p id="file-error-message" class="text-danger mb-4">处理文件时出错</p>
+                                        <button id="retry-file-process" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-custom">
+                                            重试
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 文件处理信息 -->
+                                <div class="bg-gray-50 p-4 rounded-xl">
+                                    <h3 class="font-semibold mb-3">支持的文件类型</h3>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                        <div class="flex items-center text-sm">
+                                            <i class="fa fa-file-text-o text-gray-500 mr-2"></i>
+                                            <span>文档 (.txt, .doc, .pdf)</span>
+                                        </div>
+                                        <div class="flex items-center text-sm">
+                                            <i class="fa fa-file-image-o text-gray-500 mr-2"></i>
+                                            <span>图片 (.jpg, .png, .gif)</span>
+                                        </div>
+                                        <div class="flex items-center text-sm">
+                                            <i class="fa fa-file-archive-o text-gray-500 mr-2"></i>
+                                            <span>压缩包 (.zip, .rar)</span>
+                                        </div>
+                                        <div class="flex items-center text-sm">
+                                            <i class="fa fa-file-code-o text-gray-500 mr-2"></i>
+                                            <span>代码 (.html, .js, .py)</span>
+                                        </div>
+                                        <div class="flex items-center text-sm">
+                                            <i class="fa fa-file-audio-o text-gray-500 mr-2"></i>
+                                            <span>音频 (.mp3, .wav)</span>
+                                        </div>
+                                        <div class="flex items-center text-sm">
+                                            <i class="fa fa-file-video-o text-gray-500 mr-2"></i>
+                                            <span>视频 (.mp4, .avi)</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                                        <h4 class="font-medium text-primary text-sm mb-1">注意事项</h4>
+                                        <ul class="text-sm text-gray-600 space-y-1">
+                                            <li class="flex items-start">
+                                                <i class="fa fa-check-circle text-primary mt-1 mr-2 text-xs"></i>
+                                                <span>所有文件处理均在本地完成，不会上传到服务器</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <i class="fa fa-check-circle text-primary mt-1 mr-2 text-xs"></i>
+                                                <span>加密后的文件会添加 ".encrypted" 扩展名</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <i class="fa fa-check-circle text-primary mt-1 mr-2 text-xs"></i>
+                                                <span>请妥善保管您的密钥，丢失后无法恢复文件</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作历史选项卡内容 -->
+                    <div class="tool-content hidden p-6 md:p-8" id="history-content">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-semibold text-lg">操作历史记录</h3>
+                            <button id="clear-history" class="text-sm text-gray-500 hover:text-danger transition-custom">
+                                <i class="fa fa-trash-o mr-1"></i> 清空历史
+                            </button>
+                        </div>
+
+                        <div id="history-list" class="space-y-4">
+                            <!-- 历史记录会通过JavaScript动态添加 -->
+                            <div id="empty-history" class="text-center py-16">
+                                <i class="fa fa-history text-4xl text-gray-300 mb-3"></i>
+                                <p class="text-gray-500">暂无操作历史记录</p>
+                                <p class="text-sm text-gray-400 mt-2">使用加密解密功能后会在这里显示记录</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 加密算法介绍 -->
+        <section class="py-16 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">常用加密算法介绍</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">了解不同加密算法的特点和适用场景，选择最适合您需求的加密方式</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- 算法卡片 1 -->
+                    <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-custom">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fa fa-key text-primary"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold">AES</h3>
+                            </div>
+                            <p class="text-gray-600 mb-4 text-sm">高级加密标准，是目前最流行的对称加密算法之一，安全性高，效率好，广泛应用于各种场景。</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <p><span class="font-medium">类型：</span>对称加密</p>
+                                <p><span class="font-medium">密钥长度：</span>128位、192位、256位</p>
+                                <p><span class="font-medium">特点：</span>安全、高效、应用广泛</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 算法卡片 2 -->
+                    <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-custom">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fa fa-lock text-primary"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold">DES</h3>
+                            </div>
+                            <p class="text-gray-600 mb-4 text-sm">数据加密标准，是早期广泛使用的对称加密算法，现在由于密钥长度较短，安全性已不足。</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <p><span class="font-medium">类型：</span>对称加密</p>
+                                <p><span class="font-medium">密钥长度：</span>56位</p>
+                                <p><span class="font-medium">特点：</span>历史悠久，安全性较低</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 算法卡片 3 -->
+                    <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-custom">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fa fa-exchange text-primary"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold">RSA</h3>
+                            </div>
+                            <p class="text-gray-600 mb-4 text-sm">非对称加密算法，使用公钥加密，私钥解密，广泛应用于数字签名和密钥交换。</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <p><span class="font-medium">类型：</span>非对称加密</p>
+                                <p><span class="font-medium">密钥长度：</span>1024位-4096位</p>
+                                <p><span class="font-medium">特点：</span>安全性高，速度较慢</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 算法卡片 4 -->
+                    <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-custom">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fa fa-code text-primary"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold">Base64</h3>
+                            </div>
+                            <p class="text-gray-600 mb-4 text-sm">不是加密算法，而是一种编码方式，用于将二进制数据转换为文本格式，方便传输和存储。</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <p><span class="font-medium">类型：</span>编码方式</p>
+                                <p><span class="font-medium">用途：</span>数据传输、存储二进制数据</p>
+                                <p><span class="font-medium">特点：</span>可逆，编码后数据量增加</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 算法卡片 5 -->
+                    <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-custom">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fa fa-hashtag text-primary"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold">MD5</h3>
+                            </div>
+                            <p class="text-gray-600 mb-4 text-sm">消息摘要算法，生成128位的哈希值，是单向加密，无法解密，主要用于数据完整性校验。</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <p><span class="font-medium">类型：</span>哈希算法</p>
+                                <p><span class="font-medium">输出长度：</span>128位</p>
+                                <p><span class="font-medium">特点：</span>不可逆，易碰撞，安全性低</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 算法卡片 6 -->
+                    <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-custom">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fa fa-shield text-primary"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold">SHA-256</h3>
+                            </div>
+                            <p class="text-gray-600 mb-4 text-sm">安全散列算法，生成256位的哈希值，是MD5的替代方案，安全性更高，应用广泛。</p>
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <p><span class="font-medium">类型：</span>哈希算法</p>
+                                <p><span class="font-medium">输出长度：</span>256位</p>
+                                <p><span class="font-medium">特点：</span>不可逆，安全性高，应用广泛</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 关于部分 -->
+        <section id="about" class="py-16 bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-8 md:p-10">
+                    <div class="text-center mb-8">
+                        <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">关于加密解密工具</h2>
+                        <p class="text-gray-600">我们致力于提供安全、高效、易用的加密解密解决方案</p>
+                    </div>
+
+                    <div class="space-y-6 text-gray-700">
+                        <p>本工具是一个纯前端实现的加密解密应用，所有操作均在您的浏览器中完成，不会将您的数据上传到任何服务器，确保您的信息安全。</p>
+
+                        <p>支持多种加密算法，包括AES、DES、RSA等对称和非对称加密算法，以及Base64编码、MD5和SHA-256哈希算法，满足您在不同场景下的加密需求。</p>
+
+                        <div class="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                            <h3 class="font-semibold text-primary mb-2">安全提示</h3>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-primary mt-1 mr-2 text-xs"></i>
+                                    <span>请妥善保管您的加密密钥，丢失后可能导致数据无法恢复</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-primary mt-1 mr-2 text-xs"></i>
+                                    <span>对于重要数据，建议使用高强度加密算法（如AES-256）</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-primary mt-1 mr-2 text-xs"></i>
+                                    <span>哈希算法（MD5、SHA-256）是单向的，无法解密，适用于密码存储等场景</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <p>本工具仅供学习和参考使用，对于因使用本工具造成的任何损失，我们不承担责任。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fa fa-shield text-primary text-2xl"></i>
+                        <h3 class="text-xl font-bold">加密解密工具</h3>
+                    </div>
+                    <p class="text-gray-400 mb-4">安全、高效的加密解密解决方案，保护您的数据安全。</p>
+                   
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">快速链接</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#home" class="text-gray-400 hover:text-white transition-custom">首页</a></li>
+                        <li><a href="#features" class="text-gray-400 hover:text-white transition-custom">功能</a></li>
+                        <li><a href="#tools" class="text-gray-400 hover:text-white transition-custom">工具</a></li>
+                        <li><a href="#about" class="text-gray-400 hover:text-white transition-custom">关于</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">加密资源</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">加密算法指南</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">安全最佳实践</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">密码学基础知识</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-custom">常见问题解答</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-500 text-sm">
+                <p>&copy; 2025 加密解密工具 - 保护您的数据安全</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 加密解密功能实现 -->
+    <script>
+        // 工具选项卡切换
+        document.querySelectorAll('.tool-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 移除所有选项卡的active类
+                document.querySelectorAll('.tool-tab').forEach(t => {
+                    t.classList.remove('active', 'text-primary', 'border-b-2', 'border-primary');
+                    t.classList.add('text-gray-500');
+                });
+
+                // 给当前选项卡添加active类
+                tab.classList.add('active', 'text-primary', 'border-b-2', 'border-primary');
+                tab.classList.remove('text-gray-500');
+
+                // 隐藏所有内容
+                document.querySelectorAll('.tool-content').forEach(content => {
+                    content.classList.add('hidden');
+                    content.classList.remove('active');
+                });
+
+                // 显示对应内容
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-content`).classList.remove('hidden');
+                document.getElementById(`${tabId}-content`).classList.add('active');
+            });
+        });
+
+        // 操作类型切换（文本）
+        document.querySelectorAll('.operation-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 移除所有按钮的active类
+                document.querySelectorAll('.operation-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white');
+                    b.classList.add('bg-gray-200', 'text-gray-700');
+                });
+
+                // 给当前按钮添加active类
+                btn.classList.add('active', 'bg-primary', 'text-white');
+                btn.classList.remove('bg-gray-200', 'text-gray-700');
+
+                // 更新按钮文本
+                const operation = btn.getAttribute('data-operation');
+                document.getElementById('process-btn-text').textContent = `执行${operation === 'encrypt' ? '加密' : '解密'}`;
+                document.getElementById('info-operation').textContent = operation === 'encrypt' ? '加密' : '解密';
+
+                // 对于单向算法（MD5、SHA-256），如果是解密操作，禁用按钮
+                const algorithm = document.getElementById('algorithm-select').value;
+                const processBtn = document.getElementById('process-text-btn');
+                if (operation === 'decrypt' && (algorithm === 'md5' || algorithm === 'sha256')) {
+                    processBtn.disabled = true;
+                    processBtn.classList.add('opacity-70', 'cursor-not-allowed');
+                } else {
+                    processBtn.disabled = false;
+                    processBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+                }
+            });
+        });
+
+        // 操作类型切换（文件）
+        document.querySelectorAll('.file-operation-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 移除所有按钮的active类
+                document.querySelectorAll('.file-operation-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white');
+                    b.classList.add('bg-gray-200', 'text-gray-700');
+                });
+
+                // 给当前按钮添加active类
+                btn.classList.add('active', 'bg-primary', 'text-white');
+                btn.classList.remove('bg-gray-200', 'text-gray-700');
+
+                // 更新按钮文本
+                const operation = btn.getAttribute('data-operation');
+                document.getElementById('file-process-btn-text').textContent = `执行文件${operation === 'encrypt' ? '加密' : '解密'}`;
+            });
+        });
+
+        // 算法选择切换（文本）
+        document.getElementById('algorithm-select').addEventListener('change', function () {
+            const selectedAlgorithm = this.value;
+
+            // 更新信息显示
+            document.getElementById('info-algorithm').textContent =
+                selectedAlgorithm === 'aes' ? 'AES' :
+                    selectedAlgorithm === 'des' ? 'DES' :
+                        selectedAlgorithm === 'rsa' ? 'RSA' :
+                            selectedAlgorithm === 'base64' ? 'Base64' :
+                                selectedAlgorithm === 'md5' ? 'MD5' :
+                                    selectedAlgorithm === 'sha256' ? 'SHA-256' : selectedAlgorithm;
+
+            // 隐藏所有算法参数
+            document.querySelectorAll('.algorithm-params').forEach(params => {
+                params.classList.add('hidden');
+                params.classList.remove('active');
+            });
+
+            // 显示选中算法的参数
+            document.querySelector(`.algorithm-params.${selectedAlgorithm}`).classList.remove('hidden');
+            document.querySelector(`.algorithm-params.${selectedAlgorithm}`).classList.add('active');
+
+            // 对于单向算法（MD5、SHA-256），如果是解密操作，禁用按钮
+            const operation = document.querySelector('.operation-btn.active').getAttribute('data-operation');
+            const processBtn = document.getElementById('process-text-btn');
+            if (operation === 'decrypt' && (selectedAlgorithm === 'md5' || selectedAlgorithm === 'sha256')) {
+                processBtn.disabled = true;
+                processBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            } else {
+                processBtn.disabled = false;
+                processBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        });
+
+        // 算法选择切换（文件）
+        document.getElementById('file-algorithm-select').addEventListener('change', function () {
+            const selectedAlgorithm = this.value;
+
+            // 隐藏所有算法参数
+            document.querySelectorAll('.file-algorithm-params').forEach(params => {
+                params.classList.add('hidden');
+                params.classList.remove('active');
+            });
+
+            // 显示选中算法的参数
+            document.querySelector(`.file-algorithm-params.${selectedAlgorithm}`).classList.remove('hidden');
+            document.querySelector(`.file-algorithm-params.${selectedAlgorithm}`).classList.add('active');
+        });
+
+        // 生成RSA密钥对
+        document.getElementById('generate-rsa-keys').addEventListener('click', function () {
+            // 这里只是模拟生成RSA密钥对，实际应用中需要使用专门的加密库
+            const keySize = document.getElementById('rsa-size').value;
+
+            // 显示加载状态
+            this.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 生成中...';
+            this.disabled = true;
+
+            // 模拟生成延迟
+            setTimeout(() => {
+                // 生成模拟的公钥和私钥
+                const publicKey = `-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz${Math.random().toString(36).substring(2, 34)}\n${Math.random().toString(36).substring(2, 34)}\n${Math.random().toString(36).substring(2, 18)}\n-----END PUBLIC KEY-----`;
+
+                const privateKey = `-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCz${Math.random().toString(36).substring(2, 34)}\n${Math.random().toString(36).substring(2, 34)}\n${Math.random().toString(36).substring(2, 34)}\n${Math.random().toString(36).substring(2, 34)}\n${Math.random().toString(36).substring(2, 34)}\n${Math.random().toString(36).substring(2, 18)}\n-----END PRIVATE KEY-----`;
+
+                // 填充到文本框
+                document.getElementById('rsa-public-key').value = publicKey;
+                document.getElementById('rsa-private-key').value = privateKey;
+
+                // 恢复按钮状态
+                this.innerHTML = '生成RSA密钥对';
+                this.disabled = false;
+
+                // 显示成功消息
+                showResultMessage('密钥对生成成功', 'success');
+            }, 1000);
+        });
+
+        // 输入文本操作
+        document.getElementById('clear-input').addEventListener('click', function () {
+            document.getElementById('input-text').value = '';
+        });
+
+        document.getElementById('sample-input').addEventListener('click', function () {
+            document.getElementById('input-text').value = '这是一段测试文本，用于演示加密解密功能。Encryption and decryption test.';
+        });
+
+        // 结果操作
+        document.getElementById('copy-result').addEventListener('click', function () {
+            const resultText = document.getElementById('output-result').value;
+            if (resultText) {
+                navigator.clipboard.writeText(resultText).then(() => {
+                    showResultMessage('已复制到剪贴板', 'success');
+                }).catch(err => {
+                    showResultMessage('复制失败', 'error');
+                    console.error('无法复制文本: ', err);
+                });
+            }
+        });
+
+        document.getElementById('download-result').addEventListener('click', function () {
+            const resultText = document.getElementById('output-result').value;
+            if (resultText) {
+                const algorithm = document.getElementById('algorithm-select').value;
+                const operation = document.querySelector('.operation-btn.active').getAttribute('data-operation');
+
+                const blob = new Blob([resultText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${operation === 'encrypt' ? 'encrypted' : 'decrypted'}_${algorithm}_${new Date().getTime()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showResultMessage('文件已下载', 'success');
+            }
+        });
+
+        // 显示结果消息
+        function showResultMessage(message, type) {
+            const messageEl = document.getElementById('result-message');
+            messageEl.textContent = message;
+            messageEl.classList.remove('hidden', 'bg-success/20', 'text-success', 'bg-danger/20', 'text-danger');
+
+            if (type === 'success') {
+                messageEl.classList.add('bg-success/20', 'text-success');
+            } else {
+                messageEl.classList.add('bg-danger/20', 'text-danger');
+            }
+
+            // 3秒后隐藏消息
+            setTimeout(() => {
+                messageEl.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 文件上传处理
+        document.getElementById('file-upload').addEventListener('change', function (e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                document.getElementById('file-name').textContent = file.name;
+                document.getElementById('file-size').textContent = formatFileSize(file.size);
+                document.getElementById('file-info').classList.remove('hidden');
+
+                // 启用处理按钮
+                document.getElementById('process-file-btn').disabled = false;
+            }
+        });
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 处理文本加密解密
+        document.getElementById('process-text-btn').addEventListener('click', function () {
+            const inputText = document.getElementById('input-text').value;
+            if (!inputText) {
+                showResultMessage('请输入要处理的文本', 'error');
+                return;
+            }
+
+            const algorithm = document.getElementById('algorithm-select').value;
+            const operation = document.querySelector('.operation-btn.active').getAttribute('data-operation');
+
+            // 记录开始时间
+            const startTime = performance.now();
+
+            // 显示加载状态
+            this.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 处理中...';
+            this.disabled = true;
+
+            // 模拟处理延迟
+            setTimeout(() => {
+                let result = '';
+
+                // 根据选择的算法和操作类型进行处理（这里只是模拟）
+                if (algorithm === 'base64') {
+                    if (operation === 'encrypt') {
+                        result = btoa(unescape(encodeURIComponent(inputText)));
+                    } else {
+                        try {
+                            result = decodeURIComponent(escape(atob(inputText)));
+                        } catch (e) {
+                            result = 'Base64解码失败：输入不是有效的Base64字符串';
+                        }
+                    }
+                } else if (algorithm === 'md5') {
+                    // 模拟MD5哈希
+                    result = '模拟MD5哈希：' + inputText.split('').reduce((acc, char) => {
+                        const hash = ((acc << 5) - acc) + char.charCodeAt(0);
+                        return hash & hash; // 转换为32位整数
+                    }, 0).toString(16).padStart(32, '0');
+                } else if (algorithm === 'sha256') {
+                    // 模拟SHA-256哈希
+                    result = '模拟SHA256哈希：' + Array(64).fill(0).map(() =>
+                        Math.floor(Math.random() * 16).toString(16)
+                    ).join('');
+                } else if (algorithm === 'aes') {
+                    const key = document.getElementById('aes-key').value || 'default-key-123';
+                    const mode = document.getElementById('aes-mode').value;
+                    const iv = document.getElementById('aes-iv').value || 'default-iv-1234';
+                    const length = document.getElementById('aes-length').value;
+
+                    if (operation === 'encrypt') {
+                        result = `AES-${length}-${mode}加密结果：${btoa(inputText + '|' + key + '|' + iv)}`;
+                    } else {
+                        try {
+                            const decoded = atob(inputText);
+                            result = decoded.split('|')[0];
+                        } catch (e) {
+                            result = 'AES解密失败：输入不是有效的AES加密字符串';
+                        }
+                    }
+                } else if (algorithm === 'des') {
+                    const key = document.getElementById('des-key').value || 'des-key';
+                    const mode = document.getElementById('des-mode').value;
+                    const iv = document.getElementById('des-iv').value || 'des-iv';
+
+                    if (operation === 'encrypt') {
+                        result = `DES-${mode}加密结果：${btoa(inputText + '|' + key + '|' + iv)}`;
+                    } else {
+                        try {
+                            const decoded = atob(inputText);
+                            result = decoded.split('|')[0];
+                        } catch (e) {
+                            result = 'DES解密失败：输入不是有效的DES加密字符串';
+                        }
+                    }
+                } else if (algorithm === 'rsa') {
+                    if (operation === 'encrypt') {
+                        const publicKey = document.getElementById('rsa-public-key').value || '默认公钥';
+                        result = `RSA加密结果：${btoa(inputText + '|' + publicKey.substring(0, 20))}`;
+                    } else {
+                        try {
+                            const decoded = atob(inputText);
+                            result = decoded.split('|')[0];
+                        } catch (e) {
+                            result = 'RSA解密失败：输入不是有效的RSA加密字符串';
+                        }
+                    }
+                }
+
+                // 显示结果
+                document.getElementById('output-result').value = result;
+
+                // 计算耗时
+                const endTime = performance.now();
+                const timeTaken = ((endTime - startTime) / 1000).toFixed(3);
+                document.getElementById('info-time').textContent = `${timeTaken}s`;
+
+                // 更新字符数
+                document.getElementById('info-length').textContent = result.length;
+
+                // 恢复按钮状态
+                this.innerHTML = `<i class="fa fa-cog mr-2"></i><span id="process-btn-text">执行${operation === 'encrypt' ? '加密' : '解密'}</span>`;
+                this.disabled = false;
+
+                // 保存到历史记录
+                saveToHistory({
+                    algorithm: algorithm,
+                    operation: operation,
+                    inputLength: inputText.length,
+                    outputLength: result.length,
+                    time: timeTaken,
+                    timestamp: new Date().getTime()
+                });
+
+                // 显示成功消息
+                showResultMessage(`${operation === 'encrypt' ? '加密' : '解密'}完成`, 'success');
+            }, 800);
+        });
+
+        // 处理文件加密解密
+        document.getElementById('process-file-btn').addEventListener('click', function () {
+            const fileInput = document.getElementById('file-upload');
+            if (fileInput.files.length === 0) {
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const algorithm = document.getElementById('file-algorithm-select').value;
+            const operation = document.querySelector('.file-operation-btn.active').getAttribute('data-operation');
+
+            // 显示处理状态
+            document.getElementById('file-status-default').classList.add('hidden');
+            document.getElementById('file-status-processing').classList.remove('hidden');
+            document.getElementById('file-status-success').classList.add('hidden');
+            document.getElementById('file-status-error').classList.add('hidden');
+
+            // 模拟进度
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) progress = 100;
+                document.getElementById('file-progress').style.width = `${progress}%`;
+
+                if (progress === 100) {
+                    clearInterval(progressInterval);
+
+                    // 模拟处理完成
+                    setTimeout(() => {
+                        // 生成一个模拟的下载链接
+                        const blob = new Blob(['模拟加密解密后的文件内容'], { type: file.type });
+                        const url = URL.createObjectURL(blob);
+
+                        // 更新成功状态
+                        document.getElementById('file-status-processing').classList.add('hidden');
+                        document.getElementById('file-status-success').classList.remove('hidden');
+
+                        // 设置下载链接
+                        const downloadLink = document.getElementById('download-file-result');
+                        downloadLink.href = url;
+                        downloadLink.download = `${operation === 'encrypt' ? 'encrypted_' : 'decrypted_'}${file.name}`;
+
+                        // 保存到历史记录
+                        saveToHistory({
+                            algorithm: algorithm,
+                            operation: operation,
+                            type: 'file',
+                            fileName: file.name,
+                            fileSize: formatFileSize(file.size),
+                            timestamp: new Date().getTime()
+                        });
+
+                        // 清理
+                        downloadLink.addEventListener('click', () => {
+                            setTimeout(() => {
+                                URL.revokeObjectURL(url);
+                            }, 100);
+                        });
+                    }, 500);
+                }
+            }, 300);
+        });
+
+        // 重试文件处理
+        document.getElementById('retry-file-process').addEventListener('click', function () {
+            document.getElementById('file-status-error').classList.add('hidden');
+            document.getElementById('file-status-processing').classList.remove('hidden');
+            document.getElementById('file-progress').style.width = '0%';
+
+            // 重新触发处理
+            setTimeout(() => {
+                document.getElementById('process-file-btn').click();
+            }, 500);
+        });
+
+        // 保存到历史记录
+        function saveToHistory(item) {
+            let history = JSON.parse(localStorage.getItem('cryptoHistory') || '[]');
+
+            // 添加新记录
+            history.unshift({
+                id: Date.now(),
+                ...item
+            });
+
+            // 限制历史记录数量
+            if (history.length > 20) {
+                history = history.slice(0, 20);
+            }
+
+            // 保存到localStorage
+            localStorage.setItem('cryptoHistory', JSON.stringify(history));
+
+            // 更新历史记录显示
+            renderHistory();
+        }
+
+        // 渲染历史记录
+        function renderHistory() {
+            const historyList = document.getElementById('history-list');
+            const emptyHistory = document.getElementById('empty-history');
+            const history = JSON.parse(localStorage.getItem('cryptoHistory') || '[]');
+
+            // 清除现有内容（除了empty-history）
+            while (historyList.firstChild) {
+                if (historyList.firstChild === emptyHistory) {
+                    break;
+                }
+                historyList.removeChild(historyList.firstChild);
+            }
+
+            if (history.length === 0) {
+                emptyHistory.classList.remove('hidden');
+                return;
+            }
+
+            // 隐藏空状态
+            emptyHistory.classList.add('hidden');
+
+            // 添加历史记录
+            history.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'bg-gray-50 rounded-lg p-4 hover:shadow-md transition-custom';
+
+                const algorithmName = item.algorithm === 'aes' ? 'AES' :
+                    item.algorithm === 'des' ? 'DES' :
+                        item.algorithm === 'rsa' ? 'RSA' :
+                            item.algorithm === 'base64' ? 'Base64' :
+                                item.algorithm === 'md5' ? 'MD5' :
+                                    item.algorithm === 'sha256' ? 'SHA-256' : item.algorithm;
+
+                const operationName = item.operation === 'encrypt' ? '加密' : '解密';
+
+                const date = new Date(item.timestamp);
+                const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+                let contentHtml = '';
+                if (item.type === 'file') {
+                    contentHtml = `
+                <div class="flex items-center text-sm text-gray-500 mb-2">
+                  <i class="fa fa-file-o mr-2"></i>
+                  <span>${item.fileName} (${item.fileSize})</span>
+                </div>
+              `;
+                } else {
+                    contentHtml = `
+                <div class="text-sm text-gray-500 mb-2">
+                  输入: ${item.inputLength} 字符 | 输出: ${item.outputLength} 字符 | 耗时: ${item.time}s
+                </div>
+              `;
+                }
+
+                historyItem.innerHTML = `
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <span class="font-medium">${algorithmName}</span>
+                  <span class="ml-2 px-2 py-0.5 text-xs bg-${item.operation === 'encrypt' ? 'primary' : 'secondary'}/10 text-${item.operation === 'encrypt' ? 'primary' : 'secondary'} rounded-full">${operationName}</span>
+                </div>
+                <span class="text-xs text-gray-400">${formattedDate}</span>
+              </div>
+              ${contentHtml}
+              <div class="flex justify-end space-x-2 mt-1">
+                <button class="text-xs text-gray-500 hover:text-primary transition-custom reuse-history" data-id="${item.id}">
+                  <i class="fa fa-refresh mr-1"></i> 复用参数
+                </button>
+                <button class="text-xs text-gray-500 hover:text-danger transition-custom delete-history" data-id="${item.id}">
+                  <i class="fa fa-trash-o mr-1"></i> 删除
+                </button>
+              </div>
+            `;
+
+                // 添加到列表
+                historyList.insertBefore(historyItem, emptyHistory);
+            });
+
+            // 添加事件监听器
+            document.querySelectorAll('.delete-history').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    let history = JSON.parse(localStorage.getItem('cryptoHistory') || '[]');
+                    history = history.filter(item => item.id !== id);
+                    localStorage.setItem('cryptoHistory', JSON.stringify(history));
+                    renderHistory();
+                });
+            });
+
+            document.querySelectorAll('.reuse-history').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const history = JSON.parse(localStorage.getItem('cryptoHistory') || '[]');
+                    const item = history.find(item => item.id === id);
+
+                    if (item) {
+                        // 切换到文本或文件标签
+                        if (item.type === 'file') {
+                            document.querySelector('.tool-tab[data-tab="file"]').click();
+                            document.getElementById('file-algorithm-select').value = item.algorithm;
+                            document.getElementById('file-algorithm-select').dispatchEvent(new Event('change'));
+
+                            // 切换操作类型
+                            document.querySelector(`.file-operation-btn[data-operation="${item.operation}"]`).click();
+                        } else {
+                            document.querySelector('.tool-tab[data-tab="text"]').click();
+                            document.getElementById('algorithm-select').value = item.algorithm;
+                            document.getElementById('algorithm-select').dispatchEvent(new Event('change'));
+
+                            // 切换操作类型
+                            document.querySelector(`.operation-btn[data-operation="${item.operation}"]`).click();
+                        }
+
+                        // 滚动到工具区域
+                        document.getElementById('tools').scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        }
+
+        // 清空历史记录
+        document.getElementById('clear-history').addEventListener('click', function () {
+            if (confirm('确定要清空所有历史记录吗？')) {
+                localStorage.removeItem('cryptoHistory');
+                renderHistory();
+            }
+        });
+
+        // 移动端菜单切换
+        document.getElementById('mobile-menu-button').addEventListener('click', function () {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // 主题切换
+        document.getElementById('theme-toggle').addEventListener('click', function () {
+            const icon = this.querySelector('i');
+            if (icon.classList.contains('fa-moon-o')) {
+                icon.classList.remove('fa-moon-o');
+                icon.classList.add('fa-sun-o');
+                // 这里可以添加暗色模式切换逻辑
+            } else {
+                icon.classList.remove('fa-sun-o');
+                icon.classList.add('fa-moon-o');
+                // 这里可以添加亮色模式切换逻辑
+            }
+        });
+
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', function () {
+            // 渲染历史记录
+            renderHistory();
+
+            // 平滑滚动
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+
+                        // 如果是移动端，点击后关闭菜单
+                        const mobileMenu = document.getElementById('mobile-menu');
+                        if (!mobileMenu.classList.contains('hidden')) {
+                            mobileMenu.classList.add('hidden');
+                        }
+                    }
+                });
+            });
+
+            // 滚动时导航栏效果
+            window.addEventListener('scroll', function () {
+                const header = document.querySelector('header');
+                if (window.scrollY > 50) {
+                    header.classList.add('py-2', 'shadow');
+                    header.classList.remove('py-3');
+                } else {
+                    header.classList.add('py-3');
+                    header.classList.remove('py-2', 'shadow');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

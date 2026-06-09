@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级数据格式转换工具 - 支持XML/JSON/Excel/CSV/PDF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- 修复PDF库引用 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-parse/1.1.1/pdf-parse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blob-stream/0.1.3/stream.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        pdfColor: '#E53E3E',
+                        csvColor: '#F59E0B',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .transition-height {
+                transition: max-height 0.3s ease-in-out;
+            }
+
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .bg-gradient {
+                background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+            }
+
+            .format-badge {
+                @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-md sticky top-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-exchange text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient">高级数据格式转换工具</h1>
+            </div>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-gray-600 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-home mr-1"></i>首页
+                </a>
+                <a href="#" class="text-gray-600 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-question-circle mr-1"></i>帮助
+                </a>
+                <a href="#" class="text-gray-600 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-info-circle mr-1"></i>关于
+                </a>
+            </div>
+            <button class="md:hidden text-gray-600 hover:text-primary" id="mobile-menu-button">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg absolute w-full">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="#" class="py-2 text-gray-600 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-home mr-2"></i>首页
+                </a>
+                <a href="#" class="py-2 text-gray-600 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-question-circle mr-2"></i>帮助
+                </a>
+                <a href="#" class="py-2 text-gray-600 hover:text-primary transition-colors duration-200">
+                    <i class="fa fa-info-circle mr-2"></i>关于
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-6 md:py-10">
+        <!-- 功能介绍卡片 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8 transform hover:shadow-xl transition-shadow duration-300">
+            <h2 class="text-2xl font-bold mb-4 text-dark">强大的多格式转换功能</h2>
+            <p class="text-gray-600 mb-6">轻松实现XML、JSON、Excel、CSV和PDF格式之间的互相转换，支持文件导入和结果导出，满足您的数据处理需求。</p>
+
+            <!-- 支持的格式标签 -->
+            <div class="flex flex-wrap gap-2 mb-8">
+                <span class="format-badge bg-blue-100 text-blue-800">
+                    <i class="fa fa-file-code-o mr-1"></i>JSON
+                </span>
+                <span class="format-badge bg-green-100 text-green-800">
+                    <i class="fa fa-file-code-o mr-1"></i>XML
+                </span>
+                <span class="format-badge bg-green-100 text-green-800">
+                    <i class="fa fa-file-excel-o mr-1"></i>Excel
+                </span>
+                <span class="format-badge bg-amber-100 text-amber-800">
+                    <i class="fa fa-file-text-o mr-1"></i>CSV
+                </span>
+                <span class="format-badge bg-red-100 text-red-800">
+                    <i class="fa fa-file-pdf-o mr-1"></i>PDF
+                </span>
+            </div>
+
+            <!-- 转换类型选择器 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-primary/50 transition-colors duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-md transition-all duration-200" data-conversion="xml-json">
+                    <div class="flex items-center mb-3">
+                        <i class="fa fa-code text-primary text-xl mr-3"></i>
+                        <h3 class="font-semibold text-lg">XML ↔ JSON</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">将XML格式数据转换为JSON格式，或JSON格式转换为XML格式</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-secondary/50 transition-colors duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-md transition-all duration-200" data-conversion="excel-others">
+                    <div class="flex items-center mb-3">
+                        <i class="fa fa-file-excel-o text-secondary text-xl mr-3"></i>
+                        <h3 class="font-semibold text-lg">Excel ↔ 其他格式</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">Excel与JSON、XML、CSV格式之间的互相转换</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-csvColor/50 transition-colors duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-md transition-all duration-200" data-conversion="csv-others">
+                    <div class="flex items-center mb-3">
+                        <i class="fa fa-file-text-o text-csvColor text-xl mr-3"></i>
+                        <h3 class="font-semibold text-lg">CSV ↔ 其他格式</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">CSV与JSON、XML、Excel格式之间的互相转换</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-pdfColor/50 transition-colors duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-md transition-all duration-200" data-conversion="pdf-others">
+                    <div class="flex items-center mb-3">
+                        <i class="fa fa-file-pdf-o text-pdfColor text-xl mr-3"></i>
+                        <h3 class="font-semibold text-lg">PDF ↔ 文本格式</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">PDF与JSON、XML、CSV格式之间的互相转换</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-accent/50 transition-colors duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-md transition-all duration-200" data-conversion="batch">
+                    <div class="flex items-center mb-3">
+                        <i class="fa fa-cogs text-gray-700 text-xl mr-3"></i>
+                        <h3 class="font-semibold text-lg">批量转换</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">支持多文件批量处理，提高转换效率</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-5 border border-gray-200 hover:border-primary/50 transition-colors duration-300 cursor-pointer transform hover:-translate-y-1 hover:shadow-md transition-all duration-200" data-conversion="format-validate">
+                    <div class="flex items-center mb-3">
+                        <i class="fa fa-check-square-o text-primary text-xl mr-3"></i>
+                        <h3 class="font-semibold text-lg">格式验证</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">验证JSON、XML等格式的语法正确性</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 转换工作区 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 输入区域 -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <h3 class="font-bold text-lg flex items-center">
+                        <i class="fa fa-input text-primary mr-2"></i>输入
+                        <span id="input-file-indicator" class="ml-2 text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded hidden"></span>
+                    </h3>
+                </div>
+                <div class="p-4">
+                    <!-- 输入选项卡 -->
+                    <div class="flex border-b border-gray-200 mb-4">
+                        <button class="px-4 py-2 text-sm font-medium text-primary border-b-2 border-primary" id="input-text-tab">文本输入</button>
+                        <button class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" id="input-file-tab">文件导入</button>
+                    </div>
+
+                    <!-- 文本输入区域 -->
+                    <div id="input-text-section" class="mb-4">
+                        <div class="flex mb-3">
+                            <select id="input-format" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary p-2 w-full">
+                                <option value="json">JSON</option>
+                                <option value="xml">XML</option>
+                                <option value="csv">CSV</option>
+                                <option value="excel">Excel</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                        <div id="pdf-text-warning" class="hidden mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
+                            <i class="fa fa-info-circle mr-1"></i> 文本输入模式下，PDF格式仅支持简单文本内容
+                        </div>
+                        <textarea id="input-content" rows="10" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary focus:border-primary resize-none transition-all duration-200" placeholder="请输入或粘贴内容..."></textarea>
+                    </div>
+
+                    <!-- 文件导入区域 (默认隐藏) -->
+                    <div id="input-file-section" class="hidden mb-4">
+                        <div class="flex items-center justify-center w-full">
+                            <label for="file-upload" class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <i class="fa fa-cloud-upload text-3xl text-gray-400 mb-2"></i>
+                                    <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">点击上传</span> 或拖放文件</p>
+                                    <p class="text-xs text-gray-500">支持 JSON, XML, CSV, XLS, XLSX, PDF 格式</p>
+                                </div>
+                                <input id="file-upload" type="file" class="hidden" accept=".json,.xml,.csv,.xls,.xlsx,.pdf" />
+                            </label>
+                        </div>
+                        <div id="file-info" class="mt-4 hidden">
+                            <div class="bg-gray-50 p-3 rounded-lg flex items-center">
+                                <i id="file-icon" class="fa fa-file text-primary mr-2"></i>
+                                <span id="file-name" class="text-sm"></span>
+                                <button id="remove-file" class="ml-auto text-gray-400 hover:text-red-500">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 输入区域按钮 -->
+                    <div class="flex flex-wrap gap-2">
+                        <button id="clear-input" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                            <i class="fa fa-eraser mr-1"></i> 清空
+                        </button>
+                        <button id="sample-input" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                            <i class="fa fa-file-text-o mr-1"></i> 示例数据
+                        </button>
+                        <button id="validate-input" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center ml-auto">
+                            <i class="fa fa-check-circle mr-1"></i> 验证格式
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输出区域 -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <h3 class="font-bold text-lg flex items-center">
+                        <i class="fa fa-output text-secondary mr-2"></i>输出
+                    </h3>
+                </div>
+                <div class="p-4">
+                    <!-- 输出选项卡 -->
+                    <div class="flex border-b border-gray-200 mb-4">
+                        <button class="px-4 py-2 text-sm font-medium text-secondary border-b-2 border-secondary" id="output-text-tab">文本查看</button>
+                        <button class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700" id="output-preview-tab">预览</button>
+                    </div>
+
+                    <!-- 输出格式选择 -->
+                    <div class="flex mb-3">
+                        <select id="output-format" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-secondary focus:border-secondary p-2 w-full">
+                            <option value="json">JSON</option>
+                            <option value="xml">XML</option>
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+
+                    <!-- 文本输出区域 -->
+                    <div id="output-text-section" class="mb-4">
+                        <textarea id="output-content" rows="10" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-secondary focus:border-secondary resize-none transition-all duration-200" placeholder="转换结果将显示在这里..." readonly></textarea>
+                    </div>
+
+                    <!-- 预览区域 (默认隐藏) -->
+                    <div id="output-preview-section" class="hidden mb-4 max-h-[320px] overflow-auto">
+                        <div id="preview-content" class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <p class="text-gray-500 text-center py-10">转换结果预览将显示在这里</p>
+                        </div>
+                    </div>
+
+                    <!-- 输出区域按钮 -->
+                    <div class="flex flex-wrap gap-2">
+                        <button id="copy-output" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                            <i class="fa fa-copy mr-1"></i> 复制
+                        </button>
+                        <button id="download-output" class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center">
+                            <i class="fa fa-download mr-1"></i> 导出
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 转换选项配置 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="font-bold text-lg mb-4 flex items-center">
+                <i class="fa fa-sliders text-accent mr-2"></i>转换选项
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">JSON 格式设置</label>
+                    <div class="flex items-center space-x-2 mb-2">
+                        <input type="checkbox" id="json-pretty" class="rounded text-primary focus:ring-primary" checked>
+                        <label for="json-pretty" class="text-sm text-gray-600">格式化输出</label>
+                    </div>
+                    <div>
+                        <label for="json-indent" class="block text-xs text-gray-500 mb-1">缩进空格数</label>
+                        <input type="number" id="json-indent" min="2" max="8" value="2" class="w-16 text-sm border border-gray-300 rounded-md px-2 py-1">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">XML 格式设置</label>
+                    <div class="flex items-center space-x-2 mb-2">
+                        <input type="checkbox" id="xml-pretty" class="rounded text-primary focus:ring-primary" checked>
+                        <label for="xml-pretty" class="text-sm text-gray-600">格式化输出</label>
+                    </div>
+                    <div>
+                        <label for="xml-root" class="block text-xs text-gray-500 mb-1">根节点名称</label>
+                        <input type="text" id="xml-root" value="root" class="text-sm border border-gray-300 rounded-md px-2 py-1 w-full">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">PDF 转换设置</label>
+                    <div>
+                        <label for="pdf-page-size" class="block text-xs text-gray-500 mb-1">页面大小</label>
+                        <select id="pdf-page-size" class="text-sm border border-gray-300 rounded-md px-2 py-1 w-full">
+                            <option value="A4">A4</option>
+                            <option value="LETTER">Letter</option>
+                            <option value="LEGAL">Legal</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 转换按钮 -->
+        <div class="flex justify-center mb-10">
+            <button id="convert-btn" class="px-8 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center">
+                <i class="fa fa-exchange mr-2"></i> 开始转换
+            </button>
+        </div>
+
+        <!-- 使用统计 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="font-bold text-lg mb-4">转换统计</h3>
+            <div class="h-64">
+                <canvas id="conversion-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- 使用指南 -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="font-bold text-lg mb-4">使用指南</h3>
+            <div class="space-y-4 text-gray-600">
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-1">1. 基本格式互转</h4>
+                    <p class="text-sm">选择输入和输出格式，输入内容或上传文件，点击"开始转换"按钮即可完成JSON、XML、CSV之间的互相转换。</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-1">2. Excel与其他格式转换</h4>
+                    <p class="text-sm">上传Excel文件(.xls或.xlsx)，选择输出格式(JSON、XML或CSV)；或输入其他格式内容，选择Excel作为输出格式，转换后可下载。</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-1">3. PDF转换</h4>
+                    <p class="text-sm">上传PDF文件可转换为文本格式(JSON、XML、CSV)；其他格式内容也可转换为PDF文件下载。PDF转换可能存在格式限制。</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-1">4. 高级选项</h4>
+                    <p class="text-sm">可通过转换选项面板设置JSON缩进、XML根节点、PDF页面大小等参数，优化转换结果。</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h4 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fa fa-exchange text-primary mr-2"></i>高级数据格式转换工具
+                    </h4>
+                    <p class="text-gray-400 text-sm">一款免费、高效的在线工具，支持XML、JSON、Excel、CSV和PDF格式之间的互相转换，保护您的数据安全与隐私。</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">快速链接</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200"><i class="fa fa-angle-right mr-1"></i>使用指南</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200"><i class="fa fa-angle-right mr-1"></i>常见问题</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200"><i class="fa fa-angle-right mr-1"></i>格式说明</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200"><i class="fa fa-angle-right mr-1"></i>联系我们</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-4">关注我们</h4>
+                    <div class="flex space-x-4 mb-4">
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors duration-200">
+                            <i class="fa fa-github"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors duration-200">
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors duration-200">
+                            <i class="fa fa-linkedin"></i>
+                        </a>
+                    </div>
+                    <p class="text-gray-400 text-sm">所有转换均在本地完成，不会上传您的数据。</p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-500 text-sm">
+                <p>&copy; 2025 高级数据格式转换工具 | Candy</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 通知提示 -->
+    <div id="notification" class="fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center">
+        <i id="notification-icon" class="mr-2"></i>
+        <span id="notification-message"></span>
+    </div>
+
+    <!-- 加载中模态框 -->
+    <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center">
+            <i class="fa fa-spinner fa-spin text-primary text-2xl mr-3"></i>
+            <span>处理中，请稍候...</span>
+        </div>
+    </div>
+
+    <script>
+        // 检查PDF库是否加载成功
+        function checkPdfLibraries() {
+            const libraries = [
+                { name: 'PDFLib', loaded: typeof PDFLib !== 'undefined' },
+                { name: 'pdfParse', loaded: typeof pdfParse !== 'undefined' },
+                { name: 'blobStream', loaded: typeof blobStream !== 'undefined' }
+            ];
+
+            const missing = libraries.filter(lib => !lib.loaded).map(lib => lib.name);
+
+            if (missing.length > 0) {
+                console.warn(`PDF相关库未加载: ${missing.join(', ')}`);
+                showNotification(`PDF功能可能受限，缺少必要组件: ${missing.join(', ')}`, 'warning');
+                return false;
+            }
+            return true;
+        }
+
+        // DOM元素
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const inputTextTab = document.getElementById('input-text-tab');
+        const inputFileTab = document.getElementById('input-file-tab');
+        const inputTextSection = document.getElementById('input-text-section');
+        const inputFileSection = document.getElementById('input-file-section');
+        const fileUpload = document.getElementById('file-upload');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const fileIcon = document.getElementById('file-icon');
+        const fileIndicator = document.getElementById('input-file-indicator');
+        const removeFile = document.getElementById('remove-file');
+        const clearInput = document.getElementById('clear-input');
+        const sampleInput = document.getElementById('sample-input');
+        const validateInput = document.getElementById('validate-input');
+        const inputContent = document.getElementById('input-content');
+        const inputFormat = document.getElementById('input-format');
+        const pdfTextWarning = document.getElementById('pdf-text-warning');
+        const outputTextTab = document.getElementById('output-text-tab');
+        const outputPreviewTab = document.getElementById('output-preview-tab');
+        const outputTextSection = document.getElementById('output-text-section');
+        const outputPreviewSection = document.getElementById('output-preview-section');
+        const outputContent = document.getElementById('output-content');
+        const previewContent = document.getElementById('preview-content');
+        const outputFormat = document.getElementById('output-format');
+        const copyOutput = document.getElementById('copy-output');
+        const downloadOutput = document.getElementById('download-output');
+        const convertBtn = document.getElementById('convert-btn');
+        const notification = document.getElementById('notification');
+        const notificationIcon = document.getElementById('notification-icon');
+        const notificationMessage = document.getElementById('notification-message');
+        const conversionTypes = document.querySelectorAll('[data-conversion]');
+        const loadingModal = document.getElementById('loading-modal');
+
+        // 转换选项
+        const jsonPretty = document.getElementById('json-pretty');
+        const jsonIndent = document.getElementById('json-indent');
+        const xmlPretty = document.getElementById('xml-pretty');
+        const xmlRoot = document.getElementById('xml-root');
+        const pdfPageSize = document.getElementById('pdf-page-size');
+
+        // 移动端菜单切换
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // 输入选项卡切换
+        inputTextTab.addEventListener('click', () => {
+            inputTextTab.classList.add('text-primary', 'border-primary', 'border-b-2');
+            inputTextTab.classList.remove('text-gray-500');
+            inputFileTab.classList.remove('text-primary', 'border-primary', 'border-b-2');
+            inputFileTab.classList.add('text-gray-500');
+            inputTextSection.classList.remove('hidden');
+            inputFileSection.classList.add('hidden');
+            fileIndicator.classList.add('hidden');
+        });
+
+        inputFileTab.addEventListener('click', () => {
+            inputFileTab.classList.add('text-primary', 'border-primary', 'border-b-2');
+            inputFileTab.classList.remove('text-gray-500');
+            inputTextTab.classList.remove('text-primary', 'border-primary', 'border-b-2');
+            inputTextTab.classList.add('text-gray-500');
+            inputFileSection.classList.remove('hidden');
+            inputTextSection.classList.add('hidden');
+
+            if (fileUpload.files.length > 0) {
+                fileIndicator.textContent = `已选择: ${fileUpload.files[0].name}`;
+                fileIndicator.classList.remove('hidden');
+            }
+        });
+
+        // 输出选项卡切换
+        outputTextTab.addEventListener('click', () => {
+            outputTextTab.classList.add('text-secondary', 'border-secondary', 'border-b-2');
+            outputTextTab.classList.remove('text-gray-500');
+            outputPreviewTab.classList.remove('text-secondary', 'border-secondary', 'border-b-2');
+            outputPreviewTab.classList.add('text-gray-500');
+            outputTextSection.classList.remove('hidden');
+            outputPreviewSection.classList.add('hidden');
+        });
+
+        outputPreviewTab.addEventListener('click', () => {
+            outputPreviewTab.classList.add('text-secondary', 'border-secondary', 'border-b-2');
+            outputPreviewTab.classList.remove('text-gray-500');
+            outputTextTab.classList.remove('text-secondary', 'border-secondary', 'border-b-2');
+            outputTextTab.classList.add('text-gray-500');
+            outputPreviewSection.classList.remove('hidden');
+            outputTextSection.classList.add('hidden');
+            updatePreview();
+        });
+
+        // 输入格式变更时显示PDF警告
+        inputFormat.addEventListener('change', () => {
+            if (inputFormat.value === 'pdf' && inputTextTab.classList.contains('text-primary')) {
+                pdfTextWarning.classList.remove('hidden');
+            } else {
+                pdfTextWarning.classList.add('hidden');
+            }
+        });
+
+        // 文件上传处理
+        fileUpload.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                fileName.textContent = file.name;
+                fileInfo.classList.remove('hidden');
+
+                // 根据文件扩展名设置图标和输入格式
+                const ext = file.name.split('.').pop().toLowerCase();
+                let iconClass = 'fa-file text-primary';
+                let format = '';
+
+                switch (ext) {
+                    case 'json':
+                        iconClass = 'fa-file-code-o text-primary';
+                        format = 'json';
+                        break;
+                    case 'xml':
+                        iconClass = 'fa-file-code-o text-green-500';
+                        format = 'xml';
+                        break;
+                    case 'csv':
+                        iconClass = 'fa-file-text-o text-csvColor';
+                        format = 'csv';
+                        break;
+                    case 'xls':
+                    case 'xlsx':
+                        iconClass = 'fa-file-excel-o text-secondary';
+                        format = 'excel';
+                        break;
+                    case 'pdf':
+                        iconClass = 'fa-file-pdf-o text-pdfColor';
+                        format = 'pdf';
+                        break;
+                }
+
+                fileIcon.className = `fa ${iconClass} mr-2`;
+                if (format) {
+                    inputFormat.value = format;
+                }
+
+                // 更新文件指示器
+                fileIndicator.textContent = `已选择: ${file.name}`;
+                fileIndicator.classList.remove('hidden');
+            }
+        });
+
+        // 移除已上传文件
+        removeFile.addEventListener('click', () => {
+            fileUpload.value = '';
+            fileInfo.classList.add('hidden');
+            fileName.textContent = '';
+            fileIndicator.classList.add('hidden');
+        });
+
+        // 清空输入
+        clearInput.addEventListener('click', () => {
+            inputContent.value = '';
+            showNotification('输入已清空', 'info');
+        });
+
+        // 验证输入格式
+        validateInput.addEventListener('click', () => {
+            const content = inputContent.value.trim();
+            if (!content) {
+                showNotification('请先输入内容', 'warning');
+                return;
+            }
+
+            const format = inputFormat.value;
+            let isValid = false;
+            let message = '';
+
+            try {
+                switch (format) {
+                    case 'json':
+                        JSON.parse(content);
+                        isValid = true;
+                        message = 'JSON格式验证通过';
+                        break;
+                    case 'xml':
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(content, "text/xml");
+                        const errorNode = xmlDoc.querySelector("parsererror");
+                        if (errorNode) {
+                            throw new Error('XML格式不正确');
+                        }
+                        isValid = true;
+                        message = 'XML格式验证通过';
+                        break;
+                    case 'csv':
+                        // 简单CSV验证
+                        if (content.includes(',')) {
+                            isValid = true;
+                            message = 'CSV格式验证通过';
+                        } else {
+                            throw new Error('CSV格式不正确（未找到逗号分隔符）');
+                        }
+                        break;
+                    case 'excel':
+                    case 'pdf':
+                        showNotification('请上传文件进行验证', 'info');
+                        return;
+                    default:
+                        message = '不支持的格式验证';
+                }
+            } catch (error) {
+                message = `格式验证失败: ${error.message}`;
+            }
+
+            showNotification(message, isValid ? 'success' : 'error');
+        });
+
+        // 示例数据
+        sampleInput.addEventListener('click', () => {
+            const format = inputFormat.value;
+            let sampleData = '';
+
+            switch (format) {
+                case 'json':
+                    sampleData = JSON.stringify({
+                        "name": "示例数据",
+                        "version": "1.0.0",
+                        "author": {
+                            "name": "转换工具",
+                            "email": "example@tool.com"
+                        },
+                        "features": ["JSON转换", "XML转换", "Excel转换", "CSV转换", "PDF转换"],
+                        "active": true,
+                        "stats": {
+                            "conversions": 1560,
+                            "users": 890
+                        }
+                    }, null, 2);
+                    break;
+                case 'xml':
+                    sampleData = `<?xml version="1.0" encoding="UTF-8"?>
+<root>
+        <name>示例数据</name>
+        <version>1.0.0</version>
+        <author>
+            <name>转换工具</name>
+            <email>example@tool.com</email>
+        </author>
+        <features>
+            <feature>JSON转换</feature>
+            <feature>XML转换</feature>
+            <feature>Excel转换</feature>
+            <feature>CSV转换</feature>
+            <feature>PDF转换</feature>
+        </features>
+        <active>true</active>
+        <stats>
+            <conversions>1560</conversions>
+            <users>890</users>
+        </stats>
+</root>`;
+                    break;
+                case 'csv':
+                    sampleData = `id,name,email,age,active
+1,张三,zhangsan@example.com,30,true
+2,李四,lisi@example.com,25,false
+3,王五,wangwu@example.com,35,true
+4,赵六,zhaoliu@example.com,28,true`;
+                    break;
+                case 'pdf':
+                    sampleData = `这是PDF示例文本内容。
+
+在文本输入模式下，您可以输入简单的文本，
+转换工具将把这些文本转换为PDF格式。
+
+表格数据示例：
+ID,名称,数量
+1,产品A,100
+2,产品B,200`;
+                    pdfTextWarning.classList.remove('hidden');
+                    break;
+                case 'excel':
+                    showNotification('Excel格式请使用文件上传', 'info');
+                    return;
+            }
+
+            inputContent.value = sampleData;
+            showNotification('已加载示例数据', 'info');
+        });
+
+        // 复制输出
+        copyOutput.addEventListener('click', () => {
+            if (outputContent.value) {
+                outputContent.select();
+                document.execCommand('copy');
+                showNotification('内容已复制到剪贴板', 'success');
+            } else {
+                showNotification('没有可复制的内容', 'warning');
+            }
+        });
+
+        // 下载输出
+        downloadOutput.addEventListener('click', () => {
+            if (!outputContent.value && ['json', 'xml', 'csv'].includes(outputFormat.value)) {
+                showNotification('没有可下载的内容', 'warning');
+                return;
+            }
+
+            const format = outputFormat.value;
+            let content = outputContent.value;
+            let mimeType, extension, fileName;
+
+            try {
+                switch (format) {
+                    case 'json':
+                        mimeType = 'application/json';
+                        extension = 'json';
+                        fileName = '转换结果.json';
+                        break;
+                    case 'xml':
+                        mimeType = 'application/xml';
+                        extension = 'xml';
+                        fileName = '转换结果.xml';
+                        break;
+                    case 'csv':
+                        mimeType = 'text/csv';
+                        extension = 'csv';
+                        fileName = '转换结果.csv';
+                        break;
+                    case 'excel':
+                        // 处理Excel下载
+                        const data = JSON.parse(content);
+                        // 修复XML转Excel时的格式问题
+                        const normalizedData = normalizeDataForExcel(data);
+                        const ws = XLSX.utils.json_to_sheet(Array.isArray(normalizedData) ? normalizedData : [normalizedData]);
+                        const wb = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(wb, ws, "转换数据");
+                        XLSX.writeFile(wb, '转换结果.xlsx');
+                        showNotification('Excel文件已下载', 'success');
+                        return;
+                    case 'pdf':
+                        // 检查PDF库是否加载
+                        if (!checkPdfLibraries()) {
+                            return;
+                        }
+                        // 处理PDF下载
+                        downloadPdf(content);
+                        return;
+                    default:
+                        showNotification('不支持的下载格式', 'error');
+                        return;
+                }
+
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showNotification(`${format.toUpperCase()}文件已下载`, 'success');
+            } catch (error) {
+                console.error('下载失败:', error);
+                showNotification(`下载失败: ${error.message}`, 'error');
+            }
+        });
+
+        // 标准化数据用于Excel导出（修复XML转Excel问题）
+        function normalizeDataForExcel(data) {
+            // 如果是对象而非数组，将其转换为包含单个对象的数组
+            if (!Array.isArray(data)) {
+                // 检查是否有明显的列表属性
+                const keys = Object.keys(data);
+                for (const key of keys) {
+                    if (Array.isArray(data[key]) && data[key].length > 0 && typeof data[key][0] === 'object') {
+                        return data[key];
+                    }
+                }
+                // 否则将整个对象作为一行
+                return [flattenObject(data)];
+            }
+
+            // 展平数组中的对象，处理嵌套结构
+            return data.map(item => flattenObject(item));
+        }
+
+        // 展平嵌套对象，用于Excel导出
+        function flattenObject(obj, parentKey = '', separator = '_') {
+            const flattened = {};
+
+            Object.keys(obj).forEach(key => {
+                const newKey = parentKey ? `${parentKey}${separator}${key}` : key;
+
+                if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                    Object.assign(flattened, flattenObject(obj[key], newKey, separator));
+                } else if (Array.isArray(obj[key])) {
+                    // 处理数组，将其转换为逗号分隔的字符串
+                    flattened[newKey] = obj[key].map(item =>
+                        typeof item === 'object' ? JSON.stringify(item) : item
+                    ).join(', ');
+                } else {
+                    flattened[newKey] = obj[key];
+                }
+            });
+
+            return flattened;
+        }
+
+        // 下载PDF文件
+        async function downloadPdf(content) {
+            try {
+                showLoading();
+
+                // 确保PDFLib已加载
+                if (typeof PDFLib === 'undefined') {
+                    throw new Error('PDF处理库未加载，请刷新页面重试');
+                }
+
+                // 创建PDF文档
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const pageSize = pdfPageSize.value;
+                const page = pdfDoc.addPage(pageSize);
+
+                // 设置字体
+                const helveticaFont = await pdfDoc.embedFont(PDFLib.HelveticaFont);
+                page.setFont(helveticaFont);
+                page.setFontSize(12);
+
+                // 页面边距
+                const margin = 50;
+                const { width, height } = page.getSize();
+                let y = height - margin;
+
+                // 分割文本为多行
+                const textLines = splitTextIntoLines(content, helveticaFont, 12, width - margin * 2);
+
+                // 绘制文本
+                textLines.forEach(line => {
+                    if (y < margin + 20) {
+                        // 如果超出当前页面，添加新页面
+                        const newPage = pdfDoc.addPage(pageSize);
+                        newPage.setFont(helveticaFont);
+                        newPage.setFontSize(12);
+                        page = newPage;
+                        y = height - margin;
+                    }
+                    page.drawText(line, { x: margin, y });
+                    y -= 15; // 行高
+                });
+
+                // 保存PDF
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '转换结果.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showNotification('PDF文件已下载', 'success');
+            } catch (error) {
+                console.error('PDF生成失败:', error);
+                showNotification(`PDF生成失败: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 将文本分割为适合PDF页面宽度的行
+        function splitTextIntoLines(text, font, fontSize, maxWidth) {
+            const lines = [];
+            const paragraphs = text.split('\n');
+
+            paragraphs.forEach(paragraph => {
+                if (!paragraph) {
+                    lines.push('');
+                    return;
+                }
+
+                let currentLine = '';
+                const words = paragraph.split(' ');
+
+                words.forEach(word => {
+                    const testLine = currentLine ? `${currentLine} ${word}` : word;
+                    const textWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+                    if (textWidth <= maxWidth) {
+                        currentLine = testLine;
+                    } else {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    }
+                });
+
+                if (currentLine) {
+                    lines.push(currentLine);
+                }
+            });
+
+            return lines;
+        }
+
+        // 显示通知
+        function showNotification(message, type) {
+            notificationMessage.textContent = message;
+
+            // 设置图标和样式
+            notification.className = 'fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center';
+
+            if (type === 'success') {
+                notification.classList.add('bg-green-500', 'text-white');
+                notificationIcon.className = 'fa fa-check-circle mr-2';
+            } else if (type === 'error') {
+                notification.classList.add('bg-red-500', 'text-white');
+                notificationIcon.className = 'fa fa-times-circle mr-2';
+            } else if (type === 'warning') {
+                notification.classList.add('bg-yellow-500', 'text-white');
+                notificationIcon.className = 'fa fa-exclamation-triangle mr-2';
+            } else {
+                notification.classList.add('bg-blue-500', 'text-white');
+                notificationIcon.className = 'fa fa-info-circle mr-2';
+            }
+
+            // 显示通知
+            setTimeout(() => {
+                notification.classList.remove('translate-y-20', 'opacity-0');
+            }, 10);
+
+            // 3秒后隐藏
+            setTimeout(() => {
+                notification.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading() {
+            loadingModal.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingModal.classList.add('hidden');
+        }
+
+        // 转换按钮点击事件
+        convertBtn.addEventListener('click', async () => {
+            try {
+                showLoading();
+
+                let inputData;
+                let inputType = inputFormat.value;
+
+                // 检查输入源
+                if (inputFileTab.classList.contains('text-primary')) {
+                    // 处理文件输入
+                    if (fileUpload.files.length === 0) {
+                        showNotification('请先选择文件', 'warning');
+                        hideLoading();
+                        return;
+                    }
+
+                    const file = fileUpload.files[0];
+                    const ext = file.name.split('.').pop().toLowerCase();
+
+                    if (ext === 'xls' || ext === 'xlsx') {
+                        // 处理Excel文件
+                        inputType = 'excel';
+                        inputData = await readExcelFile(file);
+                    } else if (ext === 'pdf') {
+                        // 处理PDF文件
+                        if (!checkPdfLibraries()) {
+                            hideLoading();
+                            return;
+                        }
+                        inputType = 'pdf';
+                        inputData = await readPdfFile(file);
+                    } else if (ext === 'csv') {
+                        // 处理CSV文件
+                        inputType = 'csv';
+                        inputData = await readTextFile(file);
+                    } else if (ext === 'json' || ext === 'xml') {
+                        // 处理文本文件
+                        inputData = await readTextFile(file);
+                    } else {
+                        showNotification('不支持的文件格式', 'error');
+                        hideLoading();
+                        return;
+                    }
+                } else {
+                    // 处理文本输入
+                    inputData = inputContent.value.trim();
+                    if (!inputData) {
+                        showNotification('请输入内容后再转换', 'warning');
+                        hideLoading();
+                        return;
+                    }
+
+                    // 对于PDF文本输入，直接使用文本内容
+                    if (inputType === 'pdf') {
+                        // 不做处理，直接使用文本
+                    }
+                }
+
+                // 执行转换
+                const outputType = outputFormat.value;
+                let result = await convertData(inputData, inputType, outputType);
+
+                // 显示结果
+                outputContent.value = result;
+                updatePreview();
+                showNotification('转换成功', 'success');
+            } catch (error) {
+                console.error('转换错误:', error);
+                showNotification(`转换失败: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // 数据转换主函数
+        async function convertData(inputData, inputType, outputType) {
+            // 如果输入输出类型相同，直接返回
+            if (inputType === outputType) {
+                return typeof inputData === 'string' ? inputData : JSON.stringify(inputData, null, 2);
+            }
+
+            // 统一先转换为JSON对象，再转换为目标格式
+            let jsonData;
+
+            // 第一步：将输入转换为JSON
+            switch (inputType) {
+                case 'json':
+                    jsonData = typeof inputData === 'string' ? JSON.parse(inputData) : inputData;
+                    break;
+                case 'xml':
+                    jsonData = xmlToJson(inputData);
+                    break;
+                case 'csv':
+                    jsonData = csvToJson(inputData);
+                    break;
+                case 'excel':
+                    jsonData = inputData; // 已经是JSON格式数组
+                    break;
+                case 'pdf':
+                    // 尝试从PDF文本中解析数据
+                    if (looksLikeCsv(inputData)) {
+                        jsonData = csvToJson(inputData);
+                    } else if (looksLikeJson(inputData)) {
+                        jsonData = JSON.parse(inputData);
+                    } else if (looksLikeXml(inputData)) {
+                        jsonData = xmlToJson(inputData);
+                    } else {
+                        // 如果无法解析为结构化数据，创建一个包含文本的JSON对象
+                        jsonData = { pdfText: inputData };
+                    }
+                    break;
+                default:
+                    throw new Error(`不支持的输入格式: ${inputType}`);
+            }
+
+            // 第二步：将JSON转换为目标格式
+            switch (outputType) {
+                case 'json':
+                    return JSON.stringify(jsonData, null, jsonPretty.checked ? parseInt(jsonIndent.value) : 0);
+                case 'xml':
+                    return jsonToXml(jsonData);
+                case 'csv':
+                    // 修复XML转CSV的格式问题
+                    const normalizedData = Array.isArray(jsonData) ? jsonData : [jsonData];
+                    return jsonToCsv(normalizedData);
+                case 'excel':
+                    // 对于Excel，返回JSON以便后续处理
+                    return JSON.stringify(jsonData, null, 2);
+                case 'pdf':
+                    // 对于PDF，返回文本内容
+                    return typeof jsonData === 'string' ? jsonData :
+                        JSON.stringify(jsonData, null, 2);
+                default:
+                    throw new Error(`不支持的输出格式: ${outputType}`);
+            }
+        }
+
+        // 读取文本文件
+        function readTextFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('文件读取失败'));
+                reader.readAsText(file);
+            });
+        }
+
+        // 读取Excel文件
+        function readExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        resolve(jsonData);
+                    } catch (error) {
+                        reject(new Error('Excel文件解析失败'));
+                    }
+                };
+                reader.onerror = (e) => reject(new Error('文件读取失败'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // 读取PDF文件
+        function readPdfFile(file) {
+            return new Promise((resolve, reject) => {
+                if (typeof pdfParse === 'undefined') {
+                    reject(new Error('PDF解析库未加载'));
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function () {
+                    const data = new Uint8Array(this.result);
+                    pdfParse(data).then(function (result) {
+                        resolve(result.text);
+                    }).catch(function (error) {
+                        reject(new Error('PDF文件解析失败: ' + error.message));
+                    });
+                };
+                reader.onerror = (e) => reject(new Error('文件读取失败'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // 判断文本是否类似CSV
+        function looksLikeCsv(text) {
+            const lines = text.split('\n');
+            if (lines.length < 2) return false;
+
+            // 检查是否有一致的分隔符
+            const commaCount = lines[0].split(',').length;
+            const tabCount = lines[0].split('\t').length;
+
+            if (commaCount > 1) {
+                // 检查其他行是否有相似的逗号数量
+                return lines.slice(1).every(line => line.split(',').length === commaCount);
+            } else if (tabCount > 1) {
+                // 检查其他行是否有相似的制表符数量
+                return lines.slice(1).every(line => line.split('\t').length === tabCount);
+            }
+
+            return false;
+        }
+
+        // 判断文本是否类似JSON
+        function looksLikeJson(text) {
+            try {
+                JSON.parse(text);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // 判断文本是否类似XML
+        function looksLikeXml(text) {
+            return text.trim().startsWith('<') && text.trim().endsWith('>');
+        }
+
+        // 更新预览
+        function updatePreview() {
+            const format = outputFormat.value;
+            const content = outputContent.value;
+
+            if (!content) {
+                previewContent.innerHTML = '<p class="text-gray-500 text-center py-10">转换结果预览将显示在这里</p>';
+                return;
+            }
+
+            try {
+                switch (format) {
+                    case 'json':
+                        const json = JSON.parse(content);
+                        previewContent.innerHTML = `<pre class="text-sm text-gray-800">${JSON.stringify(json, null, 2)}</pre>`;
+                        break;
+                    case 'xml':
+                        // 简单格式化XML显示
+                        const formattedXml = content.replace(/></g, '>\n<');
+                        previewContent.innerHTML = `<pre class="text-sm text-gray-800">${formattedXml}</pre>`;
+                        break;
+                    case 'csv':
+                        // 以表格形式预览CSV
+                        const csvLines = content.split('\n').filter(line => line.trim());
+                        if (csvLines.length === 0) {
+                            previewContent.innerHTML = '<p class="text-gray-500 text-center py-10">没有数据</p>';
+                            return;
+                        }
+
+                        // 检测分隔符
+                        const delimiter = csvLines[0].includes(',') ? ',' : '\t';
+                        const headers = csvLines[0].split(delimiter);
+
+                        let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
+                        tableHtml += '<thead><tr>';
+                        headers.forEach(header => {
+                            tableHtml += `<th class="px-3 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${header}</th>`;
+                        });
+                        tableHtml += '</tr></thead>';
+
+                        tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                        csvLines.slice(1).forEach((line, index) => {
+                            const rowClass = index % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+                            tableHtml += `<tr class="${rowClass}">`;
+                            line.split(delimiter).forEach(value => {
+                                tableHtml += `<td class="px-3 py-2 text-sm text-gray-500">${value}</td>`;
+                            });
+                            tableHtml += '</tr>';
+                        });
+                        tableHtml += '</tbody></table>';
+                        previewContent.innerHTML = tableHtml;
+                        break;
+                    case 'excel':
+                        // 预览Excel数据（以表格形式）
+                        const excelJson = JSON.parse(content);
+                        if (Array.isArray(excelJson)) {
+                            let excelTableHtml = '<table class="min-w-full divide-y divide-gray-200">';
+
+                            // 表头
+                            if (excelJson.length > 0) {
+                                excelTableHtml += '<thead><tr>';
+                                Object.keys(excelJson[0]).forEach(key => {
+                                    excelTableHtml += `<th class="px-3 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${key}</th>`;
+                                });
+                                excelTableHtml += '</tr></thead>';
+
+                                // 表体
+                                excelTableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+                                excelJson.forEach((item, index) => {
+                                    const rowClass = index % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+                                    excelTableHtml += `<tr class="${rowClass}">`;
+                                    Object.values(item).forEach(value => {
+                                        excelTableHtml += `<td class="px-3 py-2 text-sm text-gray-500">${value}</td>`;
+                                    });
+                                    excelTableHtml += '</tr>';
+                                });
+                                excelTableHtml += '</tbody>';
+                            } else {
+                                excelTableHtml += '<tbody><tr><td colspan="100%" class="px-3 py-4 text-center text-gray-500">没有数据</td></tr></tbody>';
+                            }
+
+                            excelTableHtml += '</table>';
+                            previewContent.innerHTML = excelTableHtml;
+                        } else {
+                            previewContent.innerHTML = `<pre class="text-sm text-gray-800">${JSON.stringify(excelJson, null, 2)}</pre>`;
+                        }
+                        break;
+                    case 'pdf':
+                        // PDF预览（显示文本内容）
+                        previewContent.innerHTML = `<div class="prose max-w-none text-sm">${content.replace(/\n/g, '<br>')}</div>`;
+                        break;
+                }
+            } catch (error) {
+                previewContent.innerHTML = `<p class="text-red-500 text-center py-10">预览失败: 内容格式不正确</p>`;
+            }
+        }
+
+        // JSON转XML
+        function jsonToXml(jsonData) {
+            try {
+                const obj = typeof jsonData === 'object' ? jsonData : JSON.parse(jsonData);
+                let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+                xml += buildXml(obj, xmlRoot.value);
+                return xml;
+            } catch (error) {
+                throw new Error('JSON格式不正确: ' + error.message);
+            }
+        }
+
+        // 构建XML辅助函数
+        function buildXml(obj, parentTag) {
+            let xml = `<${parentTag}>`;
+
+            if (typeof obj === 'object' && obj !== null) {
+                if (Array.isArray(obj)) {
+                    obj.forEach(item => {
+                        xml += buildXml(item, 'item');
+                    });
+                } else {
+                    Object.keys(obj).forEach(key => {
+                        xml += buildXml(obj[key], key);
+                    });
+                }
+            } else {
+                // 处理基本类型
+                xml += escapeXml(obj.toString());
+            }
+
+            xml += `</${parentTag}>`;
+            return xml;
+        }
+
+        // XML转义
+        function escapeXml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // XML转JSON - 优化版本，修复转换问题
+        function xmlToJson(xmlString) {
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+
+                // 检查解析错误
+                const errorNode = xmlDoc.querySelector("parsererror");
+                if (errorNode) {
+                    throw new Error('XML格式不正确');
+                }
+
+                return parseXmlNode(xmlDoc.documentElement);
+            } catch (error) {
+                throw new Error('XML格式不正确: ' + error.message);
+            }
+        }
+
+        // 解析XML节点辅助函数 - 优化版本
+        function parseXmlNode(node) {
+            // 如果是文本节点，返回其值
+            if (node.nodeType === 3) {
+                const value = node.nodeValue.trim();
+                // 尝试转换为适当的类型
+                if (value === 'true') return true;
+                if (value === 'false') return false;
+                if (!isNaN(value) && value !== '') return Number(value);
+                return value || null;
+            }
+
+            // 如果是元素节点
+            if (node.nodeType === 1) {
+                const result = {};
+                const children = Array.from(node.childNodes).filter(child =>
+                    child.nodeType === 1 || (child.nodeType === 3 && child.nodeValue.trim() !== '')
+                );
+
+                // 处理属性
+                if (node.attributes.length > 0) {
+                    result['@attributes'] = {};
+                    for (let i = 0; i < node.attributes.length; i++) {
+                        const attr = node.attributes[i];
+                        result['@attributes'][attr.name] = attr.value;
+                    }
+                }
+
+                // 处理子节点
+                if (children.length === 1 && children[0].nodeType === 3) {
+                    // 只有一个文本子节点，直接作为值
+                    return parseXmlNode(children[0]);
+                } else if (children.length > 0) {
+                    children.forEach(child => {
+                        const childName = child.nodeName;
+                        const childValue = parseXmlNode(child);
+
+                        if (result[childName] !== undefined) {
+                            // 如果已经存在同名节点，转为数组
+                            if (!Array.isArray(result[childName])) {
+                                result[childName] = [result[childName]];
+                            }
+                            result[childName].push(childValue);
+                        } else {
+                            result[childName] = childValue;
+                        }
+                    });
+                } else {
+                    // 没有子节点，返回空字符串
+                    return '';
+                }
+
+                return result;
+            }
+
+            return null;
+        }
+
+        // CSV转JSON
+        function csvToJson(csvString) {
+            try {
+                const lines = csvString.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line);
+
+                if (lines.length === 0) {
+                    return [];
+                }
+
+                // 检测分隔符 (逗号或制表符)
+                const delimiter = lines[0].includes(',') ? ',' : '\t';
+
+                // 解析标题行
+                const headers = lines[0].split(delimiter)
+                    .map(header => header.trim());
+
+                // 解析数据行
+                const result = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(delimiter)
+                        .map(value => value.trim());
+
+                    const item = {};
+                    headers.forEach((header, index) => {
+                        if (index < values.length) {
+                            // 尝试转换为适当的类型
+                            let value = values[index];
+                            if (value === 'true') value = true;
+                            else if (value === 'false') value = false;
+                            else if (!isNaN(value) && value !== '') value = Number(value);
+                            item[header] = value;
+                        }
+                    });
+
+                    result.push(item);
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error('CSV格式不正确: ' + error.message);
+            }
+        }
+
+        // JSON转CSV - 修复格式问题
+        function jsonToCsv(jsonData) {
+            try {
+                // 确保输入是数组
+                const data = Array.isArray(jsonData) ? jsonData : [jsonData];
+
+                if (data.length === 0) {
+                    return '';
+                }
+
+                // 获取所有表头，处理嵌套对象
+                const headers = new Set();
+                data.forEach(item => {
+                    const flatItem = flattenObject(item);
+                    Object.keys(flatItem).forEach(key => headers.add(key));
+                });
+                const headerArray = Array.from(headers);
+
+                // 构建CSV内容
+                let csv = headerArray.join(',') + '\n';
+
+                // 添加数据行
+                data.forEach(item => {
+                    const flatItem = flattenObject(item);
+                    const values = headerArray.map(header => {
+                        let value = flatItem[header] !== undefined ? flatItem[header] : '';
+                        // 处理包含逗号或引号的值
+                        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                            value = `"${value.replace(/"/g, '""')}"`;
+                        } else if (Array.isArray(value)) {
+                            value = `"${value.join(', ').replace(/"/g, '""')}"`;
+                        }
+                        return value;
+                    });
+                    csv += values.join(',') + '\n';
+                });
+
+                return csv;
+            } catch (error) {
+                throw new Error('JSON格式不正确: ' + error.message);
+            }
+        }
+
+        // 转换类型选择
+        conversionTypes.forEach(item => {
+            item.addEventListener('click', () => {
+                const conversion = item.getAttribute('data-conversion');
+
+                switch (conversion) {
+                    case 'xml-json':
+                        inputFormat.value = 'xml';
+                        outputFormat.value = 'json';
+                        break;
+                    case 'excel-others':
+                        inputFormat.value = 'excel';
+                        outputFormat.value = 'json';
+                        // 切换到文件上传
+                        inputFileTab.click();
+                        break;
+                    case 'csv-others':
+                        inputFormat.value = 'csv';
+                        outputFormat.value = 'json';
+                        break;
+                    case 'pdf-others':
+                        inputFormat.value = 'pdf';
+                        outputFormat.value = 'json';
+                        // 切换到文件上传
+                        inputFileTab.click();
+                        break;
+                    case 'batch':
+                        showNotification('批量转换功能即将上线，敬请期待', 'info');
+                        return;
+                    case 'format-validate':
+                        validateInput.click();
+                        return;
+                }
+
+                // 高亮选中的转换类型
+                conversionTypes.forEach(el => {
+                    el.classList.remove('border-primary', 'bg-primary/5');
+                    el.classList.add('border-gray-200');
+                });
+                item.classList.remove('border-gray-200');
+                item.classList.add('border-primary', 'bg-primary/5');
+            });
+        });
+
+        // 初始化统计图表
+        function initChart() {
+            const ctx = document.getElementById('conversion-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'JSON ↔ XML',
+                        'JSON ↔ CSV',
+                        'JSON ↔ Excel',
+                        'JSON ↔ PDF',
+                        'XML ↔ CSV',
+                        'XML ↔ Excel',
+                        'XML ↔ PDF',
+                        'CSV ↔ Excel',
+                        'CSV ↔ PDF',
+                        'Excel ↔ PDF'
+                    ],
+                    datasets: [{
+                        label: '转换次数',
+                        data: [1254, 890, 1056, 632, 743, 987, 456, 1120, 389, 542],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(6, 182, 212, 0.7)',
+                            'rgba(168, 85, 247, 0.7)',
+                            'rgba(22, 163, 74, 0.7)',
+                            'rgba(217, 119, 6, 0.7)',
+                            'rgba(230, 64, 64, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)',
+                            'rgb(139, 92, 246)',
+                            'rgb(239, 68, 68)',
+                            'rgb(245, 158, 11)',
+                            'rgb(6, 182, 212)',
+                            'rgb(168, 85, 247)',
+                            'rgb(22, 163, 74)',
+                            'rgb(217, 119, 6)',
+                            'rgb(230, 64, 64)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            initChart();
+            // 检查PDF库
+            checkPdfLibraries();
+            // 默认选中第一个转换类型
+            if (conversionTypes.length > 0) {
+                conversionTypes[0].classList.remove('border-gray-200');
+                conversionTypes[0].classList.add('border-primary', 'bg-primary/5');
+            }
+        });
+    </script>
+</body>
+</html>

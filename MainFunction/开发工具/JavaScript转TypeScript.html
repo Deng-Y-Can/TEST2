@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CandyCodePlayground - JavaScript/TypeScript 在线编辑器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- 引入代码编辑器库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/mode-javascript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/mode-typescript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/theme-dracula.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-language_tools.js"></script>
+
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1', // 靛蓝色作为主色调
+                        secondary: '#10b981', // 绿色作为辅助色/运行按钮
+                        danger: '#ef4444', // 红色作为错误/停止按钮
+                        dark: '#1e293b', // 深色背景
+                        'dark-light': '#334155', // 稍浅的深色背景
+                        'editor-bg': '#282a36', // 编辑器背景
+                    },
+                    fontFamily: {
+                        code: ['Fira Code', 'Consolas', 'Monaco', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .editor-height {
+                height: calc(100vh - 12rem);
+            }
+
+            .output-height {
+                height: calc(50vh - 6rem);
+            }
+
+            .variable-height {
+                height: calc(50vh - 6rem);
+            }
+
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+
+            .shadow-soft {
+                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            }
+
+            .scrollbar-thin {
+                scrollbar-width: thin;
+            }
+
+                .scrollbar-thin::-webkit-scrollbar {
+                    width: 6px;
+                    height: 6px;
+                }
+
+                .scrollbar-thin::-webkit-scrollbar-thumb {
+                    background-color: rgba(100, 100, 100, 0.3);
+                    border-radius: 3px;
+                }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-dark dark:text-gray-100 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white dark:bg-dark-light shadow-md z-10">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-code text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    CodePlayground
+                </h1>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-2 bg-gray-100 dark:bg-dark rounded-md px-3 py-1.5">
+                    <button id="js-mode" class="px-2 py-1 rounded bg-primary text-white text-sm">JavaScript</button>
+                    <button id="ts-mode" class="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-dark-light text-sm">TypeScript</button>
+                </div>
+
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark transition-all-300">
+                    <i class="fa fa-moon-o dark:hidden"></i>
+                    <i class="fa fa-sun-o hidden dark:inline"></i>
+                </button>
+
+                <button id="settings-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark transition-all-300">
+                    <i class="fa fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 工具栏 -->
+    <div class="bg-gray-100 dark:bg-dark-light py-2 px-4 flex flex-wrap items-center justify-between border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+            <button id="run-btn" class="flex items-center space-x-1 bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-md transition-all-300 shadow-soft">
+                <i class="fa fa-play"></i>
+                <span>运行</span>
+            </button>
+
+            <button id="stop-btn" class="flex items-center space-x-1 bg-danger hover:bg-danger/90 text-white px-4 py-2 rounded-md transition-all-300 shadow-soft hidden">
+                <i class="fa fa-stop"></i>
+                <span>停止</span>
+            </button>
+
+            <button id="debug-btn" class="flex items-center space-x-1 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition-all-300 shadow-soft">
+                <i class="fa fa-bug"></i>
+                <span>调试</span>
+            </button>
+
+            <button id="reset-btn" class="flex items-center space-x-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-4 py-2 rounded-md transition-all-300">
+                <i class="fa fa-refresh"></i>
+                <span>重置</span>
+            </button>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <div class="relative">
+                <select id="preset-select" class="appearance-none bg-white dark:bg-dark border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="none">无预设</option>
+                    <option value="hello">Hello World</option>
+                    <option value="fibonacci">斐波那契数列</option>
+                    <option value="async">异步示例</option>
+                    <option value="class">类与继承</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                    <i class="fa fa-chevron-down text-xs"></i>
+                </div>
+            </div>
+
+            <button id="share-btn" class="flex items-center space-x-1 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition-all-300">
+                <i class="fa fa-share-alt"></i>
+                <span>分享</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-3 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- 代码编辑器 -->
+        <div class="lg:col-span-2 flex flex-col">
+            <div class="bg-white dark:bg-dark-light rounded-t-lg p-2 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+                <h2 class="font-medium flex items-center">
+                    <i class="fa fa-code text-primary mr-2"></i>
+                    代码编辑器
+                </h2>
+                <div class="flex items-center space-x-2">
+                    <span id="cursor-position" class="text-xs text-gray-500 dark:text-gray-400">行: 1, 列: 1</span>
+                    <button id="fullscreen-editor" class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-dark transition-all-300 text-sm">
+                        <i class="fa fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="editor-container" class="flex-grow bg-editor-bg rounded-b-lg overflow-hidden shadow-soft">
+                <div id="editor" class="w-full h-full font-code text-sm"></div>
+                <!-- 断点标记区域 -->
+                <div id="breakpoints" class="absolute left-0 top-0 bottom-0 w-5 flex flex-col items-center pt-3"></div>
+            </div>
+        </div>
+
+        <!-- 右侧面板：输出和变量监控 -->
+        <div class="flex flex-col">
+            <!-- 输出区域 -->
+            <div class="mb-4 flex flex-col">
+                <div class="bg-white dark:bg-dark-light rounded-t-lg p-2 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="font-medium flex items-center">
+                        <i class="fa fa-terminal text-green-500 mr-2"></i>
+                        输出
+                    </h2>
+                    <button id="clear-output" class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all-300">
+                        清空
+                    </button>
+                </div>
+                <div class="bg-dark rounded-b-lg overflow-hidden shadow-soft">
+                    <div id="output" class="font-code text-sm text-gray-300 p-3 h-[200px] md:h-[250px] overflow-y-auto scrollbar-thin"></div>
+                </div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="mb-4 flex flex-col">
+                <div class="bg-white dark:bg-dark-light rounded-t-lg p-2 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="font-medium flex items-center">
+                        <i class="fa fa-keyboard-o text-blue-500 mr-2"></i>
+                        输入
+                    </h2>
+                </div>
+                <div class="bg-white dark:bg-dark rounded-b-lg overflow-hidden shadow-soft">
+                    <textarea id="input" placeholder="在这里输入程序所需的输入..." class="font-code text-sm w-full p-3 border-none focus:ring-0 h-[100px] resize-none bg-transparent scrollbar-thin"></textarea>
+                </div>
+            </div>
+
+            <!-- 变量监控 -->
+            <div class="flex flex-col flex-grow">
+                <div class="bg-white dark:bg-dark-light rounded-t-lg p-2 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="font-medium flex items-center">
+                        <i class="fa fa-sliders text-purple-500 mr-2"></i>
+                        变量监控
+                    </h2>
+                    <button id="refresh-variables" class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-all-300">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                </div>
+                <div id="variables" class="bg-white dark:bg-dark rounded-b-lg overflow-hidden shadow-soft p-3 h-[200px] md:h-[250px] overflow-y-auto scrollbar-thin">
+                    <div class="text-gray-500 dark:text-gray-400 text-sm italic">运行代码后将显示变量信息</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 调试控制栏 (默认隐藏) -->
+    <div id="debug-controls" class="bg-white dark:bg-dark-light border-t border-gray-200 dark:border-gray-700 py-2 px-4 hidden">
+        <div class="container mx-auto flex items-center space-x-4">
+            <span class="text-sm font-medium text-primary">调试模式</span>
+            <button id="step-over" class="flex items-center space-x-1 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-3 py-1 rounded-md transition-all-300">
+                <i class="fa fa-step-over"></i>
+                <span>单步跳过</span>
+            </button>
+            <button id="step-into" class="flex items-center space-x-1 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-3 py-1 rounded-md transition-all-300">
+                <i class="fa fa-step-into"></i>
+                <span>单步进入</span>
+            </button>
+            <button id="step-out" class="flex items-center space-x-1 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-3 py-1 rounded-md transition-all-300">
+                <i class="fa fa-step-backward"></i>
+                <span>单步退出</span>
+            </button>
+            <button id="continue-debug" class="flex items-center space-x-1 text-sm bg-secondary hover:bg-secondary/90 text-white px-3 py-1 rounded-md transition-all-300">
+                <i class="fa fa-play"></i>
+                <span>继续</span>
+            </button>
+            <div id="debug-status" class="ml-auto text-sm text-gray-500 dark:text-gray-400">
+                等待调试开始...
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置模态框 (默认隐藏) -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-dark-light rounded-lg shadow-lg w-full max-w-md p-5 transform transition-all-300">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">设置</h3>
+                <button id="close-settings" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">编辑器字体大小</label>
+                    <input type="range" id="font-size" min="12" max="20" step="1" value="14"
+                           class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>12px</span>
+                        <span id="font-size-value">14px</span>
+                        <span>20px</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">主题</label>
+                    <div class="flex space-x-2">
+                        <button id="theme-light" class="flex-1 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white text-gray-800">
+                            浅色
+                        </button>
+                        <button id="theme-dark" class="flex-1 py-2 border border-gray-300 dark:border-gray-600 rounded bg-dark text-white">
+                            深色
+                        </button>
+                        <button id="theme-system" class="flex-1 py-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-200 dark:bg-dark-light">
+                            跟随系统
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="auto-run" class="rounded text-primary focus:ring-primary">
+                        <span class="text-sm">代码更改时自动运行</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="preserve-state" class="rounded text-primary focus:ring-primary">
+                        <span class="text-sm">保留上次运行状态</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                <button id="save-settings" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition-all-300">
+                    保存设置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分享模态框 (默认隐藏) -->
+    <div id="share-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-dark-light rounded-lg shadow-lg w-full max-w-md p-5 transform transition-all-300">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">分享代码</h3>
+                <button id="close-share" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">分享链接</label>
+                    <div class="flex">
+                        <input type="text" id="share-link" value="https://codeplayground.example/share/abc123" readonly
+                               class="flex-1 bg-gray-100 dark:bg-dark border border-gray-300 dark:border-gray-600 rounded-l-md px-3 py-2 text-sm focus:outline-none">
+                        <button id="copy-link" class="bg-primary hover:bg-primary/90 text-white px-3 py-2 rounded-r-md transition-all-300">
+                            <i class="fa fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">分享到</label>
+                    <div class="flex space-x-3">
+                        <button class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all-300">
+                            <i class="fa fa-twitter"></i>
+                        </button>
+                        <button class="p-2 bg-blue-800 hover:bg-blue-900 text-white rounded-full transition-all-300">
+                            <i class="fa fa-facebook"></i>
+                        </button>
+                        <button class="p-2 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all-300">
+                            <i class="fa fa-whatsapp"></i>
+                        </button>
+                        <button class="p-2 bg-gray-800 hover:bg-gray-900 text-white rounded-full transition-all-300">
+                            <i class="fa fa-telegram"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化编辑器
+        const editor = ace.edit("editor");
+        editor.setTheme("ace/theme/dracula");
+        editor.session.setMode("ace/mode/javascript");
+        editor.setOptions({
+            enableBasicAutocompletion: true,
+            enableSnippets: true,
+            enableLiveAutocompletion: true,
+            fontSize: "14px",
+            showLineNumbers: true,
+            showGutter: true,
+            highlightActiveLine: true,
+            tabSize: 2,
+            useSoftTabs: true,
+            wrap: false
+        });
+
+        // 示例代码
+        const defaultCode = `// 欢迎使用 CodePlayground
+// 在这里编写 JavaScript/TypeScript 代码
+// 点击"运行"按钮执行代码
+
+// 示例: 打印Hello World
+console.log("Hello, World!");
+
+// 示例: 计算斐波那契数列
+function fibonacci(n) {
+  const sequence = [0, 1];
+  for (let i = 2; i < n; i++) {
+    sequence[i] = sequence[i - 1] + sequence[i - 2];
+  }
+  return sequence.slice(0, n);
+}
+
+const result = fibonacci(10);
+console.log("斐波那契数列前10项:", result);
+
+// 示例: 使用变量
+const user = {
+  name: "CodePlayground 用户",
+  age: 25,
+  isStudent: true
+};
+
+console.log("用户信息:", user);`;
+
+        // 预设代码
+        const presets = {
+            hello: `// Hello World 示例
+console.log("Hello, World!");
+
+// 打印不同类型的数据
+console.log("数字:", 42);
+console.log("布尔值:", true);
+console.log("数组:", [1, 2, 3]);
+console.log("对象:", { name: "JavaScript", type: "语言" });`,
+
+            fibonacci: `// 斐波那契数列生成器
+function fibonacci(n) {
+  if (n <= 0) return [];
+  if (n === 1) return [0];
+
+  const sequence = [0, 1];
+  for (let i = 2; i < n; i++) {
+    sequence[i] = sequence[i - 1] + sequence[i - 2];
+  }
+  return sequence;
+}
+
+// 生成前15项斐波那契数列
+const count = 15;
+const result = fibonacci(count);
+
+console.log(\`斐波那契数列前\${count}项:\`);
+console.log(result);
+
+// 计算第n项斐波那契数
+function fibonacciNumber(n) {
+  if (n <= 0) return 0;
+  if (n === 1) return 0;
+  if (n === 2) return 1;
+
+  let a = 0, b = 1;
+  for (let i = 3; i <= n; i++) {
+    const c = a + b;
+    a = b;
+    b = c;
+  }
+  return b;
+}
+
+console.log(\`第\${count}项斐波那契数:\`, fibonacciNumber(count));`,
+
+            async: `// 异步代码示例
+
+// 模拟API请求
+function fetchData(url) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (url.includes("error")) {
+        reject(new Error("请求失败: 模拟错误"));
+      } else {
+        resolve({
+          url,
+          data: \`从\${url}获取的数据\`,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }, 1000);
+  });
+}
+
+// 使用async/await处理异步操作
+async function processData() {
+  console.log("开始获取数据...");
+
+  try {
+    // 串行请求
+    const data1 = await fetchData("https://api.example.com/data1");
+    console.log("获取到数据1:", data1);
+
+    const data2 = await fetchData("https://api.example.com/data2");
+    console.log("获取到数据2:", data2);
+
+    // 并行请求
+    console.log("开始并行获取数据...");
+    const [data3, data4] = await Promise.all([
+      fetchData("https://api.example.com/data3"),
+      fetchData("https://api.example.com/data4")
+    ]);
+
+    console.log("并行获取到数据3:", data3);
+    console.log("并行获取到数据4:", data4);
+
+    // 故意触发错误
+    console.log("测试错误处理...");
+    await fetchData("https://api.example.com/error");
+
+  } catch (error) {
+    console.error("发生错误:", error.message);
+  } finally {
+    console.log("数据处理完成");
+  }
+}
+
+// 执行异步函数
+processData();`,
+
+            class: `// 类与继承示例
+
+// 基础类
+class Animal {
+  constructor(name, age) {
+    this.name = name;
+    this.age = age;
+  }
+
+  // 基础方法
+  speak() {
+    console.log(\`\${this.name}发出声音\`);
+  }
+
+  // 静态方法
+  static getType() {
+    return "动物";
+  }
+
+  // 获取年龄描述
+  getAgeDescription() {
+    return \`\${this.name}今年\${this.age}岁了\`;
+  }
+}
+
+// 继承Animal类
+class Dog extends Animal {
+  constructor(name, age, breed) {
+    super(name, age); // 调用父类构造函数
+    this.breed = breed;
+  }
+
+  // 重写父类方法
+  speak() {
+    console.log(\`\${this.name}汪汪叫\`);
+  }
+
+  // 子类特有方法
+  fetch() {
+    console.log(\`\${this.name}叼来了球\`);
+  }
+}
+
+// 继承Animal类
+class Cat extends Animal {
+  constructor(name, age, color) {
+    super(name, age);
+    this.color = color;
+  }
+
+  // 重写父类方法
+  speak() {
+    console.log(\`\${this.name}喵喵叫\`);
+  }
+
+  // 子类特有方法
+  scratch() {
+    console.log(\`\${this.name}挠了沙发\`);
+  }
+}
+
+// 创建实例
+const animal = new Animal("动物", 5);
+const dog = new Dog("旺财", 3, "金毛");
+const cat = new Cat("咪咪", 2, "橘色");
+
+// 使用实例
+console.log("动物类型:", Animal.getType());
+
+console.log("--- 动物 ---");
+animal.speak();
+console.log(animal.getAgeDescription());
+
+console.log("--- 狗 ---");
+dog.speak();
+dog.fetch();
+console.log(dog.getAgeDescription());
+console.log(\`品种: \${dog.breed}\`);
+
+console.log("--- 猫 ---");
+cat.speak();
+cat.scratch();
+console.log(cat.getAgeDescription());
+console.log(\`颜色: \${cat.color}\`);`
+        };
+
+        // 设置默认代码
+        editor.setValue(defaultCode);
+        editor.clearSelection();
+
+        // 元素引用
+        const runBtn = document.getElementById('run-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const debugBtn = document.getElementById('debug-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const output = document.getElementById('output');
+        const input = document.getElementById('input');
+        const variables = document.getElementById('variables');
+        const clearOutputBtn = document.getElementById('clear-output');
+        const refreshVariablesBtn = document.getElementById('refresh-variables');
+        const jsModeBtn = document.getElementById('js-mode');
+        const tsModeBtn = document.getElementById('ts-mode');
+        const themeToggle = document.getElementById('theme-toggle');
+        const cursorPosition = document.getElementById('cursor-position');
+        const presetSelect = document.getElementById('preset-select');
+        const fullscreenEditor = document.getElementById('fullscreen-editor');
+        const debugControls = document.getElementById('debug-controls');
+        const stepOverBtn = document.getElementById('step-over');
+        const stepIntoBtn = document.getElementById('step-into');
+        const stepOutBtn = document.getElementById('step-out');
+        const continueDebugBtn = document.getElementById('continue-debug');
+        const debugStatus = document.getElementById('debug-status');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsBtn = document.getElementById('close-settings');
+        const saveSettingsBtn = document.getElementById('save-settings');
+        const fontSizeSlider = document.getElementById('font-size');
+        const fontSizeValue = document.getElementById('font-size-value');
+        const themeLightBtn = document.getElementById('theme-light');
+        const themeDarkBtn = document.getElementById('theme-dark');
+        const themeSystemBtn = document.getElementById('theme-system');
+        const autoRunCheckbox = document.getElementById('auto-run');
+        const preserveStateCheckbox = document.getElementById('preserve-state');
+        const shareBtn = document.getElementById('share-btn');
+        const shareModal = document.getElementById('share-modal');
+        const closeShareBtn = document.getElementById('close-share');
+        const shareLink = document.getElementById('share-link');
+        const copyLinkBtn = document.getElementById('copy-link');
+
+        // 全局状态
+        let isRunning = false;
+        let isDebugging = false;
+        let currentVariables = {};
+        let codeTimeout;
+        let isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        // 初始化主题
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+        }
+
+        // 编辑器光标位置更新
+        editor.on('cursorChange', () => {
+            const cursor = editor.getCursorPosition();
+            cursorPosition.textContent = `行: ${cursor.row + 1}, 列: ${cursor.column + 1}`;
+        });
+
+        // 运行代码
+        runBtn.addEventListener('click', runCode);
+
+        // 停止代码
+        stopBtn.addEventListener('click', stopCode);
+
+        // 调试代码
+        debugBtn.addEventListener('click', toggleDebugMode);
+
+        // 重置代码
+        resetBtn.addEventListener('click', () => {
+            if (confirm('确定要重置代码吗？当前代码将会丢失。')) {
+                editor.setValue(defaultCode);
+                editor.clearSelection();
+                clearOutput();
+                clearVariables();
+            }
+        });
+
+        // 清空输出
+        clearOutputBtn.addEventListener('click', clearOutput);
+
+        // 刷新变量
+        refreshVariablesBtn.addEventListener('click', updateVariablesDisplay);
+
+        // 切换JavaScript/TypeScript模式
+        jsModeBtn.addEventListener('click', () => {
+            editor.session.setMode("ace/mode/javascript");
+            jsModeBtn.classList.add('bg-primary', 'text-white');
+            jsModeBtn.classList.remove('hover:bg-gray-200', 'dark:hover:bg-dark-light');
+            tsModeBtn.classList.remove('bg-primary', 'text-white');
+            tsModeBtn.classList.add('hover:bg-gray-200', 'dark:hover:bg-dark-light');
+        });
+
+        tsModeBtn.addEventListener('click', () => {
+            editor.session.setMode("ace/mode/typescript");
+            tsModeBtn.classList.add('bg-primary', 'text-white');
+            tsModeBtn.classList.remove('hover:bg-gray-200', 'dark:hover:bg-dark-light');
+            jsModeBtn.classList.remove('bg-primary', 'text-white');
+            jsModeBtn.classList.add('hover:bg-gray-200', 'dark:hover:bg-dark-light');
+        });
+
+        // 切换主题
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // 预设代码选择
+        presetSelect.addEventListener('change', () => {
+            const preset = presetSelect.value;
+            if (preset && presets[preset]) {
+                editor.setValue(presets[preset]);
+                editor.clearSelection();
+            } else if (preset === 'none') {
+                editor.setValue('');
+            }
+        });
+
+        // 全屏编辑器
+        fullscreenEditor.addEventListener('click', () => {
+            const editorContainer = document.getElementById('editor-container');
+            if (!document.fullscreenElement) {
+                if (editorContainer.requestFullscreen) {
+                    editorContainer.requestFullscreen();
+                } else if (editorContainer.webkitRequestFullscreen) {
+                    editorContainer.webkitRequestFullscreen();
+                } else if (editorContainer.msRequestFullscreen) {
+                    editorContainer.msRequestFullscreen();
+                }
+                fullscreenEditor.innerHTML = '<i class="fa fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                fullscreenEditor.innerHTML = '<i class="fa fa-expand"></i>';
+            }
+        });
+
+        // 调试控制按钮
+        stepOverBtn.addEventListener('click', () => {
+            if (isDebugging) {
+                debugStatus.textContent = '单步跳过...';
+                // 实际调试逻辑会在这里
+                setTimeout(() => {
+                    debugStatus.textContent = '暂停在第5行';
+                    simulateDebugVariables();
+                }, 500);
+            }
+        });
+
+        stepIntoBtn.addEventListener('click', () => {
+            if (isDebugging) {
+                debugStatus.textContent = '单步进入...';
+                // 实际调试逻辑会在这里
+                setTimeout(() => {
+                    debugStatus.textContent = '暂停在函数内部第3行';
+                    simulateDebugVariables();
+                }, 500);
+            }
+        });
+
+        stepOutBtn.addEventListener('click', () => {
+            if (isDebugging) {
+                debugStatus.textContent = '单步退出...';
+                // 实际调试逻辑会在这里
+                setTimeout(() => {
+                    debugStatus.textContent = '暂停在第8行';
+                    simulateDebugVariables();
+                }, 500);
+            }
+        });
+
+        continueDebugBtn.addEventListener('click', () => {
+            if (isDebugging) {
+                debugStatus.textContent = '继续执行...';
+                // 实际调试逻辑会在这里
+                setTimeout(() => {
+                    completeDebug();
+                }, 1000);
+            }
+        });
+
+        // 设置模态框
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('hidden');
+            settingsModal.classList.add('flex');
+        });
+
+        closeSettingsBtn.addEventListener('click', closeSettingsModal);
+
+        saveSettingsBtn.addEventListener('click', saveSettings);
+
+        // 点击模态框外部关闭
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                closeSettingsModal();
+            }
+        });
+
+        // 字体大小设置
+        fontSizeSlider.addEventListener('input', () => {
+            const size = fontSizeSlider.value;
+            fontSizeValue.textContent = `${size}px`;
+            editor.setFontSize(`${size}px`);
+        });
+
+        // 主题设置
+        themeLightBtn.addEventListener('click', () => {
+            document.documentElement.classList.remove('dark');
+            isDarkMode = false;
+        });
+
+        themeDarkBtn.addEventListener('click', () => {
+            document.documentElement.classList.add('dark');
+            isDarkMode = true;
+        });
+
+        themeSystemBtn.addEventListener('click', () => {
+            isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // 分享功能
+        shareBtn.addEventListener('click', () => {
+            shareModal.classList.remove('hidden');
+            shareModal.classList.add('flex');
+            // 生成随机分享ID
+            const shareId = Math.random().toString(36).substring(2, 8);
+            shareLink.value = `https://codeplayground.example/share/${shareId}`;
+        });
+
+        closeShareBtn.addEventListener('click', () => {
+            shareModal.classList.add('hidden');
+            shareModal.classList.remove('flex');
+        });
+
+        copyLinkBtn.addEventListener('click', () => {
+            shareLink.select();
+            document.execCommand('copy');
+            copyLinkBtn.innerHTML = '<i class="fa fa-check"></i>';
+            setTimeout(() => {
+                copyLinkBtn.innerHTML = '<i class="fa fa-copy"></i>';
+            }, 2000);
+        });
+
+        // 点击分享模态框外部关闭
+        shareModal.addEventListener('click', (e) => {
+            if (e.target === shareModal) {
+                shareModal.classList.add('hidden');
+                shareModal.classList.remove('flex');
+            }
+        });
+
+        // 自动运行代码
+        editor.on('change', () => {
+            if (autoRunCheckbox.checked && !isRunning && !isDebugging) {
+                clearTimeout(codeTimeout);
+                codeTimeout = setTimeout(runCode, 1000);
+            }
+        });
+
+        // 函数定义
+        function runCode() {
+            if (isRunning) return;
+
+            isRunning = true;
+            runBtn.classList.add('hidden');
+            stopBtn.classList.remove('hidden');
+            clearOutput();
+            appendOutput('> 正在执行代码...\n', 'text-gray-400');
+
+            // 捕获console.log输出
+            const originalConsoleLog = console.log;
+            console.log = function(...args) {
+                // 调用原始的console.log
+                originalConsoleLog.apply(console, args);
+
+                // 格式化输出
+                let outputText = '> ';
+                args.forEach((arg, index) => {
+                    if (index > 0) outputText += ' ';
+                    if (typeof arg === 'object' && arg !== null) {
+                        outputText += JSON.stringify(arg, null, 2);
+                    } else {
+                        outputText += arg;
+                    }
+                });
+                outputText += '\n';
+
+                appendOutput(outputText);
+            };
+
+            // 捕获错误
+            const originalConsoleError = console.error;
+            console.error = function(...args) {
+                originalConsoleError.apply(console, args);
+
+                let errorText = '> [错误] ';
+                args.forEach((arg, index) => {
+                    if (index > 0) errorText += ' ';
+                    errorText += arg.toString();
+                });
+                errorText += '\n';
+
+                appendOutput(errorText, 'text-red-400');
+            };
+
+            // 获取代码和输入
+            const code = editor.getValue();
+            const userInput = input.value;
+
+            // 创建一个带有输入的环境
+            const inputLines = userInput.split('\n');
+            let inputIndex = 0;
+
+            // 模拟输入函数
+            function inputFunc(promptText) {
+                if (promptText) {
+                    appendOutput(`> [输入] ${promptText}\n`, 'text-blue-400');
+                }
+                const value = inputLines[inputIndex] !== undefined ? inputLines[inputIndex] : '';
+                inputIndex++;
+                appendOutput(`> ${value}\n`, 'text-green-400');
+                return value;
+            }
+
+            // 执行代码
+            try {
+                // 创建一个沙箱环境执行代码
+                const codeWrapper = `
+                    (function() {
+                        const input = ${inputFunc.toString()};
+                        ${code}
+                        return { ...this };
+                    }).call({});
+                `;
+
+                // 执行代码并捕获变量
+                const result = eval(codeWrapper);
+
+                // 过滤掉内置属性，只保留用户定义的变量
+                const userVariables = {};
+                for (const key in result) {
+                    if (!Object.prototype.hasOwnProperty.call(Object.prototype, key) &&
+                        !['eval', 'parseInt', 'parseFloat', 'isNaN', 'isFinite',
+                          'decodeURI', 'decodeURIComponent', 'encodeURI', 'encodeURIComponent'].includes(key)) {
+                        userVariables[key] = result[key];
+                    }
+                }
+
+                currentVariables = userVariables;
+                updateVariablesDisplay();
+
+                setTimeout(() => {
+                    appendOutput('\n> 代码执行完成\n', 'text-green-400');
+                    completeRun();
+                }, 500);
+
+            } catch (error) {
+                appendOutput(`> [执行错误] ${error.name}: ${error.message}\n`, 'text-red-400');
+                if (error.stack) {
+                    appendOutput(`> 堆栈跟踪: ${error.stack.split('\n')[1] || ''}\n`, 'text-red-500');
+                }
+                completeRun();
+            }
+
+            // 恢复原始console方法
+            function completeRun() {
+                console.log = originalConsoleLog;
+                console.error = originalConsoleError;
+                isRunning = false;
+                runBtn.classList.remove('hidden');
+                stopBtn.classList.add('hidden');
+            }
+        }
+
+        function stopCode() {
+            if (!isRunning && !isDebugging) return;
+
+            // 在真实环境中，这里会有更复杂的逻辑来终止正在运行的代码
+            appendOutput('\n> 代码已停止\n', 'text-yellow-400');
+
+            isRunning = false;
+            isDebugging = false;
+
+            runBtn.classList.remove('hidden');
+            stopBtn.classList.add('hidden');
+            debugControls.classList.add('hidden');
+
+            // 恢复console
+            console.log = console.originalLog || console.log;
+            console.error = console.originalError || console.error;
+        }
+
+        function toggleDebugMode() {
+            if (isRunning) return;
+
+            isDebugging = !isDebugging;
+
+            if (isDebugging) {
+                debugBtn.classList.add('bg-primary/80');
+                debugControls.classList.remove('hidden');
+                runBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+
+                clearOutput();
+                appendOutput('> 进入调试模式...\n', 'text-blue-400');
+                appendOutput('> 设置断点并使用调试控制按钮执行代码\n', 'text-blue-400');
+
+                debugStatus.textContent = '准备就绪，点击单步按钮开始';
+
+                // 模拟调试变量
+                simulateDebugVariables();
+
+                // 这里应该有真实的调试初始化逻辑
+            } else {
+                completeDebug();
+            }
+        }
+
+        function completeDebug() {
+            isDebugging = false;
+            debugBtn.classList.remove('bg-primary/80');
+            debugControls.classList.add('hidden');
+            runBtn.classList.remove('hidden');
+            stopBtn.classList.add('hidden');
+
+            appendOutput('> 调试结束\n', 'text-blue-400');
+        }
+
+        function simulateDebugVariables() {
+            // 模拟调试时的变量状态
+            currentVariables = {
+                count: 10,
+                result: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34],
+                user: {
+                    name: "CodePlayground 用户",
+                    age: 25,
+                    isStudent: true
+                },
+                isDebugging: true
+            };
+
+            updateVariablesDisplay();
+        }
+
+        function appendOutput(text, className = 'text-gray-300') {
+            const div = document.createElement('div');
+            div.className = className;
+            div.textContent = text;
+            output.appendChild(div);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            output.innerHTML = '';
+        }
+
+        function updateVariablesDisplay() {
+            if (Object.keys(currentVariables).length === 0) {
+                variables.innerHTML = '<div class="text-gray-500 dark:text-gray-400 text-sm italic">没有可显示的变量</div>';
+                return;
+            }
+
+            let html = '';
+            for (const [name, value] of Object.entries(currentVariables)) {
+                let type, valueStr;
+
+                if (value === null) {
+                    type = 'null';
+                    valueStr = 'null';
+                } else if (typeof value === 'object') {
+                    type = Array.isArray(value) ? 'array' : 'object';
+                    valueStr = JSON.stringify(value, null, 2);
+                } else if (typeof value === 'function') {
+                    type = 'function';
+                    valueStr = value.toString().split('\n')[0] + ' { ... }';
+                } else {
+                    type = typeof value;
+                    valueStr = type === 'string' ? `"${value}"` : String(value);
+                }
+
+                html += `
+                    <div class="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700 last:border-0 last:mb-0 last:pb-0">
+                        <div class="flex items-center">
+                            <span class="font-medium mr-2">${name}</span>
+                            <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-dark text-gray-600 dark:text-gray-300">${type}</span>
+                        </div>
+                        <div class="mt-1 text-sm font-code text-gray-600 dark:text-gray-300 overflow-x-auto scrollbar-thin">
+                            ${valueStr}
+                        </div>
+                    </div>
+                `;
+            }
+
+            variables.innerHTML = html;
+        }
+
+        function clearVariables() {
+            currentVariables = {};
+            updateVariablesDisplay();
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.documentElement.classList.toggle('dark', isDarkMode);
+        }
+
+        function closeSettingsModal() {
+            settingsModal.classList.add('hidden');
+            settingsModal.classList.remove('flex');
+        }
+
+        function saveSettings() {
+            // 保存设置的逻辑
+            appendOutput('> 设置已保存\n', 'text-blue-400');
+            closeSettingsModal();
+        }
+
+        // 初始化变量显示
+        updateVariablesDisplay();
+    </script>
+</body>
+</html>
