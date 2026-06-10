@@ -4462,9 +4462,14 @@ function initChartTypeSelector() {
 // 添加额外的图表参数控制
 function addChartSpecificControls() {
     const controlsContainer = document.getElementById('chartSpecificControls');
+    if (!controlsContainer) {
+        console.warn('找不到 chartSpecificControls 元素，跳过图表特定参数控制初始化');
+        return;
+    }
 
     // 根据当前图表类型添加特定参数
     function updateSpecificControls() {
+        if (!controlsContainer) return;
         controlsContainer.innerHTML = '';
 
         switch (currentChartType) {
