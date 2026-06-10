@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candy导航 - 全能工具中心</title>
+    <title>Candy导航 - 全能工具箱</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
@@ -11,900 +11,842 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#4F46E5',
-                        secondary: '#7C3AED',
-                        web: '#2563EB',
-                        media: '#EC4899',
-                        file: '#10B981',
-                        code: '#F59E0B',
-                        design: '#8B5CF6',
-                        utility: '#3B82F6'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
-                    },
-                    boxShadow: {
-                        'card': '0 4px 20px rgba(0, 0, 0, 0.05)',
-                        'card-hover': '0 10px 30px rgba(0, 0, 0, 0.08), 0 4px 15px rgba(0, 0, 0, 0.05)'
+                        primary: '#6366F1',
+                        secondary: '#8B5CF6',
+                        accent: '#EC4899',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        info: '#3B82F6',
+                        dark: '#1F2937'
                     }
                 }
             }
         }
     </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .card-hover {
-                @apply transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1 hover:scale-[1.02];
-            }
-            .nav-active {
-                @apply text-primary border-b-2 border-primary;
-            }
-            .category-badge {
-                @apply inline-block px-3 py-1 text-xs font-medium rounded-full mb-6;
-            }
-            .icon-container {
-                @apply w-14 h-14 rounded-lg flex items-center justify-center mb-4 transition-all duration-300;
-            }
-            .card-arrow {
-                @apply inline-block transition-transform duration-300 group-hover:translate-x-1;
-            }
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
         }
-
-        .gradient-bg {
-            background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
-            background-attachment: fixed;
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            min-height: 100vh;
         }
-        .title-gradient {
-            background: linear-gradient(90deg, #4F46E5, #7C3AED);
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.25);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
             -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             background-clip: text;
-            color: transparent;
         }
-        .section-fade {
-            @apply opacity-0 translate-y-6 transition-all duration-700;
+        
+        .gradient-border {
+            position: relative;
         }
-        .section-visible {
-            @apply opacity-100 translate-y-0;
+        
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 2px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8); }
+        }
+        
+        .category-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover .category-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .scroll-indicator {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+            40% { transform: translateY(-10px) translateX(-50%); }
+            60% { transform: translateY(-5px) translateX(-50%); }
+        }
+        
+        .tool-count {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        
+        .nav-link {
+            position: relative;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #6366f1, #ec4899);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .nav-link:hover::after, .nav-link.active::after {
+            width: 80%;
+        }
+        
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.8);
         }
     </style>
 </head>
-<body class="gradient-bg min-h-screen">
-    <!-- 页面头部 -->
-    <header class="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all duration-300">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                        <i class="fa fa-wrench text-white text-xl"></i>
+<body class="text-white">
+    <!-- 顶部导航 -->
+    <header class="glass sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center pulse-glow">
+                        <i class="fa fa-rocket text-white text-lg"></i>
                     </div>
-                    <h1 class="text-2xl font-bold text-gray-800">Candy导航</h1>
+                    <div>
+                        <h1 class="text-xl font-bold gradient-text">Candy工具箱</h1>
+                        <p class="text-xs text-gray-400">全能工具集合</p>
+                    </div>
                 </div>
                 
-                <nav class="hidden md:flex items-center space-x-8">
-                    <a href="#" class="nav-active font-medium py-2 px-1 transition-all duration-300">工具中心</a>
-                    <a href="#" class="text-gray-600 hover:text-primary hover:border-b-2 hover:border-primary/30 py-2 px-1 transition-all duration-300">关于</a>
-                    <a href="#" class="text-gray-600 hover:text-primary hover:border-b-2 hover:border-primary/30 py-2 px-1 transition-all duration-300">反馈</a>
+                <nav class="hidden md:flex items-center space-x-1">
+                    <a href="#tools" class="nav-link active text-sm font-medium text-white">工具中心</a>
+                    <a href="#features" class="nav-link text-sm font-medium text-gray-300 hover:text-white">特色功能</a>
+                    <a href="#stats" class="nav-link text-sm font-medium text-gray-300 hover:text-white">数据统计</a>
                 </nav>
                 
-                <button class="md:hidden text-gray-700 focus:outline-none hover:text-primary transition-colors duration-300" id="mobileMenuBtn">
+                <button class="md:hidden text-gray-300 hover:text-white" id="menuBtn">
                     <i class="fa fa-bars text-xl"></i>
                 </button>
             </div>
-            
-            <div class="md:hidden hidden mt-4 pb-2 border-t border-gray-100" id="mobileMenu">
-                <a href="#" class="block nav-active font-medium py-2 px-1">工具中心</a>
-                <a href="#" class="block text-gray-600 hover:text-primary py-2 px-1 transition-colors">关于</a>
-                <a href="#" class="block text-gray-600 hover:text-primary py-2 px-1 transition-colors">反馈</a>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div class="hidden md:hidden glass" id="mobileMenu">
+            <div class="px-4 py-3 space-y-2">
+                <a href="#tools" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition">工具中心</a>
+                <a href="#features" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition">特色功能</a>
+                <a href="#stats" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition">数据统计</a>
             </div>
         </div>
     </header>
 
-    <!-- 主要内容区 -->
-    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <!-- 页面标题区 -->
-        <div class="text-center mb-16 section-fade" id="titleSection">
-            <div class="inline-block mb-4 px-4 py-1 bg-primary/10 rounded-full text-primary text-sm font-medium">
-                全能工具集合
+    <!-- 英雄区域 -->
+    <section class="relative py-20 px-4 overflow-hidden">
+        <!-- 背景装饰 -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl float-animation"></div>
+            <div class="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl float-animation" style="animation-delay: -3s;"></div>
+            <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-secondary/20 rounded-full blur-3xl float-animation" style="animation-delay: -1.5s;"></div>
+        </div>
+        
+        <div class="relative max-w-4xl mx-auto text-center">
+            <div class="inline-flex items-center px-4 py-2 rounded-full glass mb-6">
+                <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse mr-2"></span>
+                <span class="text-sm text-gray-300">40+ 实用工具，持续更新中</span>
             </div>
-            <h2 class="text-[clamp(2rem,5vw,3rem)] font-bold mb-6 title-gradient">Candy工具导航</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
-                精选各类实用工具，涵盖图片处理、文件转换、代码开发、数据管理等多个领域，满足你的多样化需求
+            
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6">
+                <span class="gradient-text">Candy</span>
+                <span class="text-white">工具箱</span>
+            </h1>
+            
+            <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+                精选各类实用工具，涵盖图片处理、文件转换、代码开发、数据管理等多个领域，让工作效率倍增
             </p>
             
-            <div class="flex justify-center mt-10">
-                <div class="w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+            <div class="flex flex-wrap justify-center gap-4 mb-12">
+                <a href="#tools" class="px-8 py-3 bg-gradient-to-r from-primary to-secondary rounded-full font-semibold hover:shadow-lg hover:shadow-primary/50 transition-all duration-300 transform hover:-translate-y-1">
+                    <i class="fa fa-th-large mr-2"></i>浏览全部工具
+                </a>
+                <a href="Page/旧版工具导航.html" class="px-8 py-3 glass rounded-full font-semibold hover:bg-white/10 transition-all duration-300">
+                    <i class="fa fa-history mr-2"></i>查看旧版工具
+                </a>
+            </div>
+            
+            <!-- 特性标签 -->
+            <div class="flex flex-wrap justify-center gap-3">
+                <span class="px-4 py-2 glass rounded-full text-sm text-gray-300">
+                    <i class="fa fa-shield mr-1 text-green-400"></i>本地运行
+                </span>
+                <span class="px-4 py-2 glass rounded-full text-sm text-gray-300">
+                    <i class="fa fa-lock mr-1 text-blue-400"></i>隐私保护
+                </span>
+                <span class="px-4 py-2 glass rounded-full text-sm text-gray-300">
+                    <i class="fa fa-bolt mr-1 text-yellow-400"></i>无需安装
+                </span>
+                <span class="px-4 py-2 glass rounded-full text-sm text-gray-300">
+                    <i class="fa fa-mobile mr-1 text-purple-400"></i>响应式
+                </span>
             </div>
         </div>
         
-        <!-- 工具分类导航区 -->
-        <div class="max-w-4xl mx-auto mb-12 section-fade" id="categoryFilter">
-            <div class="bg-white rounded-xl shadow-card p-4 md:p-6 border border-gray-50">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">工具分类</h3>
-                <div class="flex flex-wrap gap-3">
-                    <button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors" onclick="filterCategory('all')">
-                        全部工具
-                    </button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium border border-gray-200 hover:border-primary hover:text-primary transition-colors" onclick="filterCategory('file')">
-                        文件处理
-                    </button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium border border-gray-200 hover:border-primary hover:text-primary transition-colors" onclick="filterCategory('image')">
-                        图片工具
-                    </button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium border border-gray-200 hover:border-primary hover:text-primary transition-colors" onclick="filterCategory('code')">
-                        代码开发
-                    </button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium border border-gray-200 hover:border-primary hover:text-primary transition-colors" onclick="filterCategory('utility')">
-                        实用工具
-                    </button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium border border-gray-200 hover:border-primary hover:text-primary transition-colors" onclick="filterCategory('database')">
-                        数据库
-                    </button>
-                    <button class="px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium border border-gray-200 hover:border-primary hover:text-primary transition-colors" onclick="filterCategory('other')">
-                        其他工具
-                    </button>
+        <!-- 滚动指示器 -->
+        <div class="absolute bottom-8 left-1/2 scroll-indicator">
+            <i class="fa fa-chevron-down text-gray-400 text-2xl"></i>
+        </div>
+    </section>
+
+    <!-- 工具分类区域 -->
+    <section id="tools" class="py-16 px-4">
+        <div class="max-w-7xl mx-auto">
+            <!-- 分类标题 -->
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">
+                    <i class="fa fa-wrench mr-2 text-primary"></i>工具分类
+                </h2>
+                <p class="text-gray-400">选择你需要的工具类型，快速开始使用</p>
+            </div>
+            
+            <!-- 1. 文件处理工具 -->
+            <div class="mb-20">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center mr-4">
+                        <i class="fa fa-file-code-o text-green-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">文件处理工具</h3>
+                        <p class="text-gray-400 text-sm">7个工具</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <a href="MainFunction/文件处理/JSON工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-green-500/20 text-green-400">
+                            <i class="fa fa-code"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">JSON工具</h4>
+                        <p class="text-gray-400 text-sm mb-4">格式化、验证、差异对比、结构分析</p>
+                        <span class="text-xs text-green-400">JSON · 格式化 · 验证</span>
+                    </a>
+                    
+                    <a href="MainFunction/文件处理/PDF工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-red-500/20 text-red-400">
+                            <i class="fa fa-file-pdf-o"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">PDF工具</h4>
+                        <p class="text-gray-400 text-sm mb-4">PDF转TXT、HTML、Word、Markdown</p>
+                        <span class="text-xs text-red-400">PDF · 转换</span>
+                    </a>
+                    
+                    <a href="MainFunction/文件处理/XML转JSON工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-blue-500/20 text-blue-400">
+                            <i class="fa fa-exchange"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">XML转JSON</h4>
+                        <p class="text-gray-400 text-sm mb-4">XML与JSON互相转换，支持多种格式</p>
+                        <span class="text-xs text-blue-400">XML · JSON · 转换</span>
+                    </a>
+                    
+                    <a href="MainFunction/文件处理/加密解密工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-yellow-500/20 text-yellow-400">
+                            <i class="fa fa-lock"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">加密解密</h4>
+                        <p class="text-gray-400 text-sm mb-4">AES、DES、RSA、Base64、MD5等</p>
+                        <span class="text-xs text-yellow-400">加密 · 解密 · 安全</span>
+                    </a>
+                    
+                    <a href="MainFunction/文件处理/文件扫描工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-purple-500/20 text-purple-400">
+                            <i class="fa fa-scanner"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">文件扫描</h4>
+                        <p class="text-gray-400 text-sm mb-4">文档扫描模拟，图片处理导出</p>
+                        <span class="text-xs text-purple-400">扫描 · 文档</span>
+                    </a>
+                    
+                    <a href="MainFunction/文件处理/文件格式转换工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-pink-500/20 text-pink-400">
+                            <i class="fa fa-file-word-o"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">格式转换</h4>
+                        <p class="text-gray-400 text-sm mb-4">Word、Excel、PDF、TXT互转</p>
+                        <span class="text-xs text-pink-400">格式 · 转换</span>
+                    </a>
+                    
+                    <a href="MainFunction/文件处理/文件预览工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-cyan-500/20 text-cyan-400">
+                            <i class="fa fa-eye"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">文件预览</h4>
+                        <p class="text-gray-400 text-sm mb-4">支持Word、Excel、图片、音视频</p>
+                        <span class="text-xs text-cyan-400">预览 · 查看</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="section-divider my-16"></div>
+            
+            <!-- 2. 图片工具 -->
+            <div class="mb-20">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center mr-4">
+                        <i class="fa fa-picture-o text-pink-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">图片处理工具</h3>
+                        <p class="text-gray-400 text-sm">5个工具</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <a href="MainFunction/图片工具/二维码生成器.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-pink-500/20 text-pink-400">
+                            <i class="fa fa-qrcode"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">二维码生成器</h4>
+                        <p class="text-gray-400 text-sm mb-4">生成二维码和条形码，自定义样式</p>
+                        <span class="text-xs text-pink-400">二维码 · 条形码</span>
+                    </a>
+                    
+                    <a href="MainFunction/图片工具/图片排版工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-orange-500/20 text-orange-400">
+                            <i class="fa fa-th"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">图片排版工具</h4>
+                        <p class="text-gray-400 text-sm mb-4">多种布局样式，轻松排版</p>
+                        <span class="text-xs text-orange-400">排版 · 布局</span>
+                    </a>
+                    
+                    <a href="MainFunction/图片工具/图片排版设计.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-indigo-500/20 text-indigo-400">
+                            <i class="fa fa-th-large"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">图片自由排版</h4>
+                        <p class="text-gray-400 text-sm mb-4">灵活组合排版，自定义布局</p>
+                        <span class="text-xs text-indigo-400">排版 · 设计</span>
+                    </a>
+                    
+                    <a href="MainFunction/图片工具/图片格式转换.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-teal-500/20 text-teal-400">
+                            <i class="fa fa-refresh"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">图片格式转换</h4>
+                        <p class="text-gray-400 text-sm mb-4">JPG、PNG、GIF、WebP互转</p>
+                        <span class="text-xs text-teal-400">格式 · 转换</span>
+                    </a>
+                    
+                    <a href="MainFunction/图片工具/图片魔法工坊.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-violet-500/20 text-violet-400">
+                            <i class="fa fa-magic"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">图片魔法工坊</h4>
+                        <p class="text-gray-400 text-sm mb-4">特效变换，打造视觉效果</p>
+                        <span class="text-xs text-violet-400">特效 · 滤镜</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="section-divider my-16"></div>
+            
+            <!-- 3. 代码开发工具 -->
+            <div class="mb-20">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mr-4">
+                        <i class="fa fa-code text-blue-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">代码开发工具</h3>
+                        <p class="text-gray-400 text-sm">7个工具</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <a href="MainFunction/开发工具/JavaScript工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-yellow-500/20 text-yellow-400">
+                            <i class="fa fa-coffee"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">JavaScript工具</h4>
+                        <p class="text-gray-400 text-sm mb-4">在线编辑运行JS代码</p>
+                        <span class="text-xs text-yellow-400">JavaScript</span>
+                    </a>
+                    
+                    <a href="MainFunction/开发工具/JavaScript转TypeScript.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-blue-500/20 text-blue-400">
+                            <i class="fa fa-terminal"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">JS转TypeScript</h4>
+                        <p class="text-gray-400 text-sm mb-4">JavaScript转TypeScript</p>
+                        <span class="text-xs text-blue-400">TypeScript</span>
+                    </a>
+                    
+                    <a href="MainFunction/开发工具/Python工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-green-500/20 text-green-400">
+                            <i class="fa fa-code"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">Python工具</h4>
+                        <p class="text-gray-400 text-sm mb-4">Python代码在线编辑</p>
+                        <span class="text-xs text-green-400">Python</span>
+                    </a>
+                    
+                    <a href="MainFunction/开发工具/CSharp代码编辑器.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-purple-500/20 text-purple-400">
+                            <i class="fa fa-code"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">C#代码编辑器</h4>
+                        <p class="text-gray-400 text-sm mb-4">C#代码在线编辑</p>
+                        <span class="text-xs text-purple-400">C# · .NET</span>
+                    </a>
+                    
+                    <a href="MainFunction/开发工具/代码格式化工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-cyan-500/20 text-cyan-400">
+                            <i class="fa fa-indent"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">代码格式化</h4>
+                        <p class="text-gray-400 text-sm mb-4">多种语言代码美化</p>
+                        <span class="text-xs text-cyan-400">格式化</span>
+                    </a>
+                    
+                    <a href="MainFunction/开发工具/网页编辑器.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-red-500/20 text-red-400">
+                            <i class="fa fa-globe"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">网页编辑器</h4>
+                        <p class="text-gray-400 text-sm mb-4">HTML/CSS/JS在线编辑</p>
+                        <span class="text-xs text-red-400">HTML · CSS</span>
+                    </a>
+                    
+                    <a href="MainFunction/其他工具/正则表达式工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-orange-500/20 text-orange-400">
+                            <i class="fa fa-search"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">正则表达式</h4>
+                        <p class="text-gray-400 text-sm mb-4">生成测试正则表达式</p>
+                        <span class="text-xs text-orange-400">正则 · Regex</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="section-divider my-16"></div>
+            
+            <!-- 4. 实用小工具 -->
+            <div class="mb-20">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mr-4">
+                        <i class="fa fa-wrench text-cyan-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">实用小工具</h3>
+                        <p class="text-gray-400 text-sm">6个工具</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <a href="MainFunction/实用小工具/世界时钟/index.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-blue-500/20 text-blue-400">
+                            <i class="fa fa-clock-o"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">世界时钟</h4>
+                        <p class="text-gray-400 text-sm mb-4">查看世界各地时间</p>
+                        <span class="text-xs text-blue-400">时钟 · 时区</span>
+                    </a>
+                    
+                    <a href="MainFunction/实用小工具/计算器/index.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-green-500/20 text-green-400">
+                            <i class="fa fa-calculator"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">计算器</h4>
+                        <p class="text-gray-400 text-sm mb-4">简单实用的计算器</p>
+                        <span class="text-xs text-green-400">计算 · 数学</span>
+                    </a>
+                    
+                    <a href="MainFunction/实用小工具/单位转换/index.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-purple-500/20 text-purple-400">
+                            <i class="fa fa-exchange"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">单位转换器</h4>
+                        <p class="text-gray-400 text-sm mb-4">长度、重量、温度转换</p>
+                        <span class="text-xs text-purple-400">转换 · 单位</span>
+                    </a>
+                    
+                    <a href="MainFunction/实用小工具/书签导航工具/index.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-pink-500/20 text-pink-400">
+                            <i class="fa fa-bookmark"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">书签导航</h4>
+                        <p class="text-gray-400 text-sm mb-4">书签转换为网页</p>
+                        <span class="text-xs text-pink-400">书签 · 导航</span>
+                    </a>
+                    
+                    <a href="MainFunction/实用小工具/图表生成/index.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-yellow-500/20 text-yellow-400">
+                            <i class="fa fa-bar-chart"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">图表生成</h4>
+                        <p class="text-gray-400 text-sm mb-4">折线图、柱状图、饼图</p>
+                        <span class="text-xs text-yellow-400">图表 · 数据</span>
+                    </a>
+                    
+                    <a href="MainFunction/实用小工具/元素周期表/index.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-red-500/20 text-red-400">
+                            <i class="fa fa-table"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">元素周期表</h4>
+                        <p class="text-gray-400 text-sm mb-4">化学元素知识学习</p>
+                        <span class="text-xs text-red-400">化学 · 元素</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="section-divider my-16"></div>
+            
+            <!-- 5. 数据库管理 -->
+            <div class="mb-20">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center mr-4">
+                        <i class="fa fa-database text-orange-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">数据库管理</h3>
+                        <p class="text-gray-400 text-sm">1个工具</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <a href="MainFunction/数据库管理/数据库管理.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-orange-500/20 text-orange-400">
+                            <i class="fa fa-database"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">数据库管理</h4>
+                        <p class="text-gray-400 text-sm mb-4">创建数据库/表、CRUD操作</p>
+                        <span class="text-xs text-orange-400">数据库 · SQL</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="section-divider my-16"></div>
+            
+            <!-- 6. 其他工具 -->
+            <div class="mb-20">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center mr-4">
+                        <i class="fa fa-paint-brush text-violet-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">其他工具</h3>
+                        <p class="text-gray-400 text-sm">6个工具</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <a href="MainFunction/其他工具/文本比较工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-green-500/20 text-green-400">
+                            <i class="fa fa-balance-scale"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">文本比较工具</h4>
+                        <p class="text-gray-400 text-sm mb-4">对比两个文件差异</p>
+                        <span class="text-xs text-green-400">比较 · 差异</span>
+                    </a>
+                    
+                    <a href="MainFunction/其他工具/画笔工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-pink-500/20 text-pink-400">
+                            <i class="fa fa-paint-brush"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">画笔工具</h4>
+                        <p class="text-gray-400 text-sm mb-4">在线绘画工具</p>
+                        <span class="text-xs text-pink-400">画笔 · 绘画</span>
+                    </a>
+                    
+                    <a href="MainFunction/其他工具/颜色选择器.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-cyan-500/20 text-cyan-400">
+                            <i class="fa fa-eyedropper"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">颜色选择器</h4>
+                        <p class="text-gray-400 text-sm mb-4">精确选择各种颜色</p>
+                        <span class="text-xs text-cyan-400">颜色 · 取色</span>
+                    </a>
+                    
+                    <a href="MainFunction/其他工具/视频工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-red-500/20 text-red-400">
+                            <i class="fa fa-film"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">视频工具</h4>
+                        <p class="text-gray-400 text-sm mb-4">视频格式转换处理</p>
+                        <span class="text-xs text-red-400">视频 · 转换</span>
+                    </a>
+                    
+                    <a href="MainFunction/其他工具/网页工具.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-blue-500/20 text-blue-400">
+                            <i class="fa fa-sitemap"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">网页工具</h4>
+                        <p class="text-gray-400 text-sm mb-4">网站导航集合</p>
+                        <span class="text-xs text-blue-400">导航 · 网站</span>
+                    </a>
+                    
+                    <a href="books-navigation.html" class="glass-card rounded-2xl p-6 block">
+                        <div class="category-icon bg-yellow-500/20 text-yellow-400">
+                            <i class="fa fa-book"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold mb-2">书籍导航</h4>
+                        <p class="text-gray-400 text-sm mb-4">精选书籍资源</p>
+                        <span class="text-xs text-yellow-400">书籍 · 阅读</span>
+                    </a>
                 </div>
             </div>
         </div>
-        
-        <!-- 工具卡片区 -->
-        <div class="max-w-6xl mx-auto">
-            <!-- 1. 文件处理工具分类 -->
-            <section class="mb-16 section-fade" id="fileTools">
-                <div class="category-badge bg-file/10 text-file">
-                    <i class="fa fa-file-text-o mr-1"></i>文件处理工具
+    </section>
+
+    <!-- 特色功能区域 -->
+    <section id="features" class="py-16 px-4 glass">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">
+                    <i class="fa fa-star mr-2 text-yellow-400"></i>特色功能
+                </h2>
+                <p class="text-gray-400">为什么选择我们的工具箱</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="text-center p-6">
+                    <div class="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                        <i class="fa fa-shield text-green-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">本地运行</h3>
+                    <p class="text-gray-400 text-sm">所有工具在浏览器本地运行，无需上传文件，保护隐私安全</p>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- JSON工具 -->
-                    <a href="MainFunction/文件处理/JSON工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-file/10 text-file group-hover:bg-file group-hover:text-white">
-                                <i class="fa fa-code text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">JSON工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                JSON格式化、验证、差异对比、结构分析、数据生成、加密压缩等多种功能
-                            </p>
-                            <div class="mt-2 text-file font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- PDF工具 -->
-                    <a href="MainFunction/文件处理/PDF工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-file/10 text-file group-hover:bg-file group-hover:text-white">
-                                <i class="fa fa-file-pdf-o text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">PDF工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                PDF转TXT、HTML、Word、Markdown等多种格式，支持页面范围选择
-                            </p>
-                            <div class="mt-2 text-file font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- XML转JSON工具 -->
-                    <a href="MainFunction/文件处理/XML转JSON工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-file/10 text-file group-hover:bg-file group-hover:text-white">
-                                <i class="fa fa-exchange text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">XML转JSON工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                XML与JSON格式互相转换，支持Excel、CSV、PDF等多种数据格式
-                            </p>
-                            <div class="mt-2 text-file font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 加密解密工具 -->
-                    <a href="MainFunction/文件处理/加密解密工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-file/10 text-file group-hover:bg-file group-hover:text-white">
-                                <i class="fa fa-lock text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">加密解密工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                支持AES、DES、RSA、Base64、MD5、SHA-256等多种加密算法
-                            </p>
-                            <div class="mt-2 text-file font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 文件扫描工具 -->
-                    <a href="MainFunction/文件处理/文件扫描工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-file/10 text-file group-hover:bg-file group-hover:text-white">
-                                <i class="fa fa-scanner text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">文件扫描工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                文档扫描模拟器，支持图片处理、PDF导出，可调整亮度和对比度
-                            </p>
-                            <div class="mt-2 text-file font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 文件格式转换工具 -->
-                    <a href="MainFunction/文件处理/文件格式转换工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-file/10 text-file group-hover:bg-file group-hover:text-white">
-                                <i class="fa fa-file-word-o text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">文件格式转换工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                支持Word、Excel、PDF、TXT等多种格式互转
-                            </p>
-                            <div class="mt-2 text-file font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 文件预览工具 -->
-                    <a href="MainFunction/文件处理/文件预览工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-file/10 text-file group-hover:bg-file group-hover:text-white">
-                                <i class="fa fa-eye text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">文件预览工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                全能文件查看器，支持Word、Excel、PPT、PDF、图片、代码、音频视频
-                            </p>
-                            <div class="mt-2 text-file font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
+                
+                <div class="text-center p-6">
+                    <div class="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                        <i class="fa fa-bolt text-blue-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">即开即用</h3>
+                    <p class="text-gray-400 text-sm">无需安装任何软件，直接打开浏览器即可使用所有工具</p>
                 </div>
-            </section>
-
-            <!-- 2. 图片工具分类 -->
-            <section class="mb-16 section-fade" id="imageTools">
-                <div class="category-badge bg-media/10 text-media">
-                    <i class="fa fa-picture-o mr-1"></i>图片工具
+                
+                <div class="text-center p-6">
+                    <div class="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                        <i class="fa fa-mobile text-purple-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">响应式设计</h3>
+                    <p class="text-gray-400 text-sm">适配各种设备，手机、平板、电脑都能完美使用</p>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- 二维码生成器 -->
-                    <a href="MainFunction/图片工具/二维码生成器.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-media/10 text-media group-hover:bg-media group-hover:text-white">
-                                <i class="fa fa-qrcode text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">二维码生成器</h3>
-                            <p class="text-gray-600 mb-4">
-                                生成各种类型的二维码和条形码，支持自定义颜色和尺寸
-                            </p>
-                            <div class="mt-2 text-media font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 图片排版工具 -->
-                    <a href="MainFunction/图片工具/图片排版工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-media/10 text-media group-hover:bg-media group-hover:text-white">
-                                <i class="fa fa-th text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">图片排版工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                对图片进行在线排版，支持多种布局样式
-                            </p>
-                            <div class="mt-2 text-media font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 图片自由排版 -->
-                    <a href="MainFunction/图片工具/图片排版设计.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-media/10 text-media group-hover:bg-media group-hover:text-white">
-                                <i class="fa fa-th-large text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">图片自由排版</h3>
-                            <p class="text-gray-600 mb-4">
-                                灵活的图片组合排版工具，支持自定义布局和样式调整
-                            </p>
-                            <div class="mt-2 text-media font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 图片格式转换 -->
-                    <a href="MainFunction/图片工具/图片格式转换.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-media/10 text-media group-hover:bg-media group-hover:text-white">
-                                <i class="fa fa-exchange text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">图片格式转换</h3>
-                            <p class="text-gray-600 mb-4">
-                                支持多种图片格式相互转换，包括JPG、PNG、GIF、WebP等
-                            </p>
-                            <div class="mt-2 text-media font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 图片魔法工坊 -->
-                    <a href="MainFunction/图片工具/图片魔法工坊.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-media/10 text-media group-hover:bg-media group-hover:text-white">
-                                <i class="fa fa-magic text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">图片魔法工坊</h3>
-                            <p class="text-gray-600 mb-4">
-                                为图片添加各种特效变换，打造独特的视觉效果
-                            </p>
-                            <div class="mt-2 text-media font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </section>
-
-            <!-- 3. 代码开发工具分类 -->
-            <section class="mb-16 section-fade" id="codeTools">
-                <div class="category-badge bg-code/10 text-code">
-                    <i class="fa fa-code mr-1"></i>代码开发工具
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- JavaScript工具 -->
-                    <a href="MainFunction/开发工具/JavaScript工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-code/10 text-code group-hover:bg-code group-hover:text-white">
-                                <i class="fa fa-js text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">JavaScript工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                在线编辑JavaScript代码，支持实时运行和调试
-                            </p>
-                            <div class="mt-2 text-code font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- JavaScript转TypeScript -->
-                    <a href="MainFunction/开发工具/JavaScript转TypeScript.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-code/10 text-code group-hover:bg-code group-hover:text-white">
-                                <i class="fa fa-terminal text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">JavaScript转TypeScript</h3>
-                            <p class="text-gray-600 mb-4">
-                                将JavaScript代码转换为TypeScript代码
-                            </p>
-                            <div class="mt-2 text-code font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- Python工具 -->
-                    <a href="MainFunction/开发工具/Python工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-code/10 text-code group-hover:bg-code group-hover:text-white">
-                                <i class="fa fa-code text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">Python工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                Python代码在线编辑和运行工具
-                            </p>
-                            <div class="mt-2 text-code font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- C#代码编辑器 -->
-                    <a href="MainFunction/开发工具/CSharp代码编辑器.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-code/10 text-code group-hover:bg-code group-hover:text-white">
-                                <i class="fa fa-code text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">C#代码编辑器</h3>
-                            <p class="text-gray-600 mb-4">
-                                C#代码在线编辑工具
-                            </p>
-                            <div class="mt-2 text-code font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 代码格式化工具 -->
-                    <a href="MainFunction/开发工具/代码格式化工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-code/10 text-code group-hover:bg-code group-hover:text-white">
-                                <i class="fa fa-indent text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">代码格式化工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                对多种编程语言代码进行格式美化和校正
-                            </p>
-                            <div class="mt-2 text-code font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 网页编辑器 -->
-                    <a href="MainFunction/开发工具/网页编辑器.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-code/10 text-code group-hover:bg-code group-hover:text-white">
-                                <i class="fa fa-globe text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">网页编辑器</h3>
-                            <p class="text-gray-600 mb-4">
-                                在线编辑HTML、CSS、JavaScript网页代码
-                            </p>
-                            <div class="mt-2 text-code font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 正则表达式工具 -->
-                    <a href="MainFunction/其他工具/正则表达式工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-code/10 text-code group-hover:bg-code group-hover:text-white">
-                                <i class="fa fa-search text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">正则表达式工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                生成和测试正则表达式，支持实时匹配预览
-                            </p>
-                            <div class="mt-2 text-code font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </section>
-
-            <!-- 4. 数据库管理工具 -->
-            <section class="mb-16 section-fade" id="databaseTools">
-                <div class="category-badge bg-code/10 text-code">
-                    <i class="fa fa-database mr-1"></i>数据库管理
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- 数据库管理 -->
-                    <a href="MainFunction/数据库管理/数据库管理.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-code/10 text-code group-hover:bg-code group-hover:text-white">
-                                <i class="fa fa-database text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">数据库管理</h3>
-                            <p class="text-gray-600 mb-4">
-                                进行数据库简单操作，支持创建数据库/表、CRUD操作、SQL执行
-                            </p>
-                            <div class="mt-2 text-code font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </section>
-
-            <!-- 5. 实用小工具分类 -->
-            <section class="mb-16 section-fade" id="utilityTools">
-                <div class="category-badge bg-utility/10 text-utility">
-                    <i class="fa fa-wrench mr-1"></i>实用小工具
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- 世界时钟 -->
-                    <a href="MainFunction/实用小工具/世界时钟/index.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-utility/10 text-utility group-hover:bg-utility group-hover:text-white">
-                                <i class="fa fa-clock-o text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">世界时钟</h3>
-                            <p class="text-gray-600 mb-4">
-                                查看世界各地的当前时间，支持多个时区同时显示
-                            </p>
-                            <div class="mt-2 text-utility font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 计算器 -->
-                    <a href="MainFunction/实用小工具/计算器/index.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-utility/10 text-utility group-hover:bg-utility group-hover:text-white">
-                                <i class="fa fa-calculator text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">计算器</h3>
-                            <p class="text-gray-600 mb-4">
-                                简单实用的计算器工具，支持基本的算术运算
-                            </p>
-                            <div class="mt-2 text-utility font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 单位转换 -->
-                    <a href="MainFunction/实用小工具/单位转换/index.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-utility/10 text-utility group-hover:bg-utility group-hover:text-white">
-                                <i class="fa fa-exchange text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">单位转换器</h3>
-                            <p class="text-gray-600 mb-4">
-                                支持长度、重量、温度等多种物理单位的相互转换
-                            </p>
-                            <div class="mt-2 text-utility font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 书签导航工具 -->
-                    <a href="MainFunction/实用小工具/书签导航工具/index.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-utility/10 text-utility group-hover:bg-utility group-hover:text-white">
-                                <i class="fa fa-bookmark text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">书签导航工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                将书签转换为网页，方便管理和使用
-                            </p>
-                            <div class="mt-2 text-utility font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 图表生成 -->
-                    <a href="MainFunction/实用小工具/图表生成/index.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-utility/10 text-utility group-hover:bg-utility group-hover:text-white">
-                                <i class="fa fa-bar-chart text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">图表生成</h3>
-                            <p class="text-gray-600 mb-4">
-                                生成各种常用图表，支持折线图、柱状图、饼图等
-                            </p>
-                            <div class="mt-2 text-utility font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 元素周期表 -->
-                    <a href="MainFunction/实用小工具/元素周期表/index.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-utility/10 text-utility group-hover:bg-utility group-hover:text-white">
-                                <i class="fa fa-table text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">元素周期表</h3>
-                            <p class="text-gray-600 mb-4">
-                                学习化学元素知识，查看各元素的属性和相关信息
-                            </p>
-                            <div class="mt-2 text-utility font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </section>
-
-            <!-- 6. 其他工具分类 -->
-            <section class="mb-16 section-fade" id="otherTools">
-                <div class="category-badge bg-design/10 text-design">
-                    <i class="fa fa-paint-brush mr-1"></i>其他工具
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- 文本比较工具 -->
-                    <a href="MainFunction/其他工具/文本比较工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-design/10 text-design group-hover:bg-design group-hover:text-white">
-                                <i class="fa fa-balance-scale text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">文本比较工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                对比两个文件的内容差异，支持文本、代码等多种文件类型
-                            </p>
-                            <div class="mt-2 text-design font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 画笔工具 -->
-                    <a href="MainFunction/其他工具/画笔工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-design/10 text-design group-hover:bg-design group-hover:text-white">
-                                <i class="fa fa-paint-brush text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">画笔工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                在线绘画工具，支持多种画笔样式和颜色选择
-                            </p>
-                            <div class="mt-2 text-design font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 颜色选择器 -->
-                    <a href="MainFunction/其他工具/颜色选择器.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-design/10 text-design group-hover:bg-design group-hover:text-white">
-                                <i class="fa fa-eyedropper text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">颜色选择器</h3>
-                            <p class="text-gray-600 mb-4">
-                                精确选择各种颜色，支持RGB、HEX等多种颜色格式
-                            </p>
-                            <div class="mt-2 text-design font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 视频工具 -->
-                    <a href="MainFunction/其他工具/视频工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-media/10 text-media group-hover:bg-media group-hover:text-white">
-                                <i class="fa fa-film text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">视频工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                各种视频格式转换和处理功能
-                            </p>
-                            <div class="mt-2 text-media font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 网页工具 -->
-                    <a href="MainFunction/其他工具/网页工具.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-web/10 text-web group-hover:bg-web group-hover:text-white">
-                                <i class="fa fa-sitemap text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">网页工具</h3>
-                            <p class="text-gray-600 mb-4">
-                                网站导航集合，包含工具、学习、娱乐等多种类型的网站链接
-                            </p>
-                            <div class="mt-2 text-web font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-
-                    <!-- 书籍导航 -->
-                    <a href="books-navigation.html" class="block group">
-                        <div class="bg-white rounded-xl shadow-card p-6 border border-gray-50 card-hover">
-                            <div class="icon-container bg-design/10 text-design group-hover:bg-design group-hover:text-white">
-                                <i class="fa fa-book text-2xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-800 mb-2">书籍导航</h3>
-                            <p class="text-gray-600 mb-4">
-                                浏览精选书籍资源，包含编程、文学、商业等多个领域
-                            </p>
-                            <div class="mt-2 text-design font-medium flex items-center">
-                                <span>进入使用</span>
-                                <i class="fa fa-arrow-right ml-2 card-arrow"></i>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-            </section>
-        </div>
-        
-        <!-- 使用提示区 -->
-        <div class="max-w-3xl mx-auto mt-16 bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-card border border-gray-100 section-fade" id="tipsSection">
-            <div class="flex flex-col md:flex-row items-center">
-                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6 md:mb-0 md:mr-6">
-                    <i class="fa fa-lightbulb-o text-2xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">使用小贴士</h3>
-                    <p class="text-gray-600 leading-relaxed">
-                        所有工具均可在浏览器本地运行，无需上传文件，保护您的隐私安全。根据工具分类快速找到所需功能，定期检查工具更新，获取更好的使用体验。
-                    </p>
+                
+                <div class="text-center p-6">
+                    <div class="w-16 h-16 rounded-full bg-pink-500/20 flex items-center justify-center mx-auto mb-4">
+                        <i class="fa fa-gift text-pink-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">完全免费</h3>
+                    <p class="text-gray-400 text-sm">所有工具免费使用，持续更新维护，不断添加新功能</p>
                 </div>
             </div>
         </div>
-    </main>
+    </section>
+
+    <!-- 统计数据区域 -->
+    <section id="stats" class="py-16 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="text-5xl font-bold gradient-text mb-2">40+</div>
+                    <div class="text-gray-400">实用工具</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-bold gradient-text mb-2">6</div>
+                    <div class="text-gray-400">工具分类</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-bold gradient-text mb-2">100%</div>
+                    <div class="text-gray-400">本地运行</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-bold gradient-text mb-2">∞</div>
+                    <div class="text-gray-400">持续更新</div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- 页脚 -->
-    <footer class="bg-gray-800 text-gray-300 py-12 mt-24">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <footer class="glass py-12 px-4">
+        <div class="max-w-7xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-8 md:mb-0">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                            <i class="fa fa-wrench text-white text-sm"></i>
+                <div class="mb-8 md:mb-0 text-center md:text-left">
+                    <div class="flex items-center justify-center md:justify-start space-x-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                            <i class="fa fa-rocket text-white text-lg"></i>
                         </div>
-                        <h2 class="text-xl font-bold text-white">Candy导航</h2>
+                        <h2 class="text-xl font-bold gradient-text">Candy工具箱</h2>
                     </div>
-                    <p class="text-gray-400 max-w-md">
-                        精选各类实用工具，为你的工作和学习提供便利，让效率倍增。所有工具均本地运行，保护隐私安全。
+                    <p class="text-gray-400 text-sm max-w-md">
+                        精选各类实用工具，为你的工作和学习提供便利，让效率倍增
                     </p>
                 </div>
                 
                 <div class="flex flex-col items-center md:items-end">
                     <div class="flex space-x-4 mb-4">
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 hover:bg-primary hover:text-white transition-all duration-300">
-                            <i class="fa fa-question-circle"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 hover:bg-secondary hover:text-white transition-all duration-300">
-                            <i class="fa fa-envelope"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 hover:bg-web hover:text-white transition-all duration-300">
+                        <a href="#" class="w-10 h-10 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white hover:bg-primary/50 transition-all">
                             <i class="fa fa-github"></i>
                         </a>
+                        <a href="#" class="w-10 h-10 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white hover:bg-primary/50 transition-all">
+                            <i class="fa fa-envelope"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full glass flex items-center justify-center text-gray-400 hover:text-white hover:bg-primary/50 transition-all">
+                            <i class="fa fa-question-circle"></i>
+                        </a>
                     </div>
-                    <p class="text-gray-400 text-sm">
-                        © 2025 Candy导航 - 全能工具中心
-                    </p>
+                    <p class="text-gray-400 text-sm">© 2025 Candy工具箱 - 全能工具集合</p>
                 </div>
             </div>
             
-            <div class="border-t border-gray-700 mt-10 pt-6 text-center text-gray-400 text-sm">
-                <p>本网站所有工具仅供学习和个人使用，请勿用于商业或非法用途</p>
+            <div class="border-t border-white/10 mt-8 pt-6 text-center">
+                <p class="text-gray-500 text-sm">
+                    本网站所有工具仅供学习和个人使用，请勿用于商业或非法用途
+                </p>
             </div>
         </div>
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // 移动端菜单切换
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const mobileMenu = document.getElementById('mobileMenu');
-            
-            mobileMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-                const icon = mobileMenuBtn.querySelector('i');
-                if (mobileMenu.classList.contains('hidden')) {
-                    icon.classList.remove('fa-times');
-                    icon.classList.add('fa-bars');
-                } else {
-                    icon.classList.remove('fa-bars');
-                    icon.classList.add('fa-times');
-                }
-            });
-            
-            // 滚动时头部导航效果
-            window.addEventListener('scroll', () => {
-                const header = document.querySelector('header');
-                if (window.scrollY > 50) {
-                    header.classList.add('shadow-md');
-                    header.classList.remove('shadow-sm');
-                } else {
-                    header.classList.remove('shadow-md');
-                    header.classList.add('shadow-sm');
-                }
-            });
-            
-            // 元素滚动渐入动画
-            const fadeElements = document.querySelectorAll('.section-fade');
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('section-visible');
-                    }
-                });
-            }, { threshold: 0.1 });
-            
-            fadeElements.forEach(element => {
-                observer.observe(element);
-            });
-            
-            // 初始化第一个元素显示
-            if (fadeElements.length > 0) {
-                fadeElements[0].classList.add('section-visible');
-            }
-            
-            // 分类筛选功能
-            const filterButtons = document.querySelectorAll('#categoryFilter button');
-            filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // 移除所有按钮的活跃状态
-                    filterButtons.forEach(btn => {
-                        btn.classList.remove('bg-primary', 'text-white');
-                        btn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+        // 移动端菜单切换
+        const menuBtn = document.getElementById('menuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
                     });
-                    
-                    // 添加当前按钮的活跃状态
-                    button.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200');
-                    button.classList.add('bg-primary', 'text-white');
-                });
+                }
             });
         });
         
-        // 分类筛选功能
-        function filterCategory(category) {
-            const sections = document.querySelectorAll('main section[id$="Tools"], main section[id="databaseTools"]');
-            
-            sections.forEach(section => {
-                const sectionId = section.id;
-                let shouldShow = false;
-                
-                switch(category) {
-                    case 'all':
-                        shouldShow = true;
-                        break;
-                    case 'file':
-                        shouldShow = sectionId === 'fileTools';
-                        break;
-                    case 'image':
-                        shouldShow = sectionId === 'imageTools';
-                        break;
-                    case 'code':
-                        shouldShow = sectionId === 'codeTools';
-                        break;
-                    case 'utility':
-                        shouldShow = sectionId === 'utilityTools';
-                        break;
-                    case 'database':
-                        shouldShow = sectionId === 'databaseTools';
-                        break;
-                    case 'other':
-                        shouldShow = sectionId === 'otherTools';
-                        break;
-                }
-                
-                if (shouldShow) {
-                    section.classList.remove('hidden');
-                    section.classList.add('block');
-                } else {
-                    section.classList.add('hidden');
-                    section.classList.remove('block');
+        // 滚动显示动画
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
                 }
             });
-        }
+        }, observerOptions);
+        
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease-out';
+            observer.observe(card);
+        });
+        
+        // 导航高亮
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        window.addEventListener('scroll', () => {
+            let current = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
     </script>
 </body>
 </html>

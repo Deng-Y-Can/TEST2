@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旧版工具导航 - Candy工具箱备份</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tool-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .tool-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .category-header {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+            border-left: 4px solid #6366f1;
+        }
+        
+        .file-link {
+            color: #60a5fa;
+            transition: all 0.2s ease;
+        }
+        
+        .file-link:hover {
+            color: #93c5fd;
+            text-decoration: underline;
+        }
+        
+        .deprecated-badge {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .info-box {
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), rgba(234, 179, 8, 0.1));
+            border-left: 4px solid #f59e0b;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- 顶部导航 -->
+    <header class="glass sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="../index.html" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-arrow-left mr-2"></i>返回主页
+                    </a>
+                    <div class="w-px h-6 bg-gray-600"></div>
+                    <h1 class="text-xl font-bold text-white">旧版工具导航</h1>
+                    <span class="deprecated-badge">备份存档</span>
+                </div>
+                
+                <div class="text-sm text-gray-400">
+                    <i class="fa fa-folder-open mr-2"></i>Page 目录文件索引
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 说明区域 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="info-box rounded-lg p-6 mb-8">
+            <div class="flex items-start">
+                <div class="text-2xl mr-4">ℹ️</div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">关于此页面</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        此页面是 <strong>Page 目录</strong>的完整文件索引，包含所有旧版工具的 HTML 文件。
+                        这些文件已整理到 <strong>MainFunction</strong> 目录中使用中文命名的版本。
+                        此页面仅作为备份存档，方便查看原始文件结构。
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 统计信息 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="glass rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-blue-400">40</div>
+                <div class="text-sm text-gray-400">HTML文件</div>
+            </div>
+            <div class="glass rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-green-400">7</div>
+                <div class="text-sm text-gray-400">目录分类</div>
+            </div>
+            <div class="glass rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-purple-400">1</div>
+                <div class="text-sm text-gray-400">备份存档</div>
+            </div>
+            <div class="glass rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-yellow-400">100%</div>
+                <div class="text-sm text-gray-400">完整保留</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件列表区域 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div class="space-y-8">
+            
+            <!-- 1. 代码编辑 -->
+            <div>
+                <div class="category-header rounded-t-lg p-4">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-code mr-3 text-blue-400"></i>
+                        代码编辑
+                        <span class="text-sm text-gray-400 ml-2">(5个文件)</span>
+                    </h2>
+                </div>
+                <div class="glass rounded-b-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">csharp</h3>
+                                <i class="fa fa-file-code-o text-gray-500"></i>
+                            </div>
+                            <a href="代码编辑/csharp/index.html" class="file-link text-sm">
+                                ./代码编辑/csharp/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">js</h3>
+                                <i class="fa fa-file-code-o text-gray-500"></i>
+                            </div>
+                            <a href="代码编辑/js/index.html" class="file-link text-sm">
+                                ./代码编辑/js/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">Js~Ts</h3>
+                                <i class="fa fa-file-code-o text-gray-500"></i>
+                            </div>
+                            <a href="代码编辑/Js~Ts/index.html" class="file-link text-sm">
+                                ./代码编辑/Js~Ts/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">python</h3>
+                                <i class="fa fa-file-code-o text-gray-500"></i>
+                            </div>
+                            <a href="代码编辑/python/index.html" class="file-link text-sm">
+                                ./代码编辑/python/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">webPage</h3>
+                                <i class="fa fa-file-code-o text-gray-500"></i>
+                            </div>
+                            <a href="代码编辑/webPage/index.html" class="file-link text-sm">
+                                ./代码编辑/webPage/index.html
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2. 代码格式化 -->
+            <div>
+                <div class="category-header rounded-t-lg p-4">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-indent mr-3 text-cyan-400"></i>
+                        代码格式化
+                        <span class="text-sm text-gray-400 ml-2">(1个文件)</span>
+                    </h2>
+                </div>
+                <div class="glass rounded-b-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">代码格式化</h3>
+                                <i class="fa fa-file-code-o text-gray-500"></i>
+                            </div>
+                            <a href="代码编辑/代码格式化/index.html" class="file-link text-sm">
+                                ./代码编辑/代码格式化/index.html
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3. 图片 -->
+            <div>
+                <div class="category-header rounded-t-lg p-4">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-picture-o mr-3 text-pink-400"></i>
+                        图片处理
+                        <span class="text-sm text-gray-400 ml-2">(5个文件)</span>
+                    </h2>
+                </div>
+                <div class="glass rounded-b-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">二维码</h3>
+                                <i class="fa fa-file-image-o text-gray-500"></i>
+                            </div>
+                            <a href="图片/二维码/index.html" class="file-link text-sm">
+                                ./图片/二维码/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">图片排版</h3>
+                                <i class="fa fa-files text-gray-500"></i>
+                            </div>
+                            <a href="图片/图片排版/index.html" class="file-link text-sm block">./图片/图片排版/index.html</a>
+                            <a href="图片/图片排版/index2.html" class="file-link text-sm block">./图片/图片排版/index2.html</a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">图片格式转换工具</h3>
+                                <i class="fa fa-file-image-o text-gray-500"></i>
+                            </div>
+                            <a href="图片/图片格式转换工具/index.html" class="file-link text-sm">
+                                ./图片/图片格式转换工具/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">图片魔法工坊</h3>
+                                <i class="fa fa-magic text-gray-500"></i>
+                            </div>
+                            <a href="图片/图片魔法工坊/index.html" class="file-link text-sm">
+                                ./图片/图片魔法工坊/index.html
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 4. 小工具 -->
+            <div>
+                <div class="category-header rounded-t-lg p-4">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-wrench mr-3 text-green-400"></i>
+                        实用小工具
+                        <span class="text-sm text-gray-400 ml-2">(9个文件)</span>
+                    </h2>
+                </div>
+                <div class="glass rounded-b-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">chart图表生成</h3>
+                                <i class="fa fa-bar-chart text-gray-500"></i>
+                            </div>
+                            <a href="小工具/chart图表生成/index.html" class="file-link text-sm">
+                                ./小工具/chart图表生成/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">世界时钟</h3>
+                                <i class="fa fa-clock-o text-gray-500"></i>
+                            </div>
+                            <a href="小工具/世界时钟/index.html" class="file-link text-sm">
+                                ./小工具/世界时钟/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">书签导航工具</h3>
+                                <i class="fa fa-bookmark text-gray-500"></i>
+                            </div>
+                            <a href="小工具/书签导航工具/index.html" class="file-link text-sm">
+                                ./小工具/书签导航工具/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">元素周期表</h3>
+                                <i class="fa fa-table text-gray-500"></i>
+                            </div>
+                            <a href="小工具/元素周期表/index.html" class="file-link text-sm block">./小工具/元素周期表/index.html</a>
+                            <a href="小工具/元素周期表/index2.html" class="file-link text-sm block">./小工具/元素周期表/index2.html</a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">单位转换</h3>
+                                <i class="fa fa-exchange text-gray-500"></i>
+                            </div>
+                            <a href="小工具/单位转换/index.html" class="file-link text-sm">
+                                ./小工具/单位转换/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">计算器</h3>
+                                <i class="fa fa-calculator text-gray-500"></i>
+                            </div>
+                            <a href="小工具/计算器/index.html" class="file-link text-sm block">./小工具/计算器/index.html</a>
+                            <a href="小工具/计算器/index2.html" class="file-link text-sm block">./小工具/计算器/index2.html</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 5. 数据库 -->
+            <div>
+                <div class="category-header rounded-t-lg p-4">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-database mr-3 text-orange-400"></i>
+                        数据库
+                        <span class="text-sm text-gray-400 ml-2">(1个文件)</span>
+                    </h2>
+                </div>
+                <div class="glass rounded-b-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">数据库</h3>
+                                <i class="fa fa-database text-gray-500"></i>
+                            </div>
+                            <a href="数据库/index.html" class="file-link text-sm">
+                                ./数据库/index.html
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 6. 文件 -->
+            <div>
+                <div class="category-header rounded-t-lg p-4">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-file-text mr-3 text-teal-400"></i>
+                        文件处理
+                        <span class="text-sm text-gray-400 ml-2">(7个文件)</span>
+                    </h2>
+                </div>
+                <div class="glass rounded-b-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">json小工具</h3>
+                                <i class="fa fa-file-code-o text-gray-500"></i>
+                            </div>
+                            <a href="文件/json小工具/index.html" class="file-link text-sm">
+                                ./文件/json小工具/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">pdf工具</h3>
+                                <i class="fa fa-file-pdf-o text-gray-500"></i>
+                            </div>
+                            <a href="文件/pdf工具/index.html" class="file-link text-sm">
+                                ./文件/pdf工具/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">xml~Json转换</h3>
+                                <i class="fa fa-exchange text-gray-500"></i>
+                            </div>
+                            <a href="文件/xml~Json转换/index.html" class="file-link text-sm">
+                                ./文件/xml~Json转换/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">加密解密工具</h3>
+                                <i class="fa fa-lock text-gray-500"></i>
+                            </div>
+                            <a href="文件/加密解密工具/index.html" class="file-link text-sm">
+                                ./文件/加密解密工具/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">文件扫描</h3>
+                                <i class="fa fa-scanner text-gray-500"></i>
+                            </div>
+                            <a href="文件/文件扫描/index.html" class="file-link text-sm">
+                                ./文件/文件扫描/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">文件格式转换</h3>
+                                <i class="fa fa-file-word-o text-gray-500"></i>
+                            </div>
+                            <a href="文件/文件格式转换/index.html" class="file-link text-sm">
+                                ./文件/文件格式转换/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">文件预览</h3>
+                                <i class="fa fa-eye text-gray-500"></i>
+                            </div>
+                            <a href="文件/文件预览/index.html" class="file-link text-sm">
+                                ./文件/文件预览/index.html
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 7. 其他 -->
+            <div>
+                <div class="category-header rounded-t-lg p-4">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-paint-brush mr-3 text-purple-400"></i>
+                        其他工具
+                        <span class="text-sm text-gray-400 ml-2">(12个文件)</span>
+                    </h2>
+                </div>
+                <div class="glass rounded-b-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">文本比较</h3>
+                                <i class="fa fa-balance-scale text-gray-500"></i>
+                            </div>
+                            <a href="文本比较/index.html" class="file-link text-sm block">./文本比较/index.html</a>
+                            <a href="文本比较/index2.html" class="file-link text-sm block">./文本比较/index2.html</a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">正则表达式</h3>
+                                <i class="fa fa-search text-gray-500"></i>
+                            </div>
+                            <a href="正则表达式/index.html" class="file-link text-sm">
+                                ./正则表达式/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">画笔</h3>
+                                <i class="fa fa-paint-brush text-gray-500"></i>
+                            </div>
+                            <a href="画笔/index.html" class="file-link text-sm">
+                                ./画笔/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">网页</h3>
+                                <i class="fa fa-globe text-gray-500"></i>
+                            </div>
+                            <a href="网页/index.html" class="file-link text-sm block">./网页/index.html</a>
+                            <a href="网页/index2.html" class="file-link text-sm block">./网页/index2.html</a>
+                            <a href="网页/index3.html" class="file-link text-sm block">./网页/index3.html</a>
+                            <a href="网页/index4.html" class="file-link text-sm block">./网页/index4.html</a>
+                            <a href="网页/index5.html" class="file-link text-sm block">./网页/index5.html</a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">视频</h3>
+                                <i class="fa fa-film text-gray-500"></i>
+                            </div>
+                            <a href="视频/index.html" class="file-link text-sm">
+                                ./视频/index.html
+                            </a>
+                        </div>
+                        <div class="tool-card rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-white">颜色选择器</h3>
+                                <i class="fa fa-eyedropper text-gray-500"></i>
+                            </div>
+                            <a href="颜色选择器/colorAdd.html" class="file-link text-sm block">./颜色选择器/colorAdd.html</a>
+                            <a href="颜色选择器/index.html" class="file-link text-sm block">./颜色选择器/index.html</a>
+                            <a href="颜色选择器/index2.html" class="file-link text-sm block">./颜色选择器/index2.html</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="glass py-6 px-4">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-gray-400 text-sm">
+                <i class="fa fa-archive mr-2"></i>
+                此页面为备份存档 | 所有原始文件已完整保留
+            </p>
+            <p class="text-gray-500 text-xs mt-2">
+                建议使用 <a href="../index.html" class="text-blue-400 hover:underline">主导航页面</a> 访问整理后的工具
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
